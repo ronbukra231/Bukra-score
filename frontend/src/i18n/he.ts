@@ -79,7 +79,7 @@ const he: Translations = {
   score_weak: 'חלש',
   score_poor: 'גרוע',
 
-  rules_title: 'חוקי בוקרה',
+  rules_title: 'חוקי המדד',
   rules_subtitle: '5 בדיקות יסוד להשקעה לטווח ארוך',
   rules_passedOf: 'עברו',
   rules_statusPass: 'עבר',
@@ -124,7 +124,7 @@ const he: Translations = {
   scanner_col_company: 'חברה',
   scanner_col_sector: 'סקטור',
   scanner_col_score: 'ציון בוקרה',
-  scanner_col_rules: 'חוקי בוקרה',
+  scanner_col_rules: 'חוקי המדד',
   scanner_col_status: 'סטטוס',
   scanner_col_marketCap: 'שווי שוק',
   scanner_col_pe: 'P/E',
