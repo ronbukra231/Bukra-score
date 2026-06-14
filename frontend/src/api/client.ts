@@ -14,6 +14,13 @@ export async function getCompanyFull(symbol: string) {
   return res.json()
 }
 
+/** Optimised single-request endpoint — returns info + financials + score + rules + AI explanation. Cached 24 h server-side. */
+export async function getCompanyPage(symbol: string) {
+  const res = await fetch(`${BASE}/company/${symbol}/page`)
+  if (!res.ok) throw new Error('שגיאה בטעינת נתוני החברה')
+  return res.json()
+}
+
 export async function getCompanyExplanation(symbol: string) {
   const res = await fetch(`${BASE}/company/${symbol}/explain`)
   if (!res.ok) throw new Error('שגיאה בטעינת הסבר AI')

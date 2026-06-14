@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowRight, ExternalLink, TrendingUp, Building2, Globe } from 'lucide-react'
-import { getCompanyFull, getCompanyExplanation } from '../api/client'
+import { getCompanyPage } from '../api/client'
 import { useLanguage } from '../i18n/index'
 import FinancialCharts from '../components/FinancialCharts'
 import BukraScoreCard from '../components/BukraScoreCard'
@@ -86,52 +86,71 @@ function LoadingSkeleton() {
   )
 }
 
+// ── Staged loading indicator ──────────────────────────────────────────────────
+const STAGE_DELAYS = [0, 2500, 6000] // ms thresholds for each step message
+
+function LoadingStages({ steps }: { steps: string[] }) {
+  const [stage, setStage] = useState(0)
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  useEffect(() => {
+    timers.current.forEach(clearTimeout)
+    timers.current = []
+    setStage(0)
+    STAGE_DELAYS.forEach((delay, i) => {
+      if (i === 0) return
+      timers.current.push(setTimeout(() => setStage(i), delay))
+    })
+    return () => timers.current.forEach(clearTimeout)
+  }, [])
+
+  return (
+    <div className="flex items-center gap-3 mb-8">
+      <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+      <div className="flex flex-col gap-0.5">
+        <span className="text-gray-300 text-sm font-medium">{steps[stage]}</span>
+        <div className="flex gap-1 mt-0.5">
+          {steps.map((_, i) => (
+            <div
+              key={i}
+              className={`h-0.5 w-8 rounded-full transition-all duration-500 ${i <= stage ? 'bg-brand-500' : 'bg-gray-700'}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Company() {
   const { symbol } = useParams<{ symbol: string }>()
   const { t } = useLanguage()
 
-  const [data, setData] = useState<any>(null)
+  const [data, setData]       = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  const [explanation, setExplanation] = useState<any>(null)
-  const [explainLoading, setExplainLoading] = useState(false)
-  const [explainError, setExplainError] = useState('')
-
-  useEffect(() => {
-    if (!symbol) return
-    const sym = symbol.toUpperCase()
-    setLoading(true)
-    setError('')
-    setData(null)
-    setExplanation(null)
-    setExplainError('')
-
-    getCompanyFull(sym)
-      .then((d) => {
-        setData(d)
-        setExplainLoading(true)
-        getCompanyExplanation(sym)
-          .then(setExplanation)
-          .catch((e) => setExplainError(e.message || 'שגיאה בטעינת הסבר AI'))
-          .finally(() => setExplainLoading(false))
-      })
-      .catch((e) => setError(e.message || 'שגיאה בטעינת נתוני החברה'))
-      .finally(() => setLoading(false))
-  }, [symbol])
+  const [error, setError]     = useState('')
 
   const sym = symbol?.toUpperCase() ?? ''
 
-  function retry() {
-    setError('')
+  function load(s: string) {
     setLoading(true)
-    getCompanyFull(sym)
+    setError('')
+    setData(null)
+
+    getCompanyPage(s)
       .then(setData)
-      .catch(e => setError(e.message))
+      .catch((e) => setError(e.message || 'שגיאה בטעינת נתוני החברה'))
       .finally(() => setLoading(false))
   }
+
+  useEffect(() => {
+    if (!sym) return
+    load(sym)
+  }, [sym])
+
+  const loadingSteps = [t.co_loadingStep1, t.co_loadingStep2, t.co_loadingStep3]
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -156,12 +175,7 @@ export default function Company() {
         {/* ── Loading ─────────────────────────────────────────────────────── */}
         {loading && (
           <div>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-gray-400 text-sm">
-                {t.co_loading} <span className="text-white font-mono font-bold">{sym}</span>
-              </span>
-            </div>
+            <LoadingStages steps={loadingSteps} />
             <LoadingSkeleton />
           </div>
         )}
@@ -174,7 +188,7 @@ export default function Company() {
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">{error}</p>
             <div className="flex gap-3 justify-center">
               <button
-                onClick={retry}
+                onClick={() => load(sym)}
                 className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-xl px-4 py-2 transition"
               >
                 {t.co_retry}
@@ -204,7 +218,6 @@ export default function Company() {
                   {data.info.country && data.info.country !== 'United States' && (
                     <Tag label={data.info.country} />
                   )}
-                  {/* Accuracy system badge */}
                   <Link
                     to="/accuracy"
                     className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs rounded-full px-2.5 py-1 hover:bg-emerald-500/20 transition"
@@ -255,10 +268,10 @@ export default function Company() {
 
             {/* Key stats grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
-              <Stat label={t.stat_marketCap}         value={fmtMoney(data.info.market_cap)} />
-              <Stat label={t.stat_pe}                value={data.info.pe_ratio ? data.info.pe_ratio.toFixed(1) : '—'} />
-              <Stat label={t.stat_high52}            value={fmtPrice(data.info['52w_high'])} />
-              <Stat label={t.stat_low52}             value={fmtPrice(data.info['52w_low'])} />
+              <Stat label={t.stat_marketCap}          value={fmtMoney(data.info.market_cap)} />
+              <Stat label={t.stat_pe}                 value={data.info.pe_ratio ? data.info.pe_ratio.toFixed(1) : '—'} />
+              <Stat label={t.stat_high52}             value={fmtPrice(data.info['52w_high'])} />
+              <Stat label={t.stat_low52}              value={fmtPrice(data.info['52w_low'])} />
               <Stat
                 label={t.stat_dividend}
                 value={data.info.dividend_yield ? fmtPct(data.info.dividend_yield, true) : '—'}
@@ -298,7 +311,6 @@ export default function Company() {
                   )}
                 </div>
 
-                {/* Company description (English always shown here) */}
                 {data.info.description && (
                   <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
                     <h3 className="text-white font-semibold text-sm mb-2">{t.co_about}</h3>
@@ -308,11 +320,11 @@ export default function Company() {
                   </div>
                 )}
 
-                {/* AI Explanation */}
+                {/* AI Explanation — comes bundled in /page response */}
                 <AIExplanation
-                  explanation={explanation}
-                  loading={explainLoading}
-                  error={explainError}
+                  explanation={data.explanation ?? null}
+                  loading={false}
+                  error={data.explanation_error ?? ''}
                   englishDescription={data.info.description || ''}
                 />
               </div>

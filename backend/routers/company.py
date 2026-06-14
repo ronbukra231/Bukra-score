@@ -1,12 +1,37 @@
+import time
 import threading
 from fastapi import APIRouter, HTTPException, Query
 from services.yahoo_finance import get_company_info, get_five_year_financials, search_companies
 from services.bukra_score import compute_bukra_score
+from services.bukra_rules import compute_bukra_rules
 from services.ai_explanation import get_hebrew_explanation
 from services.accuracy_db import save_snapshot
 
 router = APIRouter(prefix="/api", tags=["company"])
 
+# ── 24-hour page cache ────────────────────────────────────────────────────────
+# Caches the full /page response per symbol. Survives within a single process
+# lifetime. On Render free tier (cold starts), first request is always slow;
+# subsequent requests within 24 h are instant.
+
+_PAGE_CACHE: dict = {}
+_PAGE_TTL = 86_400  # 24 hours in seconds
+_page_lock = threading.Lock()
+
+
+def _page_get(symbol: str):
+    entry = _PAGE_CACHE.get(symbol)
+    if entry and (time.time() - entry["ts"]) < _PAGE_TTL:
+        return entry["data"]
+    return None
+
+
+def _page_set(symbol: str, data: dict):
+    with _page_lock:
+        _PAGE_CACHE[symbol] = {"ts": time.time(), "data": data}
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _save_snapshot_bg(info: dict, score_data: dict):
     """Fire-and-forget: save a score snapshot without blocking the response."""
@@ -27,6 +52,8 @@ def _save_snapshot_bg(info: dict, score_data: dict):
     threading.Thread(target=_run, daemon=True).start()
 
 
+# ── Endpoints ─────────────────────────────────────────────────────────────────
+
 @router.get("/search")
 def search(q: str = Query(..., min_length=1)):
     results = search_companies(q)
@@ -34,6 +61,57 @@ def search(q: str = Query(..., min_length=1)):
         raise HTTPException(status_code=404, detail="לא נמצאו תוצאות")
     return results
 
+
+@router.get("/company/{symbol}/page")
+def company_page(symbol: str):
+    """
+    Single optimised endpoint for the frontend company page.
+    Returns info + financials + score + rules + AI explanation in one request.
+    Cached per symbol for 24 hours.
+    """
+    sym = symbol.upper()
+
+    cached = _page_get(sym)
+    if cached:
+        return {**cached, "from_cache": True}
+
+    info = get_company_info(sym)
+    if not info.get("name"):
+        raise HTTPException(status_code=404, detail=f"הסימבול {sym} לא נמצא")
+
+    financials  = get_five_year_financials(sym)
+    score_data  = compute_bukra_score(financials, info)
+    rules_data  = compute_bukra_rules(financials)
+
+    _save_snapshot_bg(info, score_data)
+
+    # AI explanation — never crashes the response if unavailable
+    explanation       = None
+    explanation_error = None
+    try:
+        explanation = get_hebrew_explanation(info, financials, score_data)
+    except Exception as e:
+        explanation_error = str(e)
+        print(f"[company/page] AI explanation failed for {sym}: {e}")
+
+    result = {
+        "info":              info,
+        "financials":        financials,
+        "score":             score_data,
+        "rules":             rules_data,
+        "explanation":       explanation,
+        "explanation_error": explanation_error,
+        "from_cache":        False,
+    }
+
+    # Only cache if we got valid financial data
+    if info.get("name"):
+        _page_set(sym, result)
+
+    return result
+
+
+# ── Legacy endpoints (kept for backward compatibility) ─────────────────────────
 
 @router.get("/company/{symbol}")
 def company_overview(symbol: str):
@@ -71,12 +149,9 @@ def company_full(symbol: str):
     info = get_company_info(symbol)
     financials = get_five_year_financials(symbol)
     score_data = compute_bukra_score(financials, info)
-
-    # Save snapshot asynchronously — never blocks or crashes the response
     _save_snapshot_bg(info, score_data)
-
     return {
-        "info": info,
+        "info":      info,
         "financials": financials,
-        "score": score_data,
+        "score":     score_data,
     }

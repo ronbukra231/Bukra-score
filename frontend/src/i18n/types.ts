@@ -47,6 +47,9 @@ export interface Translations {
   co_mockBadge: string
   co_noChartsTitle: string
   co_noChartsBody: string
+  co_loadingStep1: string
+  co_loadingStep2: string
+  co_loadingStep3: string
 
   // ── Stat card labels ──────────────────────────────────────────────────────
   stat_marketCap: string

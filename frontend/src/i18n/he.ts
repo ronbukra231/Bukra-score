@@ -39,6 +39,9 @@ const he: Translations = {
   co_mockBadge: 'נתונים לדוגמה',
   co_noChartsTitle: 'נתונים פיננסיים אינם זמינים עבור',
   co_noChartsBody: 'ייתכן שמדובר ב-ETF או חברה ללא דוחות כספיים ציבוריים',
+  co_loadingStep1: 'מאתר נתונים פיננסיים...',
+  co_loadingStep2: 'מחשב ציון בוקרה...',
+  co_loadingStep3: 'מכין ניתוח בינה מלאכותית בעברית...',
 
   stat_marketCap: 'שווי שוק',
   stat_pe: 'מכפיל רווח P/E',

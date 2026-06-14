@@ -39,6 +39,9 @@ const en: Translations = {
   co_mockBadge: 'Sample data',
   co_noChartsTitle: 'Financial data not available for',
   co_noChartsBody: 'This may be an ETF or a company without public financial reports',
+  co_loadingStep1: 'Fetching financial data...',
+  co_loadingStep2: 'Computing Bukra Score...',
+  co_loadingStep3: 'Preparing AI analysis...',
 
   stat_marketCap: 'Market Cap',
   stat_pe: 'P/E Ratio',
