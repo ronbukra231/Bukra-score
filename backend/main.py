@@ -11,16 +11,23 @@ from services.accuracy_db import init_db
 load_dotenv()
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
-# Set ALLOWED_ORIGINS in production (comma-separated URLs).
-# Defaults to localhost for local development.
-_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
-_allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+# Explicit origins always allowed (dev + known production URL).
+# ALLOWED_ORIGINS env var (comma-separated) can add more at deploy time.
+_base_origins = [
+    "https://bukra-score.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+_extra = os.getenv("ALLOWED_ORIGINS", "")
+_extra_origins = [o.strip() for o in _extra.split(",") if o.strip()]
+_allowed_origins = list(dict.fromkeys(_base_origins + _extra_origins))  # dedup, preserve order
 
 app = FastAPI(title="Bukra Capital API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
