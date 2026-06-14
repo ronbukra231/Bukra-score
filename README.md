@@ -1,50 +1,72 @@
 # בוקרה קפיטל — Bukra Capital
 
-**AI-powered investment research platform for long-term investors.**
-
-Bukra Capital helps investors understand the business behind a stock — before making a decision. It analyzes real financial data from public companies and translates it into a clear 0–100 **Bukra Score** based on 5 principles of long-term business quality.
-
-> Research only. Not investment advice. US stocks and ETFs only.
+> **AI-powered investment research platform for long-term investors.**
+> Research only · Not investment advice · US stocks and ETFs only.
 
 ---
 
-## What It Does
+## What Is Bukra Capital?
 
-- **Bukra Score (0–100)** — composite score across growth, profitability, cash flow, stability, and debt health
-- **Bukra Rules** — 5 binary rule checks per company (pass/fail)
-- **AI Explanation** — Hebrew-first company breakdown powered by Claude (Anthropic)
-- **Scanner** — ranks a universe of leading US stocks by Bukra Score; cache-first, refreshes weekly
-- **Prediction Accuracy System** — tracks whether high-scoring companies outperform SPY over 3 months (alpha engine)
-- **Hebrew/English** — fully bilingual UI with RTL support
+Most people buy stocks. Few understand the business behind them.
+
+**Bukra Capital** helps retail investors make smarter decisions by analyzing the real financial quality of public companies — before they invest. The platform translates complex financial statements into a single, clear score: the **Bukra Score**.
+
+It is built for long-term investors who want to understand what they own.
+
+---
+
+## The Bukra Score
+
+A **0–100 composite score** based on five principles of long-term business quality:
+
+| # | Principle | What It Measures |
+|---|---|---|
+| 1 | Consistent Growth | Revenue and net income trends over 5 years |
+| 2 | Profitability | Net margins and return on capital |
+| 3 | Free Cash Flow | Operating cash generation minus capex |
+| 4 | Financial Stability | Liquidity and balance sheet strength |
+| 5 | Debt Health | Debt-to-equity and coverage ratios |
+
+The score does not predict prices. It answers a simpler question:
+**Is this a business I would want to own?**
+
+---
+
+## Features
+
+- **Company Analysis** — Full Bukra Score breakdown, 5-year financial charts, Bukra Rules (pass/fail), and plain-language AI explanation in Hebrew
+- **Market Scanner** — Ranks a universe of leading US stocks by Bukra Score; cache-first architecture, refreshes weekly automatically
+- **Prediction Accuracy System** — Tracks whether high-scoring companies outperform SPY over 3 months; alpha engine with confidence grades
+- **Bilingual UI** — Hebrew-first with full English support, RTL/LTR toggle, persisted per session
 
 ---
 
 ## Tech Stack
 
-| Layer | Tech |
+| Layer | Technology |
 |---|---|
-| Frontend | React 18 + TypeScript + Vite + Tailwind CSS + Recharts |
-| Backend | Python 3.11 + FastAPI + uvicorn |
-| Data | yahooquery (primary) + yfinance (fallback) |
-| AI | Anthropic claude-sonnet-4-6 |
-| Scheduler | APScheduler (weekly scanner) |
-| DB | SQLite (prediction accuracy snapshots) |
+| Frontend | React 18 · TypeScript · Vite · Tailwind CSS · Recharts |
+| Backend | Python 3.11 · FastAPI · uvicorn |
+| Data | yahooquery (primary) · yfinance (fallback) |
+| AI | Anthropic `claude-sonnet-4-6` |
+| Scheduler | APScheduler — weekly scanner (Mondays 02:00 UTC) |
+| Storage | SQLite · JSON cache |
 
 ---
 
-## Local Setup
+## Local Development
 
 ### Prerequisites
 
 - Node.js 18+
 - Python 3.11+
-- An [Anthropic API key](https://console.anthropic.com/) (optional — app works without it, AI explanations will be disabled)
+- Anthropic API key *(optional — app works without it; AI explanations will be disabled)*
 
 ### 1. Clone
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/bukra-capital.git
-cd bukra-capital
+git clone https://github.com/ronbukra231/Bukra-score.git
+cd Bukra-score
 ```
 
 ### 2. Backend
@@ -52,17 +74,16 @@ cd bukra-capital
 ```bash
 cd backend
 python3 -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# Create your .env from the example
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY (optional)
+# Open .env and add your ANTHROPIC_API_KEY (optional)
 
 uvicorn main:app --reload --port 8000
+# → http://localhost:8000
 ```
 
-The backend starts at `http://localhost:8000`.
 On first startup, `init_db()` runs automatically and seeds sample prediction accuracy data.
 
 ### 3. Frontend
@@ -71,82 +92,86 @@ On first startup, `init_db()` runs automatically and seeds sample prediction acc
 cd frontend
 npm install
 npm run dev
+# → http://localhost:5173
 ```
 
-The app opens at `http://localhost:5173`.
-The Vite dev proxy routes all `/api` calls to the backend — no env vars needed locally.
+The Vite dev proxy routes all `/api` calls to `localhost:8000` — no environment variables needed locally.
 
 ---
 
-## Key Commands
+## API Reference
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Start frontend dev server (HMR) |
-| `npm run build` | Production build → `frontend/dist/` |
-| `uvicorn main:app --reload --port 8000` | Start backend with hot-reload |
-| `uvicorn main:app --host 0.0.0.0 --port $PORT` | Production start (Render) |
-
----
-
-## API Endpoints
-
-| Method | Path | Description |
+| Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/health` | Health check |
-| `GET` | `/api/search?q=` | Search companies |
+| `GET` | `/api/search?q=` | Search companies by name or ticker |
 | `GET` | `/api/company/{ticker}/full` | Full company data + Bukra Score |
-| `GET` | `/api/company/{ticker}/explain` | AI explanation (Hebrew) |
-| `GET` | `/api/scanner/latest` | Cached scanner results (instant, no scan) |
+| `GET` | `/api/company/{ticker}/explain` | AI explanation in Hebrew |
+| `GET` | `/api/scanner/latest` | Cached scanner results (instant) |
 | `POST` | `/api/scanner/refresh` | Trigger background scan |
 | `GET` | `/api/scanner/status` | Live scan progress |
-| `GET` | `/api/accuracy/summary` | Prediction accuracy stats |
-| `GET` | `/api/accuracy/history` | Snapshot history |
+| `GET` | `/api/accuracy/summary` | Prediction accuracy stats + alpha |
+| `GET` | `/api/accuracy/history` | Full snapshot history |
+| `POST` | `/api/accuracy/recalculate` | Resolve pending predictions |
 
 ---
 
 ## Deployment
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the full guide.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the complete guide.
 
-**Short version:**
+**Recommended stack:**
 
-| | Platform | Key setting |
+| Layer | Platform | Notes |
 |---|---|---|
-| Frontend | **Vercel** | Set `VITE_API_URL=https://your-backend.onrender.com/api` |
-| Backend | **Render** | Set `ANTHROPIC_API_KEY`, `ALLOWED_ORIGINS`, `DATA_DIR=/data` |
+| Frontend | **Vercel** | Import `frontend/` · set `VITE_API_URL` |
+| Backend | **Render** | Import `backend/` · add Persistent Disk at `/data` |
 
-The backend scheduler runs a full market scan every **Monday at 02:00 UTC** automatically.
+### Environment Variables
+
+**Backend (Render):**
+
+| Variable | Required | Description |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Optional | Enables Hebrew AI explanations |
+| `ALLOWED_ORIGINS` | Yes | Comma-separated allowed frontend URLs |
+| `DATA_DIR` | Yes | Path to persistent disk (e.g. `/data`) |
+
+**Frontend (Vercel):**
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_API_URL` | Yes | Full backend API URL, e.g. `https://api.example.com/api` |
 
 ---
 
 ## Project Structure
 
 ```
-bukra-capital/
+Bukra-score/
 ├── backend/
-│   ├── main.py                  # FastAPI app + scheduler
+│   ├── main.py                   # FastAPI app entry point + scheduler
 │   ├── requirements.txt
 │   ├── .env.example
 │   ├── data/
-│   │   └── stock_universe.json  # Universe of stocks to scan
+│   │   └── stock_universe.json   # Universe of stocks to scan
 │   ├── routers/
-│   │   ├── company.py           # Company data + AI explanation
-│   │   ├── scanner.py           # Cache-first scanner
-│   │   └── accuracy.py          # Prediction accuracy system
+│   │   ├── company.py            # Company data + AI explanation
+│   │   ├── scanner.py            # Cache-first scanner architecture
+│   │   └── accuracy.py           # Prediction accuracy system
 │   └── services/
-│       ├── bukra_score.py       # Core scoring algorithm
-│       ├── bukra_rules.py       # 5 binary rules
-│       ├── yahoo_finance.py     # Data layer (yahooquery + yfinance)
-│       ├── ai_explanation.py    # Claude integration
-│       └── accuracy_db.py       # SQLite schema + alpha engine
+│       ├── bukra_score.py        # Core scoring algorithm
+│       ├── bukra_rules.py        # 5 binary quality rules
+│       ├── yahoo_finance.py      # Data layer (yahooquery + yfinance)
+│       ├── ai_explanation.py     # Claude integration
+│       └── accuracy_db.py        # SQLite schema + alpha engine
 ├── frontend/
 │   ├── src/
-│   │   ├── api/client.ts        # API calls (VITE_API_URL configurable)
-│   │   ├── pages/               # Home, Company, Scanner, Accuracy
-│   │   ├── components/          # SearchBar, PredictionAccuracyCard, ...
-│   │   └── i18n/                # Hebrew + English translations
-│   ├── public/vercel.json       # SPA routing for Vercel
+│   │   ├── api/client.ts         # API calls (VITE_API_URL configurable)
+│   │   ├── pages/                # Home · Company · Scanner · Accuracy
+│   │   ├── components/           # Reusable UI components
+│   │   └── i18n/                 # Hebrew + English translations
+│   ├── public/vercel.json        # SPA rewrite rules for Vercel
 │   └── vite.config.ts
 ├── DEPLOYMENT.md
 └── README.md
@@ -154,24 +179,14 @@ bukra-capital/
 
 ---
 
-## Environment Variables
+## Design Principles
 
-### Backend (`backend/.env`)
-
-| Variable | Required | Description |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | Optional | Enables Hebrew AI company explanations |
-| `ALLOWED_ORIGINS` | Production | Comma-separated list of allowed frontend URLs |
-| `DATA_DIR` | Production | Path to persistent data directory (e.g. `/data` on Render) |
-
-### Frontend (Vercel environment)
-
-| Variable | Required | Description |
-|---|---|---|
-| `VITE_API_URL` | Production | Full URL to backend API, e.g. `https://api.example.com/api` |
+- **No trading.** Bukra is research-only. No buy/sell execution, no options, no leverage, no crypto.
+- **No hardcoded data.** All financial data is fetched live from public sources.
+- **Never crash.** If one metric is unavailable, the score degrades gracefully — it never breaks.
+- **Long-term focus.** The scanner refreshes weekly, not on every page load. Bukra Score measures business quality, not short-term momentum.
+- **Transparency.** The accuracy system tracks every prediction the platform makes and publishes the results openly.
 
 ---
 
-## License
-
-Private project — Bukra Capital. All rights reserved.
+*Bukra Capital · בוקרה קפיטל · Research only · Not investment advice*
