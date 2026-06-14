@@ -1,6 +1,9 @@
 import time
 import threading
+import logging
 from fastapi import APIRouter, HTTPException, Query
+
+logger = logging.getLogger("bukra.company")
 from services.yahoo_finance import get_company_info, get_five_year_financials, search_companies
 from services.bukra_score import compute_bukra_score
 from services.bukra_rules import compute_bukra_rules
@@ -71,8 +74,10 @@ def company_page(symbol: str):
     """
     sym = symbol.upper()
 
+    t0     = time.monotonic()
     cached = _page_get(sym)
     if cached:
+        logger.info("[page] %s | cache=HIT | score=%s", sym, cached.get("score", {}).get("score"))
         return {**cached, "from_cache": True}
 
     info = get_company_info(sym)
@@ -93,6 +98,20 @@ def company_page(symbol: str):
     except Exception as e:
         explanation_error = str(e)
         print(f"[company/page] AI explanation failed for {sym}: {e}")
+
+    elapsed_ms = round((time.monotonic() - t0) * 1000)
+    breakdown  = score_data.get("breakdown", {})
+    logger.info(
+        "[page] %s | cache=MISS | score=%s | growth=%s prof=%s cf=%s stab=%s debt=%s | elapsed=%sms",
+        sym,
+        score_data.get("score"),
+        breakdown.get("growth"),
+        breakdown.get("profitability"),
+        breakdown.get("cash_flow"),
+        breakdown.get("stability"),
+        breakdown.get("debt"),
+        elapsed_ms,
+    )
 
     result = {
         "info":              info,
