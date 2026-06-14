@@ -1,0 +1,57 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+
+# ── Frontend build output ─────────────────────────────────────────────────────
+frontend/dist/
+frontend/.vite/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+backend/venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.so
+
+# ── Secrets — never commit these ─────────────────────────────────────────────
+.env
+backend/.env
+*.env
+.env.*
+!.env.example
+!backend/.env.example
+
+# ── Generated / ephemeral data ────────────────────────────────────────────────
+# SQLite database (recreated automatically by init_db() on first startup)
+backend/data/accuracy.db
+# Scanner cache (rebuilt via /api/scanner/refresh or weekly scheduler)
+backend/data/scanner_cache.json
+
+# stock_universe.json IS committed — it's static configuration, not generated data
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+.cache/
+.turbo/
