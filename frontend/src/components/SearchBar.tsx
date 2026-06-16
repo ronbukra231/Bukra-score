@@ -11,6 +11,33 @@ interface Result {
   type: string
 }
 
+const SEARCH_CACHE_KEY = 'bukra_search_cache'
+const SEARCH_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+function getCachedSearch(q: string): Result[] | null {
+  try {
+    const raw = localStorage.getItem(SEARCH_CACHE_KEY)
+    if (!raw) return null
+    const cache = JSON.parse(raw)
+    const entry = cache[q.toLowerCase()]
+    if (!entry) return null
+    if (Date.now() - entry.ts > SEARCH_CACHE_TTL) return null
+    return entry.data
+  } catch { return null }
+}
+
+function setCachedSearch(q: string, data: Result[]) {
+  try {
+    const raw = localStorage.getItem(SEARCH_CACHE_KEY)
+    const cache = raw ? JSON.parse(raw) : {}
+    cache[q.toLowerCase()] = { ts: Date.now(), data }
+    // Keep cache small: prune entries beyond 50
+    const keys = Object.keys(cache)
+    if (keys.length > 50) delete cache[keys[0]]
+    localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(cache))
+  } catch { /* localStorage unavailable */ }
+}
+
 export default function SearchBar({ large = false }: { large?: boolean }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Result[]>([])
@@ -33,11 +60,21 @@ export default function SearchBar({ large = false }: { large?: boolean }) {
     const val = e.target.value
     setQuery(val)
     if (timer.current) clearTimeout(timer.current)
-    if (!val.trim()) { setResults([]); setOpen(false); return }
+    if (!val.trim() || val.trim().length < 2) { setResults([]); setOpen(false); return }
+
+    // Serve from localStorage cache instantly if available
+    const cached = getCachedSearch(val)
+    if (cached) {
+      setResults(cached)
+      setOpen(true)
+      return
+    }
+
     timer.current = setTimeout(async () => {
       setLoading(true)
       try {
         const data = await searchCompanies(val)
+        setCachedSearch(val, data)
         setResults(data)
         setOpen(true)
       } catch {
@@ -45,7 +82,7 @@ export default function SearchBar({ large = false }: { large?: boolean }) {
       } finally {
         setLoading(false)
       }
-    }, 400)
+    }, 250)
   }
 
   function handleSelect(symbol: string) {

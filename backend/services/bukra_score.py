@@ -52,6 +52,32 @@ def _clamp(val: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, val))
 
 
+def _safe_number(value) -> Optional[float]:
+    """Return float or None — never raises, never returns NaN/Inf."""
+    try:
+        v = float(value)
+        if v != v or v in (float('inf'), float('-inf')):
+            return None
+        return v
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_divide(a, b, default=None) -> Optional[float]:
+    """Divide a/b safely; returns default when b is 0 or either is None."""
+    av, bv = _safe_number(a), _safe_number(b)
+    if av is None or bv is None or bv == 0:
+        return default
+    return av / bv
+
+
+def _average_available(values: list) -> Optional[float]:
+    """Mean of non-None numeric values; None when list is empty."""
+    nums = [_safe_number(v) for v in values]
+    nums = [n for n in nums if n is not None]
+    return sum(nums) / len(nums) if nums else None
+
+
 def _safe(fn):
     """Run fn(), return (result, None) or (0, error_str) on any exception."""
     try:
@@ -739,13 +765,42 @@ def compute_bukra_score(financials: dict, info: dict) -> dict:
 
     calc_ms = round((time.monotonic() - t0) * 1000, 1)
 
+    # ── Confidence, missingData, warnings ────────────────────────────────────
+    sorted_h = sorted(history, key=lambda x: x.get("year", ""))
+    _key_fields = ["revenue", "net_income", "net_margin", "free_cash_flow",
+                   "total_debt", "stockholders_equity", "total_assets", "cash"]
+
+    missing_data: list[str] = []
+    for field in _key_fields:
+        present = sum(1 for h in sorted_h if h.get(field) is not None)
+        if present == 0:
+            missing_data.append(field)
+
+    warnings: list[str] = list(errors.values())
+
+    total_fields = len(_key_fields)
+    missing_count = len(missing_data)
+    error_count = len(errors)
+
+    if missing_count == 0 and error_count == 0 and len(history) >= 4:
+        confidence = "HIGH"
+    elif missing_count <= 2 and error_count <= 1:
+        confidence = "MEDIUM"
+    else:
+        confidence = "LOW"
+
     result = {
         # ── Legacy fields (frontend uses these — do not rename or remove) ──
-        "score":        round(total),
-        "breakdown":    breakdown,
-        "explanations": explanations,
-        "max_scores":   max_scores,
-        # ── New: full audit breakdown ──────────────────────────────────────
+        "score":             round(total),
+        "breakdown":         breakdown,
+        "explanations":      explanations,
+        "max_scores":        max_scores,
+        # ── Reliability metadata (Part 2 spec) ───────────────────────────
+        "confidence":        confidence,
+        "missingData":       missing_data,
+        "warnings":          warnings,
+        "calculationSource": "deterministic",
+        # ── Full audit breakdown ──────────────────────────────────────────
         "audit": {
             "total_score":  round(total),
             "categories":   categories,

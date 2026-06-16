@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowRight, ExternalLink, TrendingUp, Building2, Globe } from 'lucide-react'
-import { getCompanyPage } from '../api/client'
+import { getCompanyPage, getCompanyPageSWR } from '../api/client'
 import { useLanguage } from '../i18n/index'
 import FinancialCharts from '../components/FinancialCharts'
 import BukraScoreCard from '../components/BukraScoreCard'
@@ -136,14 +136,26 @@ export default function Company() {
   const sym = symbol?.toUpperCase() ?? ''
 
   function load(s: string) {
-    setLoading(true)
     setError('')
-    setData(null)
 
-    getCompanyPage(s)
-      .then(setData)
-      .catch((e) => setError(e.message || 'שגיאה בטעינת נתוני החברה'))
-      .finally(() => setLoading(false))
+    // Stale-while-revalidate: show cached data instantly, refresh silently
+    const cached = getCompanyPageSWR(s, (fresh) => {
+      setData(fresh)
+      setLoading(false)
+    })
+
+    if (cached) {
+      // Instant render from cache — background refresh already fired
+      setData(cached)
+      setLoading(false)
+    } else {
+      // No cache — show loading until fresh data arrives
+      setLoading(true)
+      setData(null)
+      getCompanyPage(s)
+        .then((d) => { setData(d); setLoading(false) })
+        .catch((e) => { setError(e.message || 'שגיאה בטעינת נתוני החברה'); setLoading(false) })
+    }
   }
 
   useEffect(() => {

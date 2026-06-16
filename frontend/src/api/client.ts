@@ -14,11 +14,84 @@ export async function getCompanyFull(symbol: string) {
   return res.json()
 }
 
+// ── Company page localStorage cache (30-min TTL, stale-while-revalidate) ─────
+const PAGE_CACHE_KEY = 'bukra_page_cache'
+const PAGE_CACHE_TTL = 30 * 60 * 1000 // 30 minutes
+// Tracks in-flight requests to avoid duplicate simultaneous fetches
+const _inflight: Map<string, Promise<any>> = new Map()
+
+function getPageCached(symbol: string): any | null {
+  try {
+    const raw = localStorage.getItem(PAGE_CACHE_KEY)
+    if (!raw) return null
+    const cache = JSON.parse(raw)
+    const entry = cache[symbol.toUpperCase()]
+    if (!entry) return null
+    if (Date.now() - entry.ts > PAGE_CACHE_TTL) return null
+    return entry.data
+  } catch { return null }
+}
+
+function setPageCached(symbol: string, data: any) {
+  try {
+    const raw = localStorage.getItem(PAGE_CACHE_KEY)
+    const cache = raw ? JSON.parse(raw) : {}
+    cache[symbol.toUpperCase()] = { ts: Date.now(), data }
+    // Keep at most 20 entries
+    const keys = Object.keys(cache)
+    if (keys.length > 20) delete cache[keys[0]]
+    localStorage.setItem(PAGE_CACHE_KEY, JSON.stringify(cache))
+  } catch { /* quota exceeded — ignore */ }
+}
+
 /** Optimised single-request endpoint — returns info + financials + score + rules + AI explanation. Cached 24 h server-side. */
-export async function getCompanyPage(symbol: string) {
-  const res = await fetch(`${BASE}/company/${symbol}/page`)
-  if (!res.ok) throw new Error('שגיאה בטעינת נתוני החברה')
-  return res.json()
+export async function getCompanyPage(symbol: string): Promise<any> {
+  const sym = symbol.toUpperCase()
+
+  // Deduplicate concurrent requests for the same symbol
+  const existing = _inflight.get(sym)
+  if (existing) return existing
+
+  const fetchFresh = async (): Promise<any> => {
+    const res = await fetch(`${BASE}/company/${sym}/page`)
+    if (!res.ok) {
+      const err: any = new Error(res.status === 404
+        ? `לא מצאנו חברה עם הסימבול ${sym}. בדוק את האיות או נסה סימבול אחר.`
+        : 'שגיאה בטעינת נתוני החברה. אנא נסה שוב.')
+      err.status = res.status
+      throw err
+    }
+    const data = await res.json()
+    setPageCached(sym, data)
+    return data
+  }
+
+  const promise = fetchFresh().finally(() => _inflight.delete(sym))
+  _inflight.set(sym, promise)
+  return promise
+}
+
+/**
+ * Stale-while-revalidate: returns cached data instantly if available,
+ * fires a background refresh, and calls onFresh when the new data arrives.
+ */
+export function getCompanyPageSWR(
+  symbol: string,
+  onFresh: (data: any) => void
+): any | null {
+  const sym = symbol.toUpperCase()
+  const cached = getPageCached(sym)
+
+  // Fire background refresh regardless
+  getCompanyPage(sym)
+    .then(fresh => {
+      if (!cached || JSON.stringify(fresh) !== JSON.stringify(cached)) {
+        onFresh(fresh)
+      }
+    })
+    .catch(() => { /* background refresh failure — cached data still shown */ })
+
+  return cached // null means no cache, caller should show full loading state
 }
 
 export async function getCompanyExplanation(symbol: string) {

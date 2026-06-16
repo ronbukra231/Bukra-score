@@ -212,22 +212,253 @@ def _yq_info(symbol: str) -> dict:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
+# ── Hebrew aliases ────────────────────────────────────────────────────────────
+_HEBREW_ALIASES: dict[str, str] = {
+    "טסלה": "TSLA",
+    "אפל": "AAPL",
+    "אנבידיה": "NVDA",
+    "נבידיה": "NVDA",
+    "גוגל": "GOOGL",
+    "אלפבית": "GOOGL",
+    "אמזון": "AMZN",
+    "מטא": "META",
+    "פייסבוק": "META",
+    "מיקרוסופט": "MSFT",
+    "נטפליקס": "NFLX",
+    "איירבנב": "ABNB",
+    "ויזה": "V",
+    "נייקי": "NKE",
+    "דיסני": "DIS",
+    "קוקה קולה": "KO",
+    "פפסי": "PEP",
+    "ג'יי פי מורגן": "JPM",
+}
+
+# ── English name/alias universe — searched before hitting Yahoo API ───────────
+# Format: (SYMBOL, full_name, [aliases...], sector)
+_UNIVERSE: list[tuple] = [
+    ("AAPL",  "Apple Inc.",              ["apple", "appl", "aple"],                         "Technology"),
+    ("MSFT",  "Microsoft Corporation",   ["microsoft", "micro soft", "microsft"],            "Technology"),
+    ("NVDA",  "NVIDIA Corporation",      ["nvidia", "nvida", "nvidea", "nvdia"],             "Technology"),
+    ("GOOGL", "Alphabet Inc.",           ["google", "alphabet", "googl", "gooogle"],         "Technology"),
+    ("GOOG",  "Alphabet Inc. (C)",       ["google class c"],                                 "Technology"),
+    ("META",  "Meta Platforms",          ["meta", "facebook", "fb", "instragram"],           "Technology"),
+    ("AMZN",  "Amazon.com Inc.",         ["amazon", "amazn", "amazom"],                      "Consumer Cyclical"),
+    ("TSLA",  "Tesla Inc.",              ["tesla", "tezla", "teslas"],                       "Consumer Cyclical"),
+    ("NFLX",  "Netflix Inc.",            ["netflix", "netfix", "netflx"],                    "Communication Services"),
+    ("ABNB",  "Airbnb Inc.",             ["airbnb", "air bnb", "airnb", "airb", "airbb"],    "Consumer Cyclical"),
+    ("V",     "Visa Inc.",               ["visa"],                                           "Financial Services"),
+    ("MA",    "Mastercard Inc.",         ["mastercard", "master card"],                      "Financial Services"),
+    ("JPM",   "JPMorgan Chase",          ["jpmorgan", "jp morgan", "chase"],                 "Financial Services"),
+    ("BAC",   "Bank of America",         ["bank of america", "bofa", "bofA"],                "Financial Services"),
+    ("WMT",   "Walmart Inc.",            ["walmart", "wal mart", "walmat"],                  "Consumer Defensive"),
+    ("COST",  "Costco Wholesale",        ["costco", "cosco"],                                "Consumer Defensive"),
+    ("PG",    "Procter & Gamble",        ["procter", "procter gamble", "pg"],                "Consumer Defensive"),
+    ("KO",    "Coca-Cola Co.",           ["coca cola", "cocacola", "coke"],                  "Consumer Defensive"),
+    ("PEP",   "PepsiCo Inc.",            ["pepsi", "pepsico"],                               "Consumer Defensive"),
+    ("JNJ",   "Johnson & Johnson",       ["johnson", "j&j", "jnj"],                         "Healthcare"),
+    ("LLY",   "Eli Lilly",              ["eli lilly", "lilly"],                             "Healthcare"),
+    ("UNH",   "UnitedHealth Group",      ["unitedhealth", "united health"],                  "Healthcare"),
+    ("ABBV",  "AbbVie Inc.",             ["abbvie"],                                         "Healthcare"),
+    ("MRK",   "Merck & Co.",             ["merck"],                                          "Healthcare"),
+    ("PFE",   "Pfizer Inc.",             ["pfizer"],                                         "Healthcare"),
+    ("AVGO",  "Broadcom Inc.",           ["broadcom"],                                       "Technology"),
+    ("ORCL",  "Oracle Corporation",      ["oracle"],                                         "Technology"),
+    ("CRM",   "Salesforce Inc.",         ["salesforce", "sales force"],                      "Technology"),
+    ("ADBE",  "Adobe Inc.",              ["adobe"],                                          "Technology"),
+    ("INTC",  "Intel Corporation",       ["intel"],                                          "Technology"),
+    ("AMD",   "Advanced Micro Devices",  ["amd", "advanced micro"],                          "Technology"),
+    ("QCOM",  "Qualcomm Inc.",           ["qualcomm"],                                       "Technology"),
+    ("TXN",   "Texas Instruments",       ["texas instruments", "ti"],                        "Technology"),
+    ("AMAT",  "Applied Materials",       ["applied materials"],                              "Technology"),
+    ("MU",    "Micron Technology",       ["micron"],                                         "Technology"),
+    ("PYPL",  "PayPal Holdings",         ["paypal", "pay pal"],                              "Financial Services"),
+    ("GS",    "Goldman Sachs",           ["goldman", "goldman sachs"],                       "Financial Services"),
+    ("MS",    "Morgan Stanley",          ["morgan stanley", "morgan"],                       "Financial Services"),
+    ("BLK",   "BlackRock Inc.",          ["blackrock", "black rock"],                        "Financial Services"),
+    ("SPGI",  "S&P Global Inc.",         ["sp global", "standard poors"],                   "Financial Services"),
+    ("XOM",   "Exxon Mobil",            ["exxon", "exxonmobil", "exxon mobil"],             "Energy"),
+    ("CVX",   "Chevron Corporation",     ["chevron"],                                        "Energy"),
+    ("COP",   "ConocoPhillips",          ["conocophillips", "conoco"],                       "Energy"),
+    ("RTX",   "RTX Corporation",         ["raytheon", "rtx"],                                "Industrials"),
+    ("HON",   "Honeywell International", ["honeywell"],                                      "Industrials"),
+    ("CAT",   "Caterpillar Inc.",        ["caterpillar", "cat"],                             "Industrials"),
+    ("DE",    "Deere & Company",         ["john deere", "deere"],                            "Industrials"),
+    ("UPS",   "United Parcel Service",   ["ups", "united parcel"],                           "Industrials"),
+    ("FDX",   "FedEx Corporation",       ["fedex", "fed ex"],                                "Industrials"),
+    ("BA",    "Boeing Company",          ["boeing"],                                         "Industrials"),
+    ("GE",    "GE Aerospace",            ["ge", "general electric"],                         "Industrials"),
+    ("NEE",   "NextEra Energy",          ["nextera", "nextera energy"],                      "Utilities"),
+    ("DUK",   "Duke Energy",             ["duke energy", "duke"],                            "Utilities"),
+    ("NKE",   "Nike Inc.",               ["nike", "nikes"],                                  "Consumer Cyclical"),
+    ("SBUX",  "Starbucks Corporation",   ["starbucks", "starbuck"],                          "Consumer Cyclical"),
+    ("MCD",   "McDonald's Corporation",  ["mcdonalds", "mcdonald"],                          "Consumer Cyclical"),
+    ("TGT",   "Target Corporation",      ["target"],                                         "Consumer Cyclical"),
+    ("HD",    "The Home Depot",          ["home depot", "homedepot"],                        "Consumer Cyclical"),
+    ("LOW",   "Lowe's Companies",        ["lowes", "lowe's"],                                "Consumer Cyclical"),
+    ("BKNG",  "Booking Holdings",        ["booking", "booking.com", "priceline"],            "Consumer Cyclical"),
+    ("MAR",   "Marriott International",  ["marriott"],                                       "Consumer Cyclical"),
+    ("HLT",   "Hilton Worldwide",        ["hilton"],                                         "Consumer Cyclical"),
+    ("DIS",   "The Walt Disney Company", ["disney", "walt disney"],                          "Communication Services"),
+    ("CMCSA", "Comcast Corporation",     ["comcast"],                                        "Communication Services"),
+    ("T",     "AT&T Inc.",               ["att", "at&t"],                                    "Communication Services"),
+    ("VZ",    "Verizon Communications",  ["verizon"],                                        "Communication Services"),
+    ("SPOT",  "Spotify Technology",      ["spotify"],                                        "Communication Services"),
+    ("UBER",  "Uber Technologies",       ["uber"],                                           "Technology"),
+    ("LYFT",  "Lyft Inc.",               ["lyft"],                                           "Technology"),
+    ("SNAP",  "Snap Inc.",               ["snap", "snapchat"],                               "Communication Services"),
+    ("PINS",  "Pinterest Inc.",          ["pinterest"],                                      "Communication Services"),
+    ("TWTR",  "Twitter/X",              ["twitter", "x"],                                   "Communication Services"),
+    ("SQ",    "Block Inc.",              ["square", "block", "cash app"],                    "Technology"),
+    ("COIN",  "Coinbase Global",         ["coinbase"],                                       "Financial Services"),
+    ("SHOP",  "Shopify Inc.",            ["shopify"],                                        "Technology"),
+    ("SNOW",  "Snowflake Inc.",          ["snowflake"],                                      "Technology"),
+    ("PLTR",  "Palantir Technologies",   ["palantir"],                                       "Technology"),
+    ("RBLX",  "Roblox Corporation",      ["roblox"],                                         "Communication Services"),
+    ("CTAS",  "Cintas Corporation",      ["cintas"],                                         "Industrials"),
+    ("SPXC",  "SPX Technologies",        ["spx"],                                            "Industrials"),
+    ("BRK-B", "Berkshire Hathaway B",    ["berkshire", "buffett"],                           "Financial Services"),
+    ("TSM",   "TSMC",                    ["tsmc", "taiwan semiconductor"],                   "Technology"),
+    ("ASML",  "ASML Holding",            ["asml"],                                           "Technology"),
+    ("SAP",   "SAP SE",                  ["sap"],                                            "Technology"),
+    ("TM",    "Toyota Motor",            ["toyota"],                                         "Consumer Cyclical"),
+    ("RACE",  "Ferrari N.V.",            ["ferrari"],                                        "Consumer Cyclical"),
+    ("LUV",   "Southwest Airlines",      ["southwest", "southwest airlines"],                "Industrials"),
+    ("DAL",   "Delta Air Lines",         ["delta", "delta airlines"],                        "Industrials"),
+    ("AAL",   "American Airlines",       ["american airlines"],                              "Industrials"),
+    ("UAL",   "United Airlines",         ["united airlines"],                                "Industrials"),
+    ("RIVN",  "Rivian Automotive",       ["rivian"],                                         "Consumer Cyclical"),
+    ("LCID",  "Lucid Group",             ["lucid", "lucid motors"],                          "Consumer Cyclical"),
+    ("NIO",   "NIO Inc.",                ["nio"],                                            "Consumer Cyclical"),
+    ("BIDU",  "Baidu Inc.",              ["baidu"],                                          "Communication Services"),
+    ("BABA",  "Alibaba Group",           ["alibaba"],                                        "Consumer Cyclical"),
+    ("JD",    "JD.com Inc.",             ["jd.com", "jd"],                                   "Consumer Cyclical"),
+    ("SPY",   "SPDR S&P 500 ETF",        ["spy", "sp500", "s&p 500"],                        "ETF"),
+    ("QQQ",   "Invesco QQQ Trust",       ["qqq", "nasdaq etf"],                              "ETF"),
+    ("VTI",   "Vanguard Total Market",   ["vti", "vanguard"],                                "ETF"),
+    ("VOO",   "Vanguard S&P 500 ETF",    ["voo"],                                            "ETF"),
+]
+
+# Pre-build normalized lookup index at import time (fast O(1) lookup per query)
+def _build_search_index() -> list[dict]:
+    rows = []
+    for entry in _UNIVERSE:
+        sym, name, aliases, sector = entry
+        norm_name = name.lower().replace("&", "").replace(".", "").replace(",", "")
+        norm_aliases = [a.lower().replace(" ", "").replace("-", "") for a in aliases]
+        rows.append({
+            "symbol":       sym,
+            "name":         name,
+            "sector":       sector,
+            "exchange":     "NYSE/NASDAQ",
+            "type":         "EQUITY",
+            "_norm_sym":    sym.lower().replace("-", ""),
+            "_norm_name":   norm_name,
+            "_norm_aliases": norm_aliases,
+            "_raw_aliases": aliases,
+        })
+    return rows
+
+_SEARCH_INDEX = _build_search_index()
+
+
+def _normalize(text: str) -> str:
+    """Lowercase, strip punctuation/spaces for fuzzy matching."""
+    import re
+    return re.sub(r"[\s\-&.,']", "", text.lower())
+
+
+def _search_universe(query: str, max_results: int = 5) -> list[dict]:
+    """
+    Multi-pass search against the local universe:
+      1. Exact ticker match
+      2. Exact alias match (after normalize)
+      3. Ticker prefix
+      4. Name/alias prefix
+      5. Name/alias substring
+    Returns up to max_results results ranked by match quality.
+    """
+    q = _normalize(query)
+    if not q:
+        return []
+
+    scored: list[tuple[int, dict]] = []
+
+    for row in _SEARCH_INDEX:
+        score = 0
+        sym_n = row["_norm_sym"]
+        name_n = row["_norm_name"]
+        aliases_n = row["_norm_aliases"]
+
+        if sym_n == q:
+            score = 100
+        elif any(a == q for a in aliases_n):
+            score = 95
+        elif sym_n.startswith(q):
+            score = 80
+        elif any(a.startswith(q) for a in aliases_n):
+            score = 75
+        elif name_n.startswith(q):
+            score = 70
+        elif any(q in a for a in aliases_n):
+            score = 60
+        elif q in name_n:
+            score = 55
+        elif q in sym_n:
+            score = 40
+
+        if score > 0:
+            scored.append((score, row))
+
+    scored.sort(key=lambda x: -x[0])
+    return [
+        {k: v for k, v in row.items() if not k.startswith("_")}
+        for _, row in scored[:max_results]
+    ]
+
+
 def search_companies(query: str) -> list[dict]:
-    sym = query.strip().upper()
+    raw = query.strip()
+    if not raw:
+        return []
+
+    # 1. Hebrew alias — exact match → resolve to ticker, then universe entry
+    hebrew_sym = _HEBREW_ALIASES.get(raw)
+    if hebrew_sym:
+        # Find in universe first for full metadata
+        hit = next((r for r in _SEARCH_INDEX if r["symbol"] == hebrew_sym), None)
+        if hit:
+            return [{"symbol": hit["symbol"], "name": hit["name"],
+                     "exchange": hit["exchange"], "type": "EQUITY", "sector": hit["sector"]}]
+        # Fall back to mock info
+        if hebrew_sym in _MOCK_INFO:
+            m = _MOCK_INFO[hebrew_sym]
+            return [{"symbol": hebrew_sym, "name": m["name"],
+                     "exchange": "NYSE/NASDAQ", "type": "EQUITY", "sector": m["sector"]}]
+
+    # 2. Local universe fuzzy search (no network, instant)
+    universe_results = _search_universe(raw)
+    if universe_results:
+        return universe_results
+
+    # 3. Exact ticker — live Yahoo lookup for tickers not in universe
+    sym = raw.upper()
     if sym in _MOCK_INFO:
         m = _MOCK_INFO[sym]
-        return [{"symbol": sym, "name": m["name"], "exchange": "NYSE/NASDAQ", "type": "EQUITY", "sector": m["sector"]}]
-    # Try live
+        return [{"symbol": sym, "name": m["name"],
+                 "exchange": "NYSE/NASDAQ", "type": "EQUITY", "sector": m["sector"]}]
     try:
         t = YQTicker(sym)
         pd_ = (t.price or {}).get(sym, {})
         name = pd_.get("longName") or pd_.get("shortName")
         if name:
             ap = (t.asset_profile or {}).get(sym, {})
-            return [{"symbol": sym, "name": name, "exchange": pd_.get("exchangeName", ""), "type": "EQUITY", "sector": ap.get("sector", "")}]
+            return [{"symbol": sym, "name": name, "exchange": pd_.get("exchangeName", ""),
+                     "type": "EQUITY", "sector": ap.get("sector", "")}]
     except Exception:
         pass
-    # Return symbol as-is so user can still navigate
+
+    # 4. Return symbol as-is so user can still navigate to any valid ticker
     return [{"symbol": sym, "name": sym, "exchange": "", "type": "EQUITY", "sector": ""}]
 
 
