@@ -282,10 +282,7 @@ export default function Company() {
             </div>
 
             {/* Smart Analyst Summary — full-width, above charts */}
-            <SmartAnalystSummary
-              data={data.analyst_summary ?? null}
-              companyName={data.info.name || sym}
-            />
+            <SmartAnalystSummary data={data.analyst_summary ?? null} />
 
             {/* Main 2-column layout */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

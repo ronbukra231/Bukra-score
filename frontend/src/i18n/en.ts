@@ -113,13 +113,17 @@ const en: Translations = {
   ai_hideOriginal: '',
   ai_setupNoteHe: 'Full AI explanation is temporarily unavailable, but the score was calculated successfully.',
 
-  analyst_title:              'Smart Analyst Summary',
+  analyst_title:              'What Did the Index Find?',
   analyst_loading:            'Analysing the data...',
   analyst_deterministicBadge: 'Auto analysis',
+  analyst_contributorsTitle:  'Key Score Drivers',
   analyst_confPrefix:         'Confidence:',
   analyst_confHigh:           'High',
   analyst_confMedium:         'Medium',
   analyst_confLow:            'Low',
+  analyst_confNoteHigh:       'The index bases its conclusions on a high volume and quality of available data.',
+  analyst_confNoteMedium:     'The index bases its conclusions on partial data — some fields are unavailable.',
+  analyst_confNoteLow:        'Available data is limited — read this analysis with appropriate caution.',
   analyst_strongestLabel:     'Key Strength',
   analyst_weakestLabel:       'Key Weakness',
 

@@ -131,10 +131,14 @@ export interface Translations {
   analyst_title: string
   analyst_loading: string
   analyst_deterministicBadge: string
+  analyst_contributorsTitle: string
   analyst_confPrefix: string
   analyst_confHigh: string
   analyst_confMedium: string
   analyst_confLow: string
+  analyst_confNoteHigh: string
+  analyst_confNoteMedium: string
+  analyst_confNoteLow: string
   analyst_strongestLabel: string
   analyst_weakestLabel: string
 
