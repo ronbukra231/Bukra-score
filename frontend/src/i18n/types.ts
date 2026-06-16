@@ -79,6 +79,7 @@ export interface Translations {
   score_title: string
   score_subtitle: string
   score_noData: string
+  score_partialData: string
   score_growth: string
   score_profitability: string
   score_cashFlow: string
@@ -125,6 +126,17 @@ export interface Translations {
   ai_showOriginal: string
   ai_hideOriginal: string
   ai_setupNoteHe: string
+
+  // ── Smart Analyst Summary ─────────────────────────────────────────────────
+  analyst_title: string
+  analyst_loading: string
+  analyst_deterministicBadge: string
+  analyst_confPrefix: string
+  analyst_confHigh: string
+  analyst_confMedium: string
+  analyst_confLow: string
+  analyst_strongestLabel: string
+  analyst_weakestLabel: string
 
   // ── Scanner ───────────────────────────────────────────────────────────────
   scanner_title: string

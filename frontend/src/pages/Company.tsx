@@ -7,6 +7,7 @@ import FinancialCharts from '../components/FinancialCharts'
 import BukraScoreCard from '../components/BukraScoreCard'
 import BukraRules from '../components/BukraRules'
 import AIExplanation from '../components/AIExplanation'
+import SmartAnalystSummary from '../components/SmartAnalystSummary'
 import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
 
@@ -279,6 +280,12 @@ export default function Company() {
               />
               <Stat label={t.stat_countryAndCurrency} value={`${data.info.country || '—'} / ${data.info.currency || 'USD'}`} />
             </div>
+
+            {/* Smart Analyst Summary — full-width, above charts */}
+            <SmartAnalystSummary
+              data={data.analyst_summary ?? null}
+              companyName={data.info.name || sym}
+            />
 
             {/* Main 2-column layout */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

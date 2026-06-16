@@ -67,7 +67,8 @@ const en: Translations = {
 
   score_title: 'Bukra Score',
   score_subtitle: 'Comprehensive financial analysis',
-  score_noData: 'Score unavailable',
+  score_noData: 'Score unavailable — no financial data found',
+  score_partialData: 'Partial score — some data is missing',
   score_growth: 'Consistent Growth',
   score_profitability: 'Profitability',
   score_cashFlow: 'Cash Flow',
@@ -110,7 +111,17 @@ const en: Translations = {
   ai_noKeyMessageHe: '',
   ai_showOriginal: '',
   ai_hideOriginal: '',
-  ai_setupNoteHe: '',
+  ai_setupNoteHe: 'Full AI explanation is temporarily unavailable, but the score was calculated successfully.',
+
+  analyst_title:              'Smart Analyst Summary',
+  analyst_loading:            'Analysing the data...',
+  analyst_deterministicBadge: 'Auto analysis',
+  analyst_confPrefix:         'Confidence:',
+  analyst_confHigh:           'High',
+  analyst_confMedium:         'Medium',
+  analyst_confLow:            'Low',
+  analyst_strongestLabel:     'Key Strength',
+  analyst_weakestLabel:       'Key Weakness',
 
   scanner_title: 'Top 30 Companies by Bukra Score',
   scanner_subtitle: 'The system scans leading stocks and ranks them by financial quality, growth, profitability, cash flow, and debt.',

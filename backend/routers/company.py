@@ -1,6 +1,7 @@
 import time
 import threading
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import APIRouter, HTTPException, Query
 
 logger = logging.getLogger("bukra.company")
@@ -8,6 +9,7 @@ from services.yahoo_finance import get_company_info, get_five_year_financials, s
 from services.bukra_score import compute_bukra_score
 from services.bukra_rules import compute_bukra_rules
 from services.ai_explanation import get_hebrew_explanation
+from services.analyst_summary import generate_smart_analyst_summary
 from services.accuracy_db import save_snapshot
 
 router = APIRouter(prefix="/api", tags=["company"])
@@ -80,11 +82,15 @@ def company_page(symbol: str):
         logger.info("[page] %s | cache=HIT | score=%s", sym, cached.get("score", {}).get("score"))
         return {**cached, "from_cache": True}
 
-    info = get_company_info(sym)
+    # Fetch info + financials in parallel to cut latency roughly in half
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        info_fut = pool.submit(get_company_info, sym)
+        fin_fut  = pool.submit(get_five_year_financials, sym)
+        info       = info_fut.result()
+        financials = fin_fut.result()
+
     if not info.get("name"):
         raise HTTPException(status_code=404, detail=f"הסימבול {sym} לא נמצא")
-
-    financials  = get_five_year_financials(sym)
     score_data  = compute_bukra_score(financials, info)
     rules_data  = compute_bukra_rules(financials)
 
@@ -98,6 +104,13 @@ def company_page(symbol: str):
     except Exception as e:
         explanation_error = str(e)
         print(f"[company/page] AI explanation failed for {sym}: {e}")
+
+    # Smart analyst summary — deterministic fallback always available
+    analyst_summary = None
+    try:
+        analyst_summary = generate_smart_analyst_summary(info, score_data, financials, rules_data)
+    except Exception as e:
+        print(f"[company/page] analyst summary failed for {sym}: {e}")
 
     elapsed_ms = round((time.monotonic() - t0) * 1000)
     breakdown  = score_data.get("breakdown", {})
@@ -120,7 +133,9 @@ def company_page(symbol: str):
         "rules":             rules_data,
         "explanation":       explanation,
         "explanation_error": explanation_error,
+        "analyst_summary":   analyst_summary,
         "from_cache":        False,
+        "perf":              {"totalMs": elapsed_ms},
     }
 
     # Only cache if we got valid financial data

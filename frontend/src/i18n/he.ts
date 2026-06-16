@@ -67,7 +67,8 @@ const he: Translations = {
 
   score_title: 'ציון בוקרה',
   score_subtitle: 'ניתוח פיננסי מקיף',
-  score_noData: 'לא ניתן לחשב ציון',
+  score_noData: 'אין נתונים פיננסיים זמינים לחישוב הציון',
+  score_partialData: 'ציון חלקי — חסרים חלק מהנתונים',
   score_growth: 'צמיחה עקבית',
   score_profitability: 'רווחיות',
   score_cashFlow: 'תזרים מזומנים',
@@ -109,7 +110,17 @@ const he: Translations = {
   ai_noKeyMessageHe: 'אין עדיין הסבר AI בעברית. ניתן להגדיר Anthropic API key כדי לקבל הסבר מלא בעברית.',
   ai_showOriginal: '▾ תיאור מקור באנגלית',
   ai_hideOriginal: '▴ הסתר תיאור',
-  ai_setupNoteHe: 'כדי לקבל הסבר AI מלא בעברית, הגדר ANTHROPIC_API_KEY בקובץ backend/.env',
+  ai_setupNoteHe: 'הסבר AI מלא לא זמין כרגע, אבל הציון חושב בהצלחה.',
+
+  analyst_title:             'סיכום אנליסט חכם',
+  analyst_loading:           'מנתח את משמעות הנתונים...',
+  analyst_deterministicBadge: 'ניתוח אוטומטי',
+  analyst_confPrefix:        'רמת ביטחון:',
+  analyst_confHigh:          'גבוהה',
+  analyst_confMedium:        'בינונית',
+  analyst_confLow:           'נמוכה',
+  analyst_strongestLabel:    'חוזקה מרכזית',
+  analyst_weakestLabel:      'נקודת חולשה',
 
   scanner_title: '30 החברות המובילות לפי ציון בוקרה',
   scanner_subtitle: 'המערכת סורקת מניות מובילות ומדרגת אותן לפי איכות פיננסית, צמיחה, רווחיות, תזרים וחוב.',
