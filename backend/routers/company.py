@@ -138,9 +138,12 @@ def company_page(symbol: str):
         "perf":              {"totalMs": elapsed_ms},
     }
 
-    # Only cache if we got valid financial data
-    if info.get("name"):
+    # Only cache when we have real financial data — don't bake in empty financials
+    has_financials = bool(financials.get("history"))
+    if info.get("name") and has_financials:
         _page_set(sym, result)
+    elif info.get("name") and not has_financials:
+        logger.warning("[page] %s | NOT caching — financials empty (source=%s)", sym, financials.get("source"))
 
     return result
 

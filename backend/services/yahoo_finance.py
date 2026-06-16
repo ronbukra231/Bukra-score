@@ -1,7 +1,7 @@
 """
 Financial data service.
 Primary: yahooquery (handles Yahoo auth/crumbs reliably)
-Fallback for company info only: yfinance with session headers
+Fallback for financials + company info: yfinance with session headers
 Mock fallback for info: hardcoded data for common symbols when Yahoo is rate-limiting
 """
 
@@ -73,7 +73,7 @@ def _yq_financials(symbol: str) -> dict:
     Fetch 5-year annual financials using yahooquery.
     Returns parsed history list or raises on failure.
     """
-    t = YQTicker(symbol)
+    t = YQTicker(symbol, timeout=15, validate=False)
 
     inc = t.income_statement(frequency="annual")
     bal = t.balance_sheet(frequency="annual")
@@ -158,6 +158,104 @@ def _yq_financials(symbol: str) -> dict:
 
     years = [h["year"] for h in history]
     return {"years": years, "history": history, "raw": {}, "source": "live"}
+
+
+def _yf_financials(symbol: str) -> dict:
+    """
+    Fetch annual financials using yfinance as fallback when yahooquery fails.
+    Returns the same structure as _yq_financials().
+    """
+    t = yf.Ticker(symbol, session=_yf_session)
+
+    # yfinance 0.2.x: income_stmt / balance_sheet / cash_flow (annual by default)
+    inc = t.get_income_stmt(freq="yearly") if hasattr(t, "get_income_stmt") else t.income_stmt
+    bal = t.get_balance_sheet(freq="yearly") if hasattr(t, "get_balance_sheet") else t.balance_sheet
+    cf  = t.get_cash_flow(freq="yearly") if hasattr(t, "get_cash_flow") else t.cash_flow
+
+    if inc is None or inc.empty:
+        raise ValueError(f"yfinance: no income statement for {symbol}")
+
+    history = []
+    for col in inc.columns[:5]:  # up to 5 most recent annual periods
+        year = str(col.year)
+
+        def _get(df, *keys):
+            if df is None or df.empty:
+                return None
+            for k in keys:
+                if k in df.index:
+                    return _f(df.loc[k, col] if col in df.columns else None)
+            return None
+
+        revenue    = _get(inc, "Total Revenue")
+        net_income = _get(inc, "Net Income")
+        gross      = _get(inc, "Gross Profit")
+        net_margin = round(net_income / revenue * 100, 2) if revenue and net_income else None
+
+        # Balance sheet — match closest date column
+        bal_col = col
+        if bal is not None and not bal.empty and col not in bal.columns:
+            bal_col = min(bal.columns, key=lambda c: abs((c - col).days))
+
+        def _get_b(df, *keys):
+            if df is None or df.empty:
+                return None
+            for k in keys:
+                if k in df.index:
+                    try:
+                        return _f(df.loc[k, bal_col])
+                    except KeyError:
+                        pass
+            return None
+
+        debt   = _get_b(bal, "Total Debt", "Long Term Debt")
+        cash   = _get_b(bal, "Cash And Cash Equivalents", "Cash Cash Equivalents And Short Term Investments")
+        assets = _get_b(bal, "Total Assets")
+        equity = _get_b(bal, "Stockholders Equity", "Common Stock Equity")
+
+        # Cashflow — match closest date column
+        cf_col = col
+        if cf is not None and not cf.empty and col not in cf.columns:
+            cf_col = min(cf.columns, key=lambda c: abs((c - col).days))
+
+        def _get_cf(df, *keys):
+            if df is None or df.empty:
+                return None
+            for k in keys:
+                if k in df.index:
+                    try:
+                        return _f(df.loc[k, cf_col])
+                    except KeyError:
+                        pass
+            return None
+
+        fcf          = _get_cf(cf, "Free Cash Flow")
+        operating_cf = _get_cf(cf, "Operating Cash Flow", "Cash Flow From Continuing Operating Activities")
+        capex        = _get_cf(cf, "Capital Expenditure")
+        if fcf is None and operating_cf is not None and capex is not None:
+            fcf = operating_cf + capex
+
+        if revenue is None and net_income is None:
+            continue
+
+        history.append({
+            "year": year,
+            "revenue": revenue,
+            "net_income": net_income,
+            "net_margin": net_margin,
+            "gross_profit": gross,
+            "free_cash_flow": fcf,
+            "total_debt": debt,
+            "cash": cash,
+            "total_assets": assets,
+            "stockholders_equity": equity,
+        })
+
+    if not history:
+        raise ValueError(f"yfinance: no usable rows for {symbol}")
+
+    years = [h["year"] for h in history]
+    return {"years": years, "history": history, "raw": {}, "source": "yfinance"}
 
 
 # ── yahooquery info fetcher ───────────────────────────────────────────────────
@@ -518,12 +616,27 @@ def get_five_year_financials(symbol: str) -> dict:
     if cached:
         return cached
 
+    # Primary: yahooquery
     try:
         result = _yq_financials(sym)
-        return _store(f"fin:{sym}", result)
+        if result.get("history"):
+            print(f"[financials] {sym} | source=yahooquery | rows={len(result['history'])}")
+            return _store(f"fin:{sym}", result)
+        print(f"[financials] {sym} | yahooquery returned empty history, trying yfinance fallback")
     except Exception as e:
-        print(f"[financials] yahooquery failed for {sym}: {e}")
+        print(f"[financials] {sym} | yahooquery failed: {e}")
 
+    # Fallback: yfinance
+    try:
+        result = _yf_financials(sym)
+        if result.get("history"):
+            print(f"[financials] {sym} | source=yfinance | rows={len(result['history'])}")
+            return _store(f"fin:{sym}", result)
+    except Exception as e:
+        print(f"[financials] {sym} | yfinance fallback failed: {e}")
+
+    # Both providers failed — return empty but do NOT cache so next request retries
+    print(f"[financials] {sym} | all providers failed, returning empty (not cached)")
     return {"years": [], "history": [], "raw": {}, "source": "unavailable"}
 
 
