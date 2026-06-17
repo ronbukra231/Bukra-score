@@ -9,6 +9,7 @@ Endpoints:
 """
 
 import json
+import logging
 import os
 import threading
 import time
@@ -16,12 +17,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from limiter import limiter
 from services.yahoo_finance import get_company_info, get_five_year_financials
 from services.bukra_score import compute_bukra_score
 from services.bukra_rules import compute_bukra_rules
 from services.accuracy_db import save_snapshot
 
+logger = logging.getLogger("bukra.scanner")
 router = APIRouter(prefix="/api", tags=["scanner"])
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
@@ -133,6 +136,11 @@ def _score_ticker(entry: dict) -> Optional[dict]:
 # ── Background scan ───────────────────────────────────────────────────────────
 
 def _run_scan():
+    """
+    Background scan — always releases _refresh_lock in a finally block so that
+    even if an unexpected exception escapes the function, the lock is freed and
+    future scans can run.
+    """
     universe   = _load_universe()
     started_at = datetime.now(timezone.utc).isoformat()
     t0         = time.monotonic()
@@ -148,58 +156,65 @@ def _run_scan():
     results: list[dict] = []
     errors:  list[str]  = []
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {executor.submit(_score_ticker, e): e["ticker"] for e in universe}
-        done = 0
-        for future in as_completed(futures):
-            done += 1
-            with _scan_lock:
-                _scan_state["progress"] = done
-
-            ticker = futures[future]
-            try:
-                result = future.result()
-                if result:
-                    results.append(result)
-                else:
-                    errors.append(ticker)
-            except Exception as e:
-                errors.append(ticker)
-                print(f"[scanner] future error {ticker}: {e}")
-
-    results.sort(key=lambda x: x["bukra_score"], reverse=True)
-    duration = time.monotonic() - t0
-    completed_at = datetime.now(timezone.utc).isoformat()
-
-    # Persist to disk
     try:
-        _write_cache(results, errors, started_at, completed_at, duration)
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {executor.submit(_score_ticker, e): e["ticker"] for e in universe}
+            done = 0
+            for future in as_completed(futures):
+                done += 1
+                with _scan_lock:
+                    _scan_state["progress"] = done
+
+                ticker = futures[future]
+                try:
+                    result = future.result()
+                    if result:
+                        results.append(result)
+                    else:
+                        errors.append(ticker)
+                except Exception as e:
+                    errors.append(ticker)
+                    logger.error("[scanner] future error %s: %s", ticker, e)
+
+        results.sort(key=lambda x: x["bukra_score"], reverse=True)
+        duration = time.monotonic() - t0
+        completed_at = datetime.now(timezone.utc).isoformat()
+
+        try:
+            _write_cache(results, errors, started_at, completed_at, duration)
+        except Exception as e:
+            logger.error("[scanner] cache write failed: %s", e)
+
+        with _scan_lock:
+            _scan_state.update({
+                "status":   "completed",
+                "progress": len(universe),
+            })
+
+        # Save accuracy snapshots for top 30
+        def _save_snapshots():
+            for r in results[:30]:
+                try:
+                    save_snapshot(
+                        ticker=r["ticker"],
+                        company_name=r.get("company_name", ""),
+                        sector=r.get("sector", ""),
+                        bukra_score=int(r["bukra_score"]),
+                        price_at_score=r.get("price"),
+                    )
+                except Exception as e:
+                    logger.warning("[accuracy] snapshot failed %s: %s", r["ticker"], e)
+
+        threading.Thread(target=_save_snapshots, daemon=True).start()
+        logger.info("[scanner] Done in %.0fs — %d scored, %d failed", time.monotonic() - t0, len(results), len(errors))
+
     except Exception as e:
-        print(f"[scanner] cache write failed: {e}")
-
-    with _scan_lock:
-        _scan_state.update({
-            "status":   "completed",
-            "progress": len(universe),
-        })
-
-    # Save accuracy snapshots for top 30
-    def _save_snapshots():
-        for r in results[:30]:
-            try:
-                save_snapshot(
-                    ticker=r["ticker"],
-                    company_name=r.get("company_name", ""),
-                    sector=r.get("sector", ""),
-                    bukra_score=int(r["bukra_score"]),
-                    price_at_score=r.get("price"),
-                )
-            except Exception as e:
-                print(f"[accuracy] snapshot failed {r['ticker']}: {e}")
-
-    threading.Thread(target=_save_snapshots, daemon=True).start()
-    print(f"[scanner] Done in {duration:.0f}s — {len(results)} scored, {len(errors)} failed")
-    _refresh_lock.release()
+        logger.error("[scanner] scan crashed: %s", e)
+        with _scan_lock:
+            _scan_state["status"] = "failed"
+    finally:
+        # Always release the lock — prevents permanent deadlock on unexpected exceptions
+        _refresh_lock.release()
 
 
 # ── Public helper (used by scheduler in main.py) ─────────────────────────────
@@ -218,7 +233,8 @@ def trigger_scan_if_idle() -> bool:
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.get("/scanner/latest")
-def scanner_latest():
+@limiter.limit("30/minute")
+def scanner_latest(request: Request):
     """
     Return cached results from disk immediately.
     Never triggers a scan. Returns has_cache=False if no cache exists yet.
@@ -238,10 +254,12 @@ def scanner_latest():
 
 
 @router.post("/scanner/refresh")
-def scanner_refresh():
+@limiter.limit("3/minute")
+def scanner_refresh(request: Request):
     """
     Start a background scan. Returns immediately.
     If a scan is already running, returns status='already_running'.
+    Rate-limited to 3/minute to prevent triggering expensive scans repeatedly.
     """
     acquired = _refresh_lock.acquire(blocking=False)
     if not acquired:
@@ -253,7 +271,8 @@ def scanner_refresh():
 
 
 @router.get("/scanner/status")
-def scanner_status():
+@limiter.limit("60/minute")
+def scanner_status(request: Request):
     """Live scan progress. Safe to poll every 2 seconds."""
     with _scan_lock:
         s = dict(_scan_state)
@@ -270,7 +289,8 @@ def scanner_status():
 
 
 @router.get("/scanner/top")
-def scanner_top(force: bool = False):
+@limiter.limit("20/minute")
+def scanner_top(request: Request, force: bool = False):
     """
     Legacy endpoint kept for backward compatibility.
     Now simply returns cached results (same as /latest).

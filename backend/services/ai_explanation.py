@@ -2,9 +2,10 @@ import os
 import json
 import time
 
-# ── Cache (24-hour TTL) ───────────────────────────────────────────────────────
+# ── Cache (24-hour TTL, max 300 symbols) ─────────────────────────────────────
 _cache: dict = {}
-CACHE_TTL = 86400
+CACHE_TTL  = 86400
+_CACHE_MAX = 300
 
 
 def _cached(symbol: str):
@@ -15,6 +16,9 @@ def _cached(symbol: str):
 
 
 def _store(symbol: str, data: dict) -> dict:
+    if len(_cache) >= _CACHE_MAX and symbol not in _cache:
+        oldest = min(_cache, key=lambda k: _cache[k]["ts"])
+        del _cache[oldest]
     _cache[symbol] = {"ts": time.time(), "data": data}
     return data
 
@@ -84,7 +88,7 @@ _ELI5_SECTOR = {
     "Industrials": "דמיין שאתה מייצר את הכלים שמפעלים ובניינים לא יכולים לעבוד בלעדיהם. {name} עושה בדיוק את זה — מוכרת ציוד ומספקת שירותים לתעשיות ברחבי העולם.",
     "Communication Services": "דמיין שיש לך ספריית סרטים ענקית שכולם רוצים לצפות בה, ואתה גובה דמי מנוי. {name} עושה משהו דומה — שירותי תקשורת ותוכן שמגיעים לבתים של מיליוני אנשים.",
     "Real Estate": "דמיין שיש לך הרבה בניינים ואנשים משלמים לך שכר דירה כל חודש. {name} עושה בדיוק את זה — מחזיקה ומנהלת נכסים ומרוויחה מהשכרתם.",
-    "Energy": "דמיין שיש לך באר נפט ענקית. {name} מוציאה את הנפט, מזקקת אותו לדלק, ומוכרת אותו לכולם.",
+    "Utilities": "דמיין שאתה מפעיל את התשתיות שמספקות חשמל, גז ומים לבתים ולעסקים. {name} עושה בדיוק את זה — מרוויחה מתעריפים מוסדרים ומביקוש יציב לשירותים חיוניים.",
 }
 
 
@@ -214,7 +218,6 @@ def get_hebrew_explanation(company_info: dict, financials: dict, bukra_score: di
 
     try:
         import anthropic
-        client = anthropic.Anthropic(api_key=api_key)
 
         name        = company_info.get("name", "החברה")
         sector      = company_info.get("sector", "")
@@ -255,6 +258,7 @@ def get_hebrew_explanation(company_info: dict, financials: dict, bukra_score: di
 
 כתוב בעברית בלבד. שפה פשוטה וישירה. אל תכתוב כותרות. אל תמליץ על פעולה פיננסית כלשהי."""
 
+        client = anthropic.Anthropic(api_key=api_key, timeout=30.0)
         message = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=1000,

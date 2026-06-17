@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowRight, ExternalLink, TrendingUp, Building2, Globe } from 'lucide-react'
 import { getCompanyPage, getCompanyPageSWR } from '../api/client'
@@ -10,6 +10,15 @@ import AIExplanation from '../components/AIExplanation'
 import SmartAnalystSummary from '../components/SmartAnalystSummary'
 import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
+
+// ── Security helpers ──────────────────────────────────────────────────────────
+function isSafeUrl(url?: string | null): boolean {
+  if (!url) return false
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:'
+  } catch { return false }
+}
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 function fmtMoney(val?: number | null) {
@@ -132,36 +141,41 @@ export default function Company() {
   const [data, setData]       = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState('')
+  const mountedRef = useRef(true)
 
   const sym = symbol?.toUpperCase() ?? ''
 
-  function load(s: string) {
+  const load = useCallback((s: string) => {
     setError('')
 
-    // Stale-while-revalidate: show cached data instantly, refresh silently
+    // Stale-while-revalidate: show cached data instantly, refresh silently.
+    // mountedRef guards against setting state after the component unmounts
+    // (e.g. user navigates away before background refresh completes).
     const cached = getCompanyPageSWR(s, (fresh) => {
-      setData(fresh)
-      setLoading(false)
+      if (mountedRef.current) {
+        setData(fresh)
+        setLoading(false)
+      }
     })
 
     if (cached) {
-      // Instant render from cache — background refresh already fired
       setData(cached)
       setLoading(false)
     } else {
-      // No cache — show loading until fresh data arrives
       setLoading(true)
       setData(null)
       getCompanyPage(s)
-        .then((d) => { setData(d); setLoading(false) })
-        .catch((e) => { setError(e.message || 'שגיאה בטעינת נתוני החברה'); setLoading(false) })
+        .then((d) => { if (mountedRef.current) { setData(d); setLoading(false) } })
+        .catch((e) => { if (mountedRef.current) { setError(e.message || 'שגיאה בטעינת נתוני החברה'); setLoading(false) } })
     }
-  }
+  }, [])
 
   useEffect(() => {
+    mountedRef.current = true
     if (!sym) return
     load(sym)
-  }, [sym])
+    return () => { mountedRef.current = false }
+  }, [sym, load])
 
   const loadingSteps = [t.co_loadingStep1, t.co_loadingStep2, t.co_loadingStep3]
 
@@ -170,8 +184,8 @@ export default function Company() {
       {/* Sticky top bar */}
       <div className="sticky top-0 z-40 bg-gray-950/95 backdrop-blur border-b border-gray-900">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
-          <Link to="/" className="text-gray-400 hover:text-white transition flex-shrink-0">
-            <ArrowRight className="w-5 h-5" />
+          <Link to="/" aria-label="חזרה לדף הבית" className="text-gray-400 hover:text-white transition flex-shrink-0">
+            <ArrowRight className="w-5 h-5" aria-hidden="true" />
           </Link>
           <div className="flex-1 max-w-md">
             <SearchBar />
@@ -245,7 +259,7 @@ export default function Company() {
                 </h1>
 
                 <div className="flex flex-wrap gap-4 text-sm">
-                  {data.info.website && (
+                  {isSafeUrl(data.info.website) && (
                     <a
                       href={data.info.website}
                       target="_blank"

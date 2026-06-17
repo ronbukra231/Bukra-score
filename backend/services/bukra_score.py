@@ -425,7 +425,9 @@ def _compute_stability(history: list) -> dict:
     c2d_pts        = 0
 
     if assets and debts:
-        debt_ratio      = debts[-1] / assets[-1] if assets[-1] else None
+        # Guard: assets must be positive — negative assets (rare, e.g. heavy buybacks)
+        # would produce a negative ratio and falsely award maximum points.
+        debt_ratio = debts[-1] / assets[-1] if assets[-1] and assets[-1] > 0 else None
         if debt_ratio is not None:
             if   debt_ratio < 0.2: debt_ratio_pts = 10
             elif debt_ratio < 0.4: debt_ratio_pts = 7

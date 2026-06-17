@@ -1,3 +1,4 @@
+import logging
 import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,13 @@ from routers.accuracy import router as accuracy_router
 from services.accuracy_db import init_db
 
 load_dotenv()
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s — %(message)s",
+)
+logger = logging.getLogger("bukra.main")
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 # List only exact origins — no wildcard regex.
@@ -57,12 +65,26 @@ app.include_router(scanner_router)
 app.include_router(accuracy_router)
 
 
+# ── Security headers middleware ────────────────────────────────────────────────
+# Added to every response. Does not affect CORS or rate-limit responses.
+@app.middleware("http")
+async def _security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-XSS-Protection"] = "0"  # Modern browsers ignore; CSP handles it
+    # Tight CSP: API only returns JSON, never renders HTML content
+    response.headers["Content-Security-Policy"] = "default-src 'none'"
+    return response
+
+
 # ── Global error handler ───────────────────────────────────────────────────────
 # Catches any unhandled exception and returns a generic user-facing message.
-# Stack traces are printed to server logs only — never sent to clients.
+# Stack traces go to server logs only — never sent to clients.
 @app.exception_handler(Exception)
 async def _generic_error(request: Request, exc: Exception):
-    print(f"[error] {request.method} {request.url.path} — {type(exc).__name__}: {exc}")
+    logger.error("[error] %s %s — %s: %s", request.method, request.url.path, type(exc).__name__, exc)
     return JSONResponse(
         status_code=500,
         content={"detail": "שגיאה פנימית. אנא נסה שוב."},
@@ -86,7 +108,7 @@ def startup():
         replace_existing=True,
     )
     scheduler.start()
-    print("[scheduler] Weekly scan — Mondays 02:00 UTC")
+    logger.info("[scheduler] Weekly scan — Mondays 02:00 UTC")
 
 
 # ── Health check ──────────────────────────────────────────────────────────────

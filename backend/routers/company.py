@@ -1,7 +1,8 @@
+import re
 import time
 import threading
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, HTTPException, Query, Request
 
 logger = logging.getLogger("bukra.company")
@@ -15,13 +16,21 @@ from services.accuracy_db import save_snapshot
 
 router = APIRouter(prefix="/api", tags=["company"])
 
-# ── 24-hour page cache ────────────────────────────────────────────────────────
-# Caches the full /page response per symbol. Survives within a single process
-# lifetime. On Render free tier (cold starts), first request is always slow;
-# subsequent requests within 24 h are instant.
+# ── Symbol validation ──────────────────────────────────────────────────────────
+_SYMBOL_RE = re.compile(r'^[A-Z0-9.\-]{1,10}$')
 
+def _validate_symbol(symbol: str) -> str:
+    """Uppercase and validate a ticker symbol. Raises 400 on invalid input."""
+    sym = symbol.upper().strip()
+    if not _SYMBOL_RE.match(sym):
+        raise HTTPException(status_code=400, detail="סימבול לא תקין")
+    return sym
+
+
+# ── 24-hour page cache ────────────────────────────────────────────────────────
 _PAGE_CACHE: dict = {}
-_PAGE_TTL = 86_400  # 24 hours in seconds
+_PAGE_CACHE_MAX = 200        # max symbols to hold in memory
+_PAGE_TTL = 86_400           # 24 hours
 _page_lock = threading.Lock()
 
 
@@ -34,6 +43,10 @@ def _page_get(symbol: str):
 
 def _page_set(symbol: str, data: dict):
     with _page_lock:
+        # Evict oldest entry when at capacity
+        if len(_PAGE_CACHE) >= _PAGE_CACHE_MAX and symbol not in _PAGE_CACHE:
+            oldest = min(_PAGE_CACHE, key=lambda k: _PAGE_CACHE[k]["ts"])
+            del _PAGE_CACHE[oldest]
         _PAGE_CACHE[symbol] = {"ts": time.time(), "data": data}
 
 
@@ -54,7 +67,7 @@ def _save_snapshot_bg(info: dict, score_data: dict):
                 price_at_score=info.get("price"),
             )
         except Exception as e:
-            print(f"[accuracy] snapshot save failed: {e}")
+            logger.warning("[accuracy] snapshot save failed: %s", e)
     threading.Thread(target=_run, daemon=True).start()
 
 
@@ -77,7 +90,7 @@ def company_page(request: Request, symbol: str):
     Returns info + financials + score + rules + AI explanation in one request.
     Cached per symbol for 24 hours.
     """
-    sym = symbol.upper()
+    sym = _validate_symbol(symbol)
 
     t0     = time.monotonic()
     cached = _page_get(sym)
@@ -94,6 +107,7 @@ def company_page(request: Request, symbol: str):
 
     if not info.get("name"):
         raise HTTPException(status_code=404, detail=f"הסימבול {sym} לא נמצא")
+
     score_data  = compute_bukra_score(financials, info)
     rules_data  = compute_bukra_rules(financials)
 
@@ -105,15 +119,16 @@ def company_page(request: Request, symbol: str):
     try:
         explanation = get_hebrew_explanation(info, financials, score_data)
     except Exception as e:
-        explanation_error = str(e)
-        print(f"[company/page] AI explanation failed for {sym}: {e}")
+        # Log internally; never expose raw error strings to clients
+        logger.error("[company/page] AI explanation failed for %s: %s", sym, e)
+        explanation_error = "הסבר AI אינו זמין כרגע"
 
     # Smart analyst summary — deterministic fallback always available
     analyst_summary = None
     try:
         analyst_summary = generate_smart_analyst_summary(info, score_data, financials, rules_data)
     except Exception as e:
-        print(f"[company/page] analyst summary failed for {sym}: {e}")
+        logger.error("[company/page] analyst summary failed for %s: %s", sym, e)
 
     elapsed_ms = round((time.monotonic() - t0) * 1000)
     breakdown  = score_data.get("breakdown", {})
@@ -151,47 +166,57 @@ def company_page(request: Request, symbol: str):
     return result
 
 
-# ── Legacy endpoints (kept for backward compatibility) ─────────────────────────
+# ── Legacy endpoints — kept for backward compatibility, rate-limited ───────────
 
 @router.get("/company/{symbol}")
-def company_overview(symbol: str):
-    info = get_company_info(symbol)
+@limiter.limit("20/minute")
+def company_overview(request: Request, symbol: str):
+    sym = _validate_symbol(symbol)
+    info = get_company_info(sym)
     if not info.get("name"):
-        raise HTTPException(status_code=404, detail=f"הסימבול {symbol} לא נמצא")
+        raise HTTPException(status_code=404, detail=f"הסימבול {sym} לא נמצא")
     return info
 
 
 @router.get("/company/{symbol}/financials")
-def company_financials(symbol: str):
-    data = get_five_year_financials(symbol)
+@limiter.limit("20/minute")
+def company_financials(request: Request, symbol: str):
+    sym = _validate_symbol(symbol)
+    data = get_five_year_financials(sym)
     if not data or not data.get("history"):
         raise HTTPException(status_code=404, detail="אין נתונים פיננסיים")
     return data
 
 
 @router.get("/company/{symbol}/score")
-def company_score(symbol: str):
-    info = get_company_info(symbol)
-    financials = get_five_year_financials(symbol)
+@limiter.limit("20/minute")
+def company_score(request: Request, symbol: str):
+    sym = _validate_symbol(symbol)
+    info = get_company_info(sym)
+    financials = get_five_year_financials(sym)
     return compute_bukra_score(financials, info)
 
 
 @router.get("/company/{symbol}/explain")
-def company_explain(symbol: str):
-    info = get_company_info(symbol)
-    financials = get_five_year_financials(symbol)
+@limiter.limit("10/minute")
+def company_explain(request: Request, symbol: str):
+    sym = _validate_symbol(symbol)
+    info = get_company_info(sym)
+    financials = get_five_year_financials(sym)
     score_data = compute_bukra_score(financials, info)
     return get_hebrew_explanation(info, financials, score_data)
 
 
 @router.get("/company/{symbol}/full")
-def company_full(symbol: str):
-    info = get_company_info(symbol)
-    financials = get_five_year_financials(symbol)
+@limiter.limit("20/minute")
+def company_full(request: Request, symbol: str):
+    sym = _validate_symbol(symbol)
+    info = get_company_info(sym)
+    financials = get_five_year_financials(sym)
     score_data = compute_bukra_score(financials, info)
     _save_snapshot_bg(info, score_data)
     return {
-        "info":      info,
+        "info":       info,
         "financials": financials,
-        "score":     score_data,
+        "score":      score_data,
     }

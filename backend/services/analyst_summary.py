@@ -23,7 +23,8 @@ import json
 
 # ── Cache ─────────────────────────────────────────────────────────────────────
 _cache: dict = {}
-_CACHE_TTL = 86_400
+_CACHE_TTL  = 86_400
+_CACHE_MAX  = 300   # max symbols; evict oldest entry when full
 
 
 def _cached(symbol: str):
@@ -34,6 +35,9 @@ def _cached(symbol: str):
 
 
 def _store(symbol: str, data: dict) -> dict:
+    if len(_cache) >= _CACHE_MAX and symbol not in _cache:
+        oldest = min(_cache, key=lambda k: _cache[k]["ts"])
+        del _cache[oldest]
     _cache[symbol] = {"ts": time.time(), "data": data}
     return data
 
@@ -340,7 +344,7 @@ Write 4–5 sentences in clear English. Strict rules:
 
 Output: text only, no heading."""
 
-    client = anthropic.Anthropic(api_key=api_key)
+    client = anthropic.Anthropic(api_key=api_key, timeout=30.0)
 
     he_resp = client.messages.create(
         model="claude-sonnet-4-6",

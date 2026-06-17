@@ -8,12 +8,6 @@ export async function searchCompanies(q: string) {
   return res.json()
 }
 
-export async function getCompanyFull(symbol: string) {
-  const res = await fetch(`${BASE}/company/${symbol}/full`)
-  if (!res.ok) throw new Error('שגיאה בטעינת נתוני החברה')
-  return res.json()
-}
-
 // ── Company page localStorage cache (30-min TTL, stale-while-revalidate) ─────
 const PAGE_CACHE_KEY = 'bukra_page_cache'
 const PAGE_CACHE_TTL = 30 * 60 * 1000 // 30 minutes
@@ -94,12 +88,6 @@ export function getCompanyPageSWR(
   return cached // null means no cache, caller should show full loading state
 }
 
-export async function getCompanyExplanation(symbol: string) {
-  const res = await fetch(`${BASE}/company/${symbol}/explain`)
-  if (!res.ok) throw new Error('שגיאה בטעינת הסבר AI')
-  return res.json()
-}
-
 // ── Scanner (new cache-first API) ─────────────────────────────────────────────
 
 /** Returns cached results from disk instantly. Never triggers a scan. */
@@ -120,13 +108,6 @@ export async function postScannerRefresh() {
 export async function getScannerStatus() {
   const res = await fetch(`${BASE}/scanner/status`)
   if (!res.ok) throw new Error('שגיאה בקבלת סטטוס הסריקה')
-  return res.json()
-}
-
-/** Legacy — kept so any old callers still work. */
-export async function getScanner(force = false) {
-  const res = await fetch(`${BASE}/scanner/top${force ? '?force=true' : ''}`)
-  if (!res.ok) throw new Error('שגיאה בטעינת תוצאות הסריקה')
   return res.json()
 }
 

@@ -19,9 +19,10 @@ _yf_session.headers.update({
     "Accept-Language": "en-US,en;q=0.9",
 })
 
-# Simple TTL cache
+# Simple TTL cache with max-size eviction
 _cache: dict = {}
-CACHE_TTL = 3600
+CACHE_TTL  = 3600
+_CACHE_MAX = 500   # ~2 keys per symbol (info + fin) × 250 symbols
 
 
 def _cached(key: str):
@@ -32,6 +33,9 @@ def _cached(key: str):
 
 
 def _store(key: str, data):
+    if len(_cache) >= _CACHE_MAX and key not in _cache:
+        oldest = min(_cache, key=lambda k: _cache[k]["ts"])
+        del _cache[oldest]
     _cache[key] = {"ts": time.time(), "data": data}
     return data
 
@@ -406,7 +410,7 @@ _UNIVERSE: list[tuple] = [
     ("LYFT",  "Lyft Inc.",               ["lyft"],                                           "Technology"),
     ("SNAP",  "Snap Inc.",               ["snap", "snapchat"],                               "Communication Services"),
     ("PINS",  "Pinterest Inc.",          ["pinterest"],                                      "Communication Services"),
-    ("TWTR",  "Twitter/X",              ["twitter", "x"],                                   "Communication Services"),
+    ("X",     "X Corp.",                 ["twitter", "x corp"],                              "Communication Services"),
     ("SQ",    "Block Inc.",              ["square", "block", "cash app"],                    "Technology"),
     ("COIN",  "Coinbase Global",         ["coinbase"],                                       "Financial Services"),
     ("SHOP",  "Shopify Inc.",            ["shopify"],                                        "Technology"),
