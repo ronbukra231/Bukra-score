@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  direction: rtl;
-}
-
 body {
   @apply bg-gray-950 text-gray-100 font-sans antialiased;
 }

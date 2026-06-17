@@ -139,8 +139,14 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="text-center text-gray-600 text-xs py-6 border-t border-gray-900">
-        {t.home_footer}
+      <footer className="text-center text-gray-600 text-xs py-6 border-t border-gray-900 space-y-2">
+        <p>{t.home_footer}</p>
+        <p className="text-gray-700">{t.footer_dataNote}</p>
+        <p>
+          <Link to="/legal" className="text-gray-600 hover:text-gray-400 transition underline underline-offset-2">
+            {t.footer_legal}
+          </Link>
+        </p>
       </footer>
     </div>
   )

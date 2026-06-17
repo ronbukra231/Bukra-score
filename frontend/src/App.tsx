@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Company from './pages/Company'
 import Scanner from './pages/Scanner'
 import Accuracy from './pages/Accuracy'
+import Legal from './pages/Legal'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/company/:symbol" element={<Company />} />
           <Route path="/scanner" element={<Scanner />} />
           <Route path="/accuracy" element={<Accuracy />} />
+          <Route path="/legal" element={<Legal />} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>

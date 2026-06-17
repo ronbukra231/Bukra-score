@@ -263,4 +263,16 @@ export interface Translations {
   accuracy_samplePredictions: string
   accuracy_pendingEvals: string
   accuracy_alphaCol: string
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+  footer_legal: string
+  footer_dataNote: string
+
+  // ── SmartAnalystSummary disclaimer ────────────────────────────────────────
+  analyst_dataNote: string
+
+  // ── Legal page ────────────────────────────────────────────────────────────
+  legal_title: string
+  legal_subtitle: string
+  legal_lastUpdated: string
 }

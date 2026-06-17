@@ -150,7 +150,7 @@ def _generate_fallback_he(company_info: dict, financials: dict, bukra_score: dic
             f"{name} פועלת בשוק מבוסס עם מוצרים ושירותים שיש להם ביקוש עקבי"
         )
 
-    why_attractive = ". ".join(positives[:3]) + "."
+    financial_strengths = ". ".join(positives[:3]) + "."
 
     # ── 4. סיכונים ───────────────────────────────────────────────────────────
     risks_list = []
@@ -191,7 +191,7 @@ def _generate_fallback_he(company_info: dict, financials: dict, bukra_score: dic
     return {
         "what_does": what_does,
         "revenue_streams": revenue_streams,
-        "why_attractive": why_attractive,
+        "financial_strengths": financial_strengths,
         "risks": risks,
         "eli5": eli5,
         "no_api_key": True,
@@ -235,7 +235,7 @@ def get_hebrew_explanation(company_info: dict, financials: dict, bukra_score: di
             if margin: fin_summary += f"שולי רווח: {margin:.1f}%. "
             if fcf:    fin_summary += f"תזרים חופשי: ${fcf/1e9:.1f}B."
 
-        prompt = f"""אתה יועץ השקעות שמסביר חברות ציבוריות בעברית פשוטה למשקיעים פרטיים ישראלים שאינם מומחים בפיננסים.
+        prompt = f"""אתה מנוע ניתוח פיננסי שמסביר נתוני חברות ציבוריות בעברית פשוטה. אינך יועץ השקעות ואינך ממליץ על קנייה, מכירה, או החזקה של ניירות ערך.
 
 שם החברה: {name}
 תחום: {sector} / {industry}
@@ -248,12 +248,12 @@ def get_hebrew_explanation(company_info: dict, financials: dict, bukra_score: di
 {{
   "what_does": "2-3 משפטים בעברית פשוטה המסבירים מה החברה עושה. הימנע מז'רגון. התמקד במוצר/שירות הליבה.",
   "revenue_streams": "3-4 שורות קצרות (bullets) המסבירות איך החברה מרוויחה כסף. כל שורה מתחילה ב-•",
-  "why_attractive": "2-3 משפטים בעברית המסבירים למה משקיעים לטווח ארוך מוצאים את החברה מעניינת.",
+  "financial_strengths": "2-3 משפטים בעברית המתארים חוזקות פיננסיות שזוהו בנתונים. תאר עובדות בלבד — אל תמליץ לקנות, למכור, או להחזיק.",
   "risks": "2-3 משפטים בעברית המסבירים את הסיכונים העיקריים. היה כנה וספציפי.",
-  "eli5": "משפט אחד או שניים המסבירים את החברה כאילו מדברים עם ילד בן 12. השתמש בדוגמאות יומיומיות."
+  "eli5": "משפט אחד או שניים המסבירים את פעילות החברה כאילו מדברים עם ילד בן 12. השתמש בדוגמאות יומיומיות."
 }}
 
-כתוב בעברית בלבד. שפה פשוטה וישירה. אל תכתוב כותרות."""
+כתוב בעברית בלבד. שפה פשוטה וישירה. אל תכתוב כותרות. אל תמליץ על פעולה פיננסית כלשהי."""
 
         message = client.messages.create(
             model="claude-sonnet-4-6",
@@ -274,7 +274,7 @@ def get_hebrew_explanation(company_info: dict, financials: dict, bukra_score: di
 
     except json.JSONDecodeError:
         result = {
-            "what_does": text, "revenue_streams": None, "why_attractive": None,
+            "what_does": text, "revenue_streams": None, "financial_strengths": None,
             "risks": None, "eli5": None, "no_api_key": False, "is_fallback": False,
         }
         return _store(sym, result)

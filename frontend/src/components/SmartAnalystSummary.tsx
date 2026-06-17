@@ -147,9 +147,12 @@ export default function SmartAnalystSummary({ data }: Props) {
         </div>
       )}
 
-      {/* ── Section 3: Confidence ── */}
-      <div className="border-t border-gray-800 px-6 py-4">
+      {/* ── Section 3: Confidence + disclaimer ── */}
+      <div className="border-t border-gray-800 px-6 py-4 space-y-3">
         <ConfidenceRow level={data.confidence} t={t} />
+        <p className="text-gray-700 text-xs leading-relaxed" dir={isHe ? 'rtl' : 'ltr'}>
+          {t.analyst_dataNote}
+        </p>
       </div>
 
     </div>

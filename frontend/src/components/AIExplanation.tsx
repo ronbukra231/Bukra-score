@@ -4,7 +4,7 @@ import { useLanguage } from '../i18n/index'
 interface ExplanationData {
   what_does?: string | null
   revenue_streams?: string | null
-  why_attractive?: string | null
+  financial_strengths?: string | null
   risks?: string | null
   eli5?: string | null
   no_api_key?: boolean
@@ -65,9 +65,9 @@ function ExplanationSections({ explanation, t }: { explanation: ExplanationData;
         </Section>
       )}
 
-      {explanation.why_attractive && (
+      {explanation.financial_strengths && (
         <Section icon="⭐" title={t.ai_s_whyAttractive}>
-          <p className="text-gray-300 text-sm leading-7">{explanation.why_attractive}</p>
+          <p className="text-gray-300 text-sm leading-7">{explanation.financial_strengths}</p>
         </Section>
       )}
 

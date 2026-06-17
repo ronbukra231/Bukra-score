@@ -245,6 +245,18 @@ const en: Translations = {
   accuracy_samplePredictions: 'Sample analyses',
   accuracy_pendingEvals: 'Pending evaluations',
   accuracy_alphaCol: 'Alpha (3M)',
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+  footer_legal: 'Terms & Privacy',
+  footer_dataNote: 'Data may be delayed. This is not investment advice.',
+
+  // ── SmartAnalystSummary disclaimer ────────────────────────────────────────
+  analyst_dataNote: 'This analysis is based solely on calculated data and does not constitute investment advice.',
+
+  // ── Legal page ────────────────────────────────────────────────────────────
+  legal_title: 'Terms of Use, Privacy & Disclaimer',
+  legal_subtitle: 'Bukra Capital — Legal Information',
+  legal_lastUpdated: 'Last updated: June 2026',
 }
 
 export default en

@@ -2,9 +2,10 @@ import time
 import threading
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 
 logger = logging.getLogger("bukra.company")
+from limiter import limiter
 from services.yahoo_finance import get_company_info, get_five_year_financials, search_companies
 from services.bukra_score import compute_bukra_score
 from services.bukra_rules import compute_bukra_rules
@@ -60,7 +61,8 @@ def _save_snapshot_bg(info: dict, score_data: dict):
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.get("/search")
-def search(q: str = Query(..., min_length=1)):
+@limiter.limit("40/minute")
+def search(request: Request, q: str = Query(..., min_length=1, max_length=100)):
     results = search_companies(q)
     if not results:
         raise HTTPException(status_code=404, detail="לא נמצאו תוצאות")
@@ -68,7 +70,8 @@ def search(q: str = Query(..., min_length=1)):
 
 
 @router.get("/company/{symbol}/page")
-def company_page(symbol: str):
+@limiter.limit("30/minute")
+def company_page(request: Request, symbol: str):
     """
     Single optimised endpoint for the frontend company page.
     Returns info + financials + score + rules + AI explanation in one request.

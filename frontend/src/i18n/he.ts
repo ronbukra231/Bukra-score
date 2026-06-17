@@ -244,6 +244,18 @@ const he: Translations = {
   accuracy_samplePredictions: 'ניתוחי דוגמה',
   accuracy_pendingEvals: 'ממתינים להכרעה',
   accuracy_alphaCol: 'אלפא (3M)',
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+  footer_legal: 'תנאי שימוש ופרטיות',
+  footer_dataNote: 'הנתונים עשויים להיות מושהים. המידע אינו ייעוץ השקעות.',
+
+  // ── SmartAnalystSummary disclaimer ────────────────────────────────────────
+  analyst_dataNote: 'ניתוח זה מבוסס על נתונים מחושבים בלבד ואינו מהווה ייעוץ השקעות.',
+
+  // ── Legal page ────────────────────────────────────────────────────────────
+  legal_title: 'תנאי שימוש, פרטיות וכתב ויתור',
+  legal_subtitle: 'בוקרה קפיטל — מידע משפטי',
+  legal_lastUpdated: 'עודכן לאחרונה: יוני 2026',
 }
 
 export default he
