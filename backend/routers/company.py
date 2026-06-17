@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 
 logger = logging.getLogger("bukra.company")
 from limiter import limiter
-from services.yahoo_finance import get_company_info, get_five_year_financials, search_companies
+from services.data_service import get_company_info, get_five_year_financials, search_companies
 from services.bukra_score import compute_bukra_score
 from services.bukra_rules import compute_bukra_rules
 from services.ai_explanation import get_hebrew_explanation

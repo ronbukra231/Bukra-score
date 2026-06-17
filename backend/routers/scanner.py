@@ -19,7 +19,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Request
 from limiter import limiter
-from services.yahoo_finance import get_company_info, get_five_year_financials
+from services.data_service import get_company_info, get_five_year_financials
 from services.bukra_score import compute_bukra_score
 from services.bukra_rules import compute_bukra_rules
 from services.accuracy_db import save_snapshot

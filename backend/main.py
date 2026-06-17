@@ -12,6 +12,7 @@ from routers.company import router as company_router
 from routers.scanner import router as scanner_router, trigger_scan_if_idle
 from routers.accuracy import router as accuracy_router
 from services.accuracy_db import init_db
+from services.provider_monitor import log_hourly_report, get_snapshot
 
 load_dotenv()
 
@@ -107,12 +108,35 @@ def startup():
         id="weekly_scan",
         replace_existing=True,
     )
+    scheduler.add_job(
+        log_hourly_report,
+        trigger="interval",
+        hours=1,
+        id="provider_monitor",
+        replace_existing=True,
+    )
     scheduler.start()
     logger.info("[scheduler] Weekly scan — Mondays 02:00 UTC")
+    logger.info("[scheduler] Provider monitor — every hour")
 
 
 # ── Health check ──────────────────────────────────────────────────────────────
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    snap = get_snapshot()
+    fmp_key_set = bool(os.getenv("FMP_API_KEY", "").strip())
+    provider    = os.getenv("DATA_PROVIDER", "auto") if fmp_key_set else "yahoo"
+    fmp_status  = "ok" if snap["fmp_failure_rate_pct"] < 20 else "degraded"
+    return {
+        "status":   "ok",
+        "provider": provider,
+        "fmp": {
+            "configured": fmp_key_set,
+            "status":     fmp_status if fmp_key_set else "not_configured",
+            "requests":   snap.get("fmp_requests", 0),
+            "failure_rate_pct": snap["fmp_failure_rate_pct"],
+            "fallback_rate_pct": snap["fmp_fallback_rate_pct"],
+        },
+        "shadow_divergences_logged": len(snap.get("shadow_divergences", [])),
+    }
