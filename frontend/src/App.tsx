@@ -6,6 +6,7 @@ import Scanner from './pages/Scanner'
 import Accuracy from './pages/Accuracy'
 import Legal from './pages/Legal'
 import Radar from './pages/Radar'
+import ResearchJournal from './pages/ResearchJournal'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/company/:symbol" element={<Company />} />
           <Route path="/scanner" element={<Scanner />} />
           <Route path="/radar" element={<Radar />} />
+          <Route path="/journal" element={<ResearchJournal />} />
           <Route path="/accuracy" element={<Accuracy />} />
           <Route path="/legal" element={<Legal />} />
         </Routes>

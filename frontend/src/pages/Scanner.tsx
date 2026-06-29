@@ -243,6 +243,9 @@ export default function Scanner() {
           <Link to="/radar" className="text-brand-400 hover:text-brand-300 text-xs font-semibold hidden md:block transition">
             {t.radar_navLabel} ⬡
           </Link>
+          <Link to="/journal" className="text-purple-400 hover:text-purple-300 text-xs font-semibold hidden md:block transition">
+            {t.journal_navLabel} ⬡
+          </Link>
           <LanguageToggle />
         </div>
         {/* Thin refresh progress strip at very top */}

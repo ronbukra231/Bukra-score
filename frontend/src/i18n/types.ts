@@ -295,6 +295,50 @@ export interface Translations {
   intel_scoreUnchanged: string
   intel_significantChange: string
 
+  // ── Research Journal ──────────────────────────────────────────────────────
+  journal_navLabel: string
+  journal_title: string
+  journal_subtitle: string
+  journal_tagline: string
+  journal_latestNote: string
+  journal_companiesAnalyzed: string
+  journal_newDiscoveries: string
+  journal_confirmedDiscoveries: string
+  journal_activeSection: string
+  journal_confirmedSection: string
+  journal_historicalSection: string
+  journal_noData: string
+  journal_noDataSub: string
+  journal_goToScanner: string
+  journal_statusEmerging: string
+  journal_statusConfirmed: string
+  journal_statusHistorical: string
+  journal_statusRejected: string
+  journal_firstDetected: string
+  journal_lastConfirmed: string
+  journal_occurrences: string
+  journal_confidence: string
+  journal_importance: string
+  journal_affectedCompanies: string
+  journal_affectedSectors: string
+  journal_requiresValidation: string
+  journal_evidence: string
+  journal_statTotal: string
+  journal_statConfirmed: string
+  journal_statScans: string
+  journal_importanceHigh: string
+  journal_importanceMedium: string
+  journal_importanceLow: string
+  journal_categoryLabel: string
+  journal_catSector: string
+  journal_catMarket: string
+  journal_catMacro: string
+  journal_catQuality: string
+  journal_catValuation: string
+  journal_catData: string
+  journal_researchNotes: string
+  journal_emptyNotes: string
+
   // ── Radar page ────────────────────────────────────────────────────────────
   radar_title: string
   radar_subtitle: string

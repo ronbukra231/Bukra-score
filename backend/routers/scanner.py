@@ -25,6 +25,7 @@ from services.bukra_rules import compute_bukra_rules
 from services.accuracy_db import save_snapshot
 from services.intelligence import build_company_intelligence
 from services.scan_history import get_previous_snapshot, save_intelligence_snapshot
+from services.research_agent import run_research_scan
 
 logger = logging.getLogger("bukra.scanner")
 router = APIRouter(prefix="/api", tags=["scanner"])
@@ -217,6 +218,15 @@ def _run_scan():
                     logger.warning("[accuracy] snapshot failed %s: %s", r["ticker"], e)
 
         threading.Thread(target=_save_snapshots, daemon=True).start()
+
+        # Discovery Engine — runs after all snapshots are saved
+        def _run_research():
+            try:
+                run_research_scan()
+            except Exception as e:
+                logger.warning("[scanner] research_agent failed: %s", e)
+        threading.Thread(target=_run_research, daemon=True).start()
+
         logger.info("[scanner] Done in %.0fs — %d scored, %d failed", time.monotonic() - t0, len(results), len(errors))
 
     except Exception as e:

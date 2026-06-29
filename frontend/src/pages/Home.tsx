@@ -95,6 +95,12 @@ export default function Home() {
           >
             {t.radar_navLabel} ⬡
           </Link>
+          <Link
+            to="/journal"
+            className="bg-gray-800 hover:bg-gray-700 text-purple-400 font-bold rounded-2xl px-7 py-3.5 text-base transition border border-purple-500/30 hover:border-purple-500/60"
+          >
+            {t.journal_navLabel} ⬡
+          </Link>
         </div>
       </div>
 
