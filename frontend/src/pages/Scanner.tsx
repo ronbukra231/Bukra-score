@@ -246,6 +246,18 @@ export default function Scanner() {
           <Link to="/journal" className="text-purple-400 hover:text-purple-300 text-xs font-semibold hidden md:block transition">
             {t.journal_navLabel} ⬡
           </Link>
+          <Link to="/memory" className="text-violet-400 hover:text-violet-300 text-xs font-semibold hidden md:block transition">
+            {t.memory_navLabel} 🧠
+          </Link>
+          <Link to="/questions" className="text-blue-400 hover:text-blue-300 text-xs font-semibold hidden md:block transition">
+            {t.questions_navLabel}
+          </Link>
+          <Link to="/beliefs" className="text-orange-400 hover:text-orange-300 text-xs font-semibold hidden md:block transition">
+            {t.beliefs_navLabel}
+          </Link>
+          <Link to="/graph" className="text-indigo-400 hover:text-indigo-300 text-xs font-semibold hidden md:block transition">
+            {t.graph_navLabel}
+          </Link>
           <LanguageToggle />
         </div>
         {/* Thin refresh progress strip at very top */}

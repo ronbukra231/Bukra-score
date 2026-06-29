@@ -295,6 +295,95 @@ export interface Translations {
   intel_scoreUnchanged: string
   intel_significantChange: string
 
+  // ── Research Memory ───────────────────────────────────────────────────────
+  memory_navLabel: string
+  memory_title: string
+  memory_subtitle: string
+  memory_tagline: string
+  memory_activeSection: string
+  memory_confirmedSection: string
+  memory_historicalSection: string
+  memory_noData: string
+  memory_noDataSub: string
+  memory_confidenceTimeline: string
+  memory_evidenceHistory: string
+  memory_validationEvents: string
+  memory_fourQuestionsTitle: string
+  memory_q1: string
+  memory_q2: string
+  memory_q3: string
+  memory_q4: string
+  memory_researchScore: string
+  memory_scoreTotal: string
+  memory_evidenceQty: string
+  memory_evidenceQual: string
+  memory_historicalCons: string
+  memory_crossSectorCons: string
+  memory_fpControl: string
+  memory_statTotal: string
+  memory_statConfirmed: string
+  memory_statEmerging: string
+
+  // ── Research Questions ────────────────────────────────────────────────────
+  questions_navLabel: string
+  questions_title: string
+  questions_subtitle: string
+  questions_tagline: string
+  questions_open: string
+  questions_investigating: string
+  questions_validated: string
+  questions_rejected: string
+  questions_dormant: string
+  questions_reactivated: string
+  questions_hypothesis: string
+  questions_relatedDisc: string
+  questions_noData: string
+  questions_priorityHigh: string
+  questions_priorityMedium: string
+  questions_priorityLow: string
+  questions_generatedBy: string
+  questions_sector: string
+  questions_tags: string
+  questions_statTotal: string
+
+  // ── Belief Changes ────────────────────────────────────────────────────────
+  beliefs_navLabel: string
+  beliefs_title: string
+  beliefs_subtitle: string
+  beliefs_tagline: string
+  beliefs_noData: string
+  beliefs_noDataSub: string
+  beliefs_typeStrengthened: string
+  beliefs_typeWeakened: string
+  beliefs_typePromoted: string
+  beliefs_typeArchived: string
+  beliefs_typeMinor: string
+  beliefs_oldBelief: string
+  beliefs_newBelief: string
+  beliefs_reason: string
+  beliefs_confidenceBefore: string
+  beliefs_confidenceAfter: string
+  beliefs_statTotal: string
+  beliefs_statStrengthened: string
+  beliefs_statWeakened: string
+  beliefs_statArchived: string
+
+  // ── Knowledge Graph ───────────────────────────────────────────────────────
+  graph_navLabel: string
+  graph_title: string
+  graph_subtitle: string
+  graph_tagline: string
+  graph_noData: string
+  graph_discoveryNode: string
+  graph_sectorNode: string
+  graph_legend: string
+  graph_catSector: string
+  graph_catMarket: string
+  graph_catMacro: string
+  graph_catQuality: string
+  graph_catValuation: string
+  graph_catData: string
+
   // ── Research Journal ──────────────────────────────────────────────────────
   journal_navLabel: string
   journal_title: string

@@ -101,6 +101,30 @@ export default function Home() {
           >
             {t.journal_navLabel} ⬡
           </Link>
+          <Link
+            to="/memory"
+            className="bg-gray-800 hover:bg-gray-700 text-violet-400 font-bold rounded-2xl px-7 py-3.5 text-base transition border border-violet-500/30 hover:border-violet-500/60"
+          >
+            {t.memory_navLabel} 🧠
+          </Link>
+          <Link
+            to="/questions"
+            className="bg-gray-800 hover:bg-gray-700 text-blue-400 font-bold rounded-2xl px-7 py-3.5 text-base transition border border-blue-500/30 hover:border-blue-500/60"
+          >
+            {t.questions_navLabel} ❓
+          </Link>
+          <Link
+            to="/beliefs"
+            className="bg-gray-800 hover:bg-gray-700 text-orange-400 font-bold rounded-2xl px-7 py-3.5 text-base transition border border-orange-500/30 hover:border-orange-500/60"
+          >
+            {t.beliefs_navLabel} 🔄
+          </Link>
+          <Link
+            to="/graph"
+            className="bg-gray-800 hover:bg-gray-700 text-indigo-400 font-bold rounded-2xl px-7 py-3.5 text-base transition border border-indigo-500/30 hover:border-indigo-500/60"
+          >
+            {t.graph_navLabel} 🕸
+          </Link>
         </div>
       </div>
 
