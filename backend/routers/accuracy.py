@@ -3,8 +3,11 @@ Prediction Accuracy System — API endpoints.
 GET  /api/accuracy/summary      — full performance dashboard data
 GET  /api/accuracy/history      — paginated snapshot history
 POST /api/accuracy/recalculate  — resolve pending snapshots (background)
+GET  /api/debug/data-status     — pipeline health: snapshot counts, data mode, last scan
 """
 
+import json
+import os
 import threading
 from datetime import datetime, timezone, timedelta
 from typing import Optional
@@ -19,10 +22,63 @@ from services.accuracy_db import (
     update_outcome,
 )
 
-router = APIRouter(prefix="/api/accuracy", tags=["accuracy"])
-
-_recalc_lock  = threading.Lock()
+router       = APIRouter(tags=["accuracy"])
+_recalc_lock = threading.Lock()
 _last_recalc: Optional[str] = None
+
+_DATA_DIR     = os.path.join(os.path.dirname(__file__), "..", "data")
+_HISTORY_PATH = os.path.join(_DATA_DIR, "intelligence_history.json")
+
+
+# ── Debug endpoint ────────────────────────────────────────────────────────────
+
+@router.get("/api/debug/data-status")
+def data_status():
+    """
+    Pipeline health check. Returns snapshot counts, data mode, and last scan times.
+    Use this to verify that real data is flowing through the system.
+    """
+    # Intelligence history (radar / per-company comparison)
+    try:
+        with open(_HISTORY_PATH, "r", encoding="utf-8") as f:
+            intel = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        intel = {}
+
+    intel_companies = list(intel.keys())
+    intel_last_scan = None
+    if intel:
+        intel_last_scan = max(v.get("saved_at", "") for v in intel.values()) or None
+
+    # Accuracy DB
+    stats = get_summary_stats()
+
+    return {
+        "intelligence_history": {
+            "company_count": len(intel_companies),
+            "companies":     intel_companies,
+            "last_scan":     intel_last_scan,
+            "storage_path":  _HISTORY_PATH,
+        },
+        "accuracy_db": {
+            "total_snapshots":  stats["completed_count"] + stats["pending_count"],
+            "real_snapshots":   stats["real_count"],
+            "sample_snapshots": stats["sample_count"],
+            "pending":          stats["pending_count"],
+            "data_mode":        stats["data_mode"],
+            "last_real_scan":   stats.get("last_real_scan"),
+            "minimum_for_accuracy": stats["minimum_for_accuracy"],
+            "has_real_data":    stats["has_real_data"],
+        },
+        "pipeline": {
+            "snapshot_saves_on_company_search": True,
+            "snapshot_saves_on_scanner":        True,
+            "radar_source":                     "intelligence_history.json (real scans only)",
+            "accuracy_source":                  "accuracy.db (real rows only when available)",
+            "how_to_grow_data":                 "Search more companies or run the scanner",
+        },
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 # ── Price helpers ─────────────────────────────────────────────────────────────
@@ -89,7 +145,7 @@ def _resolve_pending():
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
-@router.get("/summary")
+@router.get("/api/accuracy/summary")
 def accuracy_summary():
     stats = get_summary_stats()
     stats["last_recalc"]  = _last_recalc
@@ -97,7 +153,7 @@ def accuracy_summary():
     return stats
 
 
-@router.get("/history")
+@router.get("/api/accuracy/history")
 def accuracy_history(
     limit:          int           = Query(100, ge=1, le=500),
     offset:         int           = Query(0,   ge=0),
@@ -111,7 +167,7 @@ def accuracy_history(
     return {"total": total, "offset": offset, "limit": limit, "rows": rows[offset: offset + limit]}
 
 
-@router.post("/recalculate")
+@router.post("/api/accuracy/recalculate")
 def recalculate():
     """Kick off background resolution of eligible pending snapshots."""
     if not _recalc_lock.acquire(blocking=False):

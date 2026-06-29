@@ -12,8 +12,12 @@ interface Summary {
   completed_count: number
   pending_count: number
   real_count: number
+  real_pending_count: number
   sample_count: number
   has_real_data: boolean
+  data_mode: 'real' | 'sample_only'
+  minimum_for_accuracy: number
+  last_real_scan: string | null
   buckets: Record<string, { count: number; avg_return: number | null; avg_alpha: number | null; beat_spy_pct: number | null }>
 }
 
@@ -111,7 +115,7 @@ export default function PredictionAccuracyCard({ compact = false }: { compact?: 
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <ConfidenceBadge grade={data.confidence_grade} />
-            {!data.has_real_data && (
+            {data.data_mode === 'sample_only' && (
               <span className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs rounded-full px-2 py-0.5 font-medium">
                 {t.accuracy_sampleBadge}
               </span>
@@ -151,10 +155,21 @@ export default function PredictionAccuracyCard({ compact = false }: { compact?: 
           </span>
         </div>
 
-        {/* ── No real data warning ── */}
-        {!data.has_real_data && (
+        {/* ── Data state notices ── */}
+        {data.data_mode === 'sample_only' && (
           <p className="mt-3 text-amber-400/70 text-xs leading-relaxed bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2">
-            {t.accuracy_noHistory}
+            {data.real_pending_count > 0
+              ? isHe
+                ? `${data.real_pending_count} סריקות אמיתיות נשמרו — ממתינות ל-90 יום לפני שניתן למדוד דיוק. הנתונים המוצגים הם לדוגמה בלבד.`
+                : `${data.real_pending_count} real scans saved — waiting 90 days before accuracy can be measured. Stats shown are demo data.`
+              : t.accuracy_noHistory}
+          </p>
+        )}
+        {data.has_real_data && data.real_count < (data.minimum_for_accuracy ?? 10) && (
+          <p className="mt-3 text-blue-400/70 text-xs leading-relaxed bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2">
+            {isHe
+              ? `${data.real_count} ניתוחים אמיתיים — יש צורך ב-${data.minimum_for_accuracy} לפחות לסטטיסטיקה משמעותית. נתונים מצטברים עם כל סריקה.`
+              : `${data.real_count} real scans — ${data.minimum_for_accuracy} needed for meaningful statistics. Data grows with every scan.`}
           </p>
         )}
       </div>

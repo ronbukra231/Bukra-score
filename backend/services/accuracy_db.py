@@ -319,6 +319,20 @@ def get_summary_stats() -> dict:
     completed      = [r for r in all_rows if r["outcome_status"] == "completed"]
     pending        = [r for r in all_rows if r["outcome_status"] == "pending"]
     real_completed = [r for r in completed if not r["is_sample"]]
+    has_real_data  = len(real_completed) > 0
+
+    # Use real-only rows for stats when available; fall back to sample-only.
+    # This prevents seeded demo data from inflating or distorting accuracy metrics.
+    stat_rows = real_completed if has_real_data else completed
+
+    # ── data_mode ─────────────────────────────────────────────────────────────
+    sample_count = len([r for r in completed if r["is_sample"]])
+    if not has_real_data:
+        data_mode = "sample_only"
+    elif sample_count > 0:
+        data_mode = "real"          # real data exists; sample rows are ignored in stats
+    else:
+        data_mode = "real"
 
     # ── Accuracy (directional) ────────────────────────────────────────────────
     def is_correct(r):
@@ -330,34 +344,33 @@ def get_summary_stats() -> dict:
             return r["beat_spy_3m"] == 0
         return None
 
-    measurable   = [r for r in completed if is_correct(r) is not None]
+    measurable   = [r for r in stat_rows if is_correct(r) is not None]
     correct      = [r for r in measurable if is_correct(r)]
     accuracy_pct = round(len(correct) / len(measurable) * 100, 1) if measurable else None
 
-    # ── Hit rate (all completed, did any beat SPY) ────────────────────────────
-    beatables    = [r for r in completed if r.get("beat_spy_3m") is not None]
-    beats        = [r for r in beatables if r["beat_spy_3m"] == 1]
-    hit_rate     = round(len(beats) / len(beatables) * 100, 1) if beatables else None
+    # ── Hit rate ──────────────────────────────────────────────────────────────
+    beatables = [r for r in stat_rows if r.get("beat_spy_3m") is not None]
+    beats     = [r for r in beatables if r["beat_spy_3m"] == 1]
+    hit_rate  = round(len(beats) / len(beatables) * 100, 1) if beatables else None
 
     # ── Alpha ─────────────────────────────────────────────────────────────────
-    alphas       = [r["alpha_3m"] for r in completed if r.get("alpha_3m") is not None]
-    avg_alpha    = round(sum(alphas) / len(alphas), 2) if alphas else None
-    best_alpha   = max(alphas) if alphas else None
-    worst_alpha  = min(alphas) if alphas else None
+    alphas        = [r["alpha_3m"] for r in stat_rows if r.get("alpha_3m") is not None]
+    avg_alpha     = round(sum(alphas) / len(alphas), 2) if alphas else None
+    best_alpha    = max(alphas) if alphas else None
+    worst_alpha   = min(alphas) if alphas else None
 
-    # rolling alpha: last 10 completed by date
-    last10       = sorted(
-        [r for r in completed if r.get("alpha_3m") is not None],
-        key=lambda r: r["snapshot_date"], reverse=True
+    last10        = sorted(
+        [r for r in stat_rows if r.get("alpha_3m") is not None],
+        key=lambda r: r["snapshot_date"], reverse=True,
     )[:10]
     rolling_alpha = round(sum(r["alpha_3m"] for r in last10) / len(last10), 2) if last10 else None
 
     # ── SPY avg return ────────────────────────────────────────────────────────
-    spy_rets = [r["spy_return_3m"] for r in completed if r.get("spy_return_3m") is not None]
+    spy_rets = [r["spy_return_3m"] for r in stat_rows if r.get("spy_return_3m") is not None]
     avg_spy  = round(sum(spy_rets) / len(spy_rets), 1) if spy_rets else None
 
-    # ── Score-range breakdown (9 buckets) ─────────────────────────────────────
-    ranges = [
+    # ── Score-range breakdown (9 buckets) — real only ─────────────────────────
+    _ranges = [
         ("95_100", 95, 101),
         ("90_94",  90,  95),
         ("85_89",  85,  90),
@@ -370,43 +383,47 @@ def get_summary_stats() -> dict:
     ]
 
     def range_stats(lo, hi):
-        rows = [r for r in completed if lo <= r["bukra_score"] < hi]
-        ret_rows   = [r for r in rows if r.get("return_3m")  is not None]
-        alpha_rows = [r for r in rows if r.get("alpha_3m")   is not None]
+        rows       = [r for r in stat_rows if lo <= r["bukra_score"] < hi]
+        ret_rows   = [r for r in rows if r.get("return_3m")   is not None]
+        alpha_rows = [r for r in rows if r.get("alpha_3m")    is not None]
         beat_rows  = [r for r in rows if r.get("beat_spy_3m") is not None]
         return {
-            "count":        len(rows),
-            "avg_return":   round(sum(r["return_3m"] for r in ret_rows)   / len(ret_rows),   1) if ret_rows   else None,
-            "avg_alpha":    round(sum(r["alpha_3m"]  for r in alpha_rows) / len(alpha_rows), 2) if alpha_rows else None,
-            "hit_rate":     round(sum(1 for r in beat_rows if r["beat_spy_3m"]) / len(beat_rows) * 100, 1) if beat_rows else None,
+            "count":      len(rows),
+            "avg_return": round(sum(r["return_3m"] for r in ret_rows)   / len(ret_rows),   1) if ret_rows   else None,
+            "avg_alpha":  round(sum(r["alpha_3m"]  for r in alpha_rows) / len(alpha_rows), 2) if alpha_rows else None,
+            "hit_rate":   round(sum(1 for r in beat_rows if r["beat_spy_3m"]) / len(beat_rows) * 100, 1) if beat_rows else None,
         }
 
-    score_ranges = {key: range_stats(lo, hi) for key, lo, hi in ranges}
+    score_ranges = {key: range_stats(lo, hi) for key, lo, hi in _ranges}
 
-    # ── Legacy 4-bucket (kept for PredictionAccuracyCard) ─────────────────────
+    # ── Legacy 4-bucket (PredictionAccuracyCard) — real only ─────────────────
     def bucket_stats(lo, hi):
-        rows = [r for r in completed if lo <= r["bukra_score"] < hi and r.get("return_3m") is not None]
+        rows = [r for r in stat_rows if lo <= r["bukra_score"] < hi and r.get("return_3m") is not None]
         if not rows:
             return {"count": 0, "avg_return": None, "avg_alpha": None, "beat_spy_pct": None}
-        avg_ret   = round(sum(r["return_3m"] for r in rows) / len(rows), 1)
-        alpha_vals= [r["alpha_3m"] for r in rows if r.get("alpha_3m") is not None]
-        avg_a     = round(sum(alpha_vals) / len(alpha_vals), 2) if alpha_vals else None
-        beat_pct  = round(sum(1 for r in rows if r.get("beat_spy_3m")) / len(rows) * 100, 1)
+        avg_ret    = round(sum(r["return_3m"] for r in rows) / len(rows), 1)
+        alpha_vals = [r["alpha_3m"] for r in rows if r.get("alpha_3m") is not None]
+        avg_a      = round(sum(alpha_vals) / len(alpha_vals), 2) if alpha_vals else None
+        beat_pct   = round(sum(1 for r in rows if r.get("beat_spy_3m")) / len(rows) * 100, 1)
         return {"count": len(rows), "avg_return": avg_ret, "avg_alpha": avg_a, "beat_spy_pct": beat_pct}
 
-    # ── Best / worst by alpha ─────────────────────────────────────────────────
-    has_real_data = len(real_completed) > 0
-    source_alpha  = real_completed if real_completed else completed
-    alpha_sortable = [r for r in source_alpha if r.get("alpha_3m") is not None]
+    # ── Best / worst predictions ── from real data only ───────────────────────
+    alpha_sortable = [r for r in stat_rows if r.get("alpha_3m") is not None]
     alpha_sorted   = sorted(alpha_sortable, key=lambda r: r["alpha_3m"], reverse=True)
-    best_pred  = _fmt_prediction(alpha_sorted[0])  if alpha_sorted else None
-    worst_pred = _fmt_prediction(alpha_sorted[-1]) if alpha_sorted else None
+    best_pred      = _fmt_prediction(alpha_sorted[0])  if alpha_sorted else None
+    worst_pred     = _fmt_prediction(alpha_sorted[-1]) if alpha_sorted else None
 
     # ── Confidence grade ──────────────────────────────────────────────────────
     confidence = _compute_confidence(len(measurable), accuracy_pct)
 
+    # ── Last real scan date ───────────────────────────────────────────────────
+    real_pending   = [r for r in pending if not r["is_sample"]]
+    real_all       = real_completed + real_pending
+    last_real_scan = max((r["snapshot_date"] for r in real_all), default=None)
+    real_companies = list({r["ticker"] for r in real_all})
+
     return {
-        # Core metrics
+        # Core metrics — always from real data when available
         "accuracy_pct":       accuracy_pct,
         "hit_rate":           hit_rate,
         "avg_alpha":          avg_alpha,
@@ -414,26 +431,30 @@ def get_summary_stats() -> dict:
         "worst_alpha":        worst_alpha,
         "rolling_alpha":      rolling_alpha,
         "confidence_grade":   confidence,
-        # Counts
-        "completed_count":    len(completed),
-        "pending_count":      len(pending),
-        "real_count":         len(real_completed),
-        "sample_count":       len([r for r in completed if r["is_sample"]]),
+        # Data source metadata
+        "data_mode":          data_mode,
         "has_real_data":      has_real_data,
-        "measurable_count":   len(measurable),
-        "correct_count":      len(correct),
+        "real_count":         len(real_completed),
+        "sample_count":       sample_count,
+        "completed_count":      len(stat_rows),   # reflects source used for stats
+        "pending_count":        len(real_pending) if has_real_data else len(pending),
+        "real_pending_count":   len(real_pending),
+        "real_companies":       real_companies,
+        "measurable_count":     len(measurable),
+        "correct_count":        len(correct),
+        "last_real_scan":       last_real_scan,
+        "minimum_for_accuracy": 10,             # real completed scans needed for meaningful stats
         # SPY benchmark
         "avg_spy_return_3m":  avg_spy,
-        # Buckets (legacy 4)
+        # Score buckets
         "buckets": {
             "score_90plus":   bucket_stats(90, 101),
             "score_80_89":    bucket_stats(80,  90),
             "score_70_79":    bucket_stats(70,  80),
             "score_below_70": bucket_stats(0,   70),
         },
-        # Fine-grained 9-range analysis
         "score_ranges": score_ranges,
-        # Best / worst predictions (sorted by alpha)
+        # Best / worst
         "best_prediction":   best_pred,
         "worst_prediction":  worst_pred,
     }
