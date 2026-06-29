@@ -240,7 +240,9 @@ export default function Scanner() {
             <ArrowRight className="w-5 h-5" />
           </Link>
           <div className="flex-1 max-w-md"><SearchBar /></div>
-          <div className="text-gray-600 text-xs hidden md:block font-medium tracking-wide">{t.nav_appName}</div>
+          <Link to="/radar" className="text-brand-400 hover:text-brand-300 text-xs font-semibold hidden md:block transition">
+            {t.radar_navLabel} ⬡
+          </Link>
           <LanguageToggle />
         </div>
         {/* Thin refresh progress strip at very top */}

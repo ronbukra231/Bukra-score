@@ -23,6 +23,8 @@ from services.data_service import get_company_info, get_five_year_financials
 from services.bukra_score import compute_bukra_score
 from services.bukra_rules import compute_bukra_rules
 from services.accuracy_db import save_snapshot
+from services.intelligence import build_company_intelligence
+from services.scan_history import get_previous_snapshot, save_intelligence_snapshot
 
 logger = logging.getLogger("bukra.scanner")
 router = APIRouter(prefix="/api", tags=["scanner"])
@@ -98,7 +100,16 @@ def _score_ticker(entry: dict) -> Optional[dict]:
         if score_data.get("score") is None:
             return None
 
-        rules_data   = compute_bukra_rules(financials)
+        rules_data = compute_bukra_rules(financials)
+
+        # Intelligence layer — save snapshot for Radar page
+        try:
+            prev_snap    = get_previous_snapshot(ticker)
+            intelligence = build_company_intelligence(info, financials, score_data, prev_snap)
+            save_intelligence_snapshot(ticker, score_data, intelligence, info)
+        except Exception as e:
+            logger.warning("[scanner] intelligence failed for %s: %s", ticker, e)
+            intelligence = None
         breakdown    = score_data.get("breakdown", {})
         max_scores   = score_data.get("max_scores", {})
         explanations = score_data.get("explanations", {})

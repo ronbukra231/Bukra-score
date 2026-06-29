@@ -275,4 +275,50 @@ export interface Translations {
   legal_title: string
   legal_subtitle: string
   legal_lastUpdated: string
+
+  // ── Intelligence panel (per-company) ─────────────────────────────────────
+  intel_panelTitle: string
+  intel_confidenceLabel: string
+  intel_trendLabel: string
+  intel_signalsLabel: string
+  intel_noSignals: string
+  intel_confidenceHigh: string
+  intel_confidenceMedium: string
+  intel_confidenceLow: string
+  intel_trendImproving: string
+  intel_trendStable: string
+  intel_trendWeakening: string
+  intel_dataYears: string
+  intel_scoreChangeTitle: string
+  intel_scoreUp: string
+  intel_scoreDown: string
+  intel_scoreUnchanged: string
+  intel_significantChange: string
+
+  // ── Radar page ────────────────────────────────────────────────────────────
+  radar_title: string
+  radar_subtitle: string
+  radar_tagline: string
+  radar_lastScan: string
+  radar_totalSignals: string
+  radar_companiesScanned: string
+  radar_noData: string
+  radar_noDataSub: string
+  radar_goToScanner: string
+  radar_qualityUpgrades: string
+  radar_qualityDowngrades: string
+  radar_valuationWarnings: string
+  radar_marginPressure: string
+  radar_revenueMomentum: string
+  radar_debtAlerts: string
+  radar_priceOpportunities: string
+  radar_highQualityWatchlist: string
+  radar_dataWarnings: string
+  radar_severityHigh: string
+  radar_severityMedium: string
+  radar_severityLow: string
+  radar_score: string
+  radar_trend: string
+  radar_confidence: string
+  radar_navLabel: string
 }

@@ -13,6 +13,8 @@ from services.bukra_rules import compute_bukra_rules
 from services.ai_explanation import get_hebrew_explanation
 from services.analyst_summary import generate_smart_analyst_summary
 from services.accuracy_db import save_snapshot
+from services.intelligence import build_company_intelligence
+from services.scan_history import get_previous_snapshot, save_intelligence_snapshot
 
 router = APIRouter(prefix="/api", tags=["company"])
 
@@ -113,6 +115,18 @@ def company_page(request: Request, symbol: str):
 
     _save_snapshot_bg(info, score_data)
 
+    # Intelligence layer — confidence, trend, signals, score change
+    prev_snap    = get_previous_snapshot(sym)
+    intelligence = build_company_intelligence(info, financials, score_data, prev_snap)
+
+    # Persist snapshot in background so it's available on next page load
+    def _save_intel():
+        try:
+            save_intelligence_snapshot(sym, score_data, intelligence, info)
+        except Exception as e:
+            logger.warning("[intelligence] snapshot save failed for %s: %s", sym, e)
+    threading.Thread(target=_save_intel, daemon=True).start()
+
     # AI explanation — never crashes the response if unavailable
     explanation       = None
     explanation_error = None
@@ -152,6 +166,7 @@ def company_page(request: Request, symbol: str):
         "explanation":       explanation,
         "explanation_error": explanation_error,
         "analyst_summary":   analyst_summary,
+        "intelligence":      intelligence,
         "from_cache":        False,
         "perf":              {"totalMs": elapsed_ms},
     }

@@ -1,0 +1,44 @@
+{
+  "AAPL": {
+    "symbol": "AAPL",
+    "name": "Apple Inc.",
+    "sector": "Technology",
+    "price": 281.74,
+    "score": 66,
+    "breakdown": {
+      "growth": 7,
+      "profitability": 20,
+      "cash_flow": 20,
+      "stability": 10,
+      "debt": 9
+    },
+    "confidence": {
+      "level": "High",
+      "score": 88,
+      "reasons": [
+        "נתונים זמינים ל-4 שנים (לא מלא)"
+      ],
+      "data_years": 4,
+      "completeness_pct": 100.0
+    },
+    "trend": {
+      "direction": "Improving",
+      "metrics": {
+        "revenue_trend": "flat",
+        "margin_trend": "flat",
+        "fcf_trend": "flat",
+        "debt_trend": "improving"
+      },
+      "summary": "סימנים ראשוניים של שיפור בנתונים",
+      "trend_score": 1
+    },
+    "signals": [
+      {
+        "signal": "איכות העסק משתפרת — המגמה בנתונים הפיננסיים חיובית",
+        "category": "QualityUpgrade",
+        "severity": "Low"
+      }
+    ],
+    "saved_at": "2026-06-29T22:32:43Z"
+  }
+}

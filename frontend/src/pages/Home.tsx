@@ -89,6 +89,12 @@ export default function Home() {
           >
             {t.home_scanBtn}
           </Link>
+          <Link
+            to="/radar"
+            className="bg-gray-800 hover:bg-gray-700 text-brand-400 font-bold rounded-2xl px-7 py-3.5 text-base transition border border-brand-500/30 hover:border-brand-500/60"
+          >
+            {t.radar_navLabel} ⬡
+          </Link>
         </div>
       </div>
 
