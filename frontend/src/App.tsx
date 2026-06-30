@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { LanguageProvider } from './i18n/index'
+import RouteTracker from './components/RouteTracker'
 import Home from './pages/Home'
 import Company from './pages/Company'
 import Scanner from './pages/Scanner'
@@ -18,6 +19,8 @@ export default function App() {
   return (
     <LanguageProvider>
       <BrowserRouter>
+        {/* Fires page_view + route_load_time on every navigation */}
+        <RouteTracker />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/company/:symbol" element={<Company />} />

@@ -12,6 +12,7 @@ import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
 import IntelligencePanel from '../components/IntelligencePanel'
 import EventIntelligencePanel from '../components/EventIntelligencePanel'
+import * as analytics from '../lib/analytics'
 
 // ── Security helpers ──────────────────────────────────────────────────────────
 function isSafeUrl(url?: string | null): boolean {
@@ -149,6 +150,7 @@ export default function Company() {
 
   const load = useCallback((s: string) => {
     setError('')
+    const loadStart = performance.now()
 
     // Stale-while-revalidate: show cached data instantly, refresh silently.
     // mountedRef guards against setting state after the component unmounts
@@ -163,12 +165,26 @@ export default function Company() {
     if (cached) {
       setData(cached)
       setLoading(false)
+      analytics.trackCompanyOpen(s, cached?.score?.total, cached?.company?.sector)
     } else {
       setLoading(true)
       setData(null)
       getCompanyPage(s)
-        .then((d) => { if (mountedRef.current) { setData(d); setLoading(false) } })
-        .catch((e) => { if (mountedRef.current) { setError(e.message || 'שגיאה בטעינת נתוני החברה'); setLoading(false) } })
+        .then((d) => {
+          if (mountedRef.current) {
+            setData(d)
+            setLoading(false)
+            analytics.trackCompanyOpen(s, d?.score?.total, d?.company?.sector)
+            analytics.trackCompanyLoadTime(s, Math.round(performance.now() - loadStart))
+          }
+        })
+        .catch((e) => {
+          if (mountedRef.current) {
+            setError(e.message || 'שגיאה בטעינת נתוני החברה')
+            setLoading(false)
+            analytics.trackApiError('/api/company/' + s, undefined, s)
+          }
+        })
     }
   }, [])
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Network } from 'lucide-react'
 import { useLanguage } from '../i18n/index'
 import LanguageToggle from '../components/LanguageToggle'
+import { trackKnowledgeGraphOpen } from '../lib/analytics'
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -243,7 +244,11 @@ export default function KnowledgeGraph() {
 
   useEffect(() => {
     getGraph()
-      .then(d  => { setData(d); setLoading(false) })
+      .then(d  => {
+        setData(d)
+        setLoading(false)
+        trackKnowledgeGraphOpen(d?.nodes?.length, d?.edges?.length)
+      })
       .catch(e => { setError(e.message); setLoading(false) })
   }, [])
 

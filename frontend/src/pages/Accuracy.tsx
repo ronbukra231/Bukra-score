@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { getAccuracySummary, getAccuracyHistory, postRecalculate } from '../api/client'
 import { useLanguage } from '../i18n/index'
+import { trackPredictionCardOpen } from '../lib/analytics'
 import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
 
@@ -414,6 +415,7 @@ export default function Accuracy() {
   }, [showSample, tab])
 
   useEffect(() => {
+    trackPredictionCardOpen()
     setLoading(true)
     loadSummary().finally(() => setLoading(false))
   }, [loadSummary])

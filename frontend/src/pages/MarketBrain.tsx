@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Brain, Zap, TrendingUp, TrendingDown, GitBranch } from 'lucide-react'
 import { useLanguage } from '../i18n/index'
 import LanguageToggle from '../components/LanguageToggle'
+import { trackMarketBrainOpen } from '../lib/analytics'
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -201,11 +202,13 @@ export default function MarketBrain() {
   const [error,    setError]    = useState(false)
 
   useEffect(() => {
+    trackMarketBrainOpen()
     Promise.all([fetchStats(), fetchPatterns(), fetchKnowledge()])
       .then(([s, p, g]) => {
         setStats(s)
         setPatterns(p.patterns ?? [])
         setGraph(g)
+        trackMarketBrainOpen(p.patterns?.length ?? 0)
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false))

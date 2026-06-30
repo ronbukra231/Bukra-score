@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import { searchCompanies } from '../api/client'
 import { useLanguage } from '../i18n/index'
+import { trackCompanySearch } from '../lib/analytics'
 
 interface Result {
   symbol: string
@@ -88,6 +89,7 @@ export default function SearchBar({ large = false }: { large?: boolean }) {
   function handleSelect(symbol: string) {
     setOpen(false)
     setQuery('')
+    trackCompanySearch(symbol)
     navigate(`/company/${symbol}`)
   }
 

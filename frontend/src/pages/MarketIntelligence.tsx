@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Eye, CheckCircle, XCircle, Clock, Zap, Link2 } from 'lucide-react'
 import { useLanguage } from '../i18n/index'
 import LanguageToggle from '../components/LanguageToggle'
+import { trackIntelligenceOpen } from '../lib/analytics'
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -216,6 +217,7 @@ export default function MarketIntelligence() {
   const [error,   setError]   = useState(false)
 
   useEffect(() => {
+    trackIntelligenceOpen()
     Promise.all([fetchThemes(), fetchRelationships(), fetchRecent(), fetchStats()])
       .then(([th, ch, re, st]) => {
         setThemes(th)

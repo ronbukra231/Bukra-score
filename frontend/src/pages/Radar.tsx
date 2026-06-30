@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Radar, TrendingUp, TrendingDown, AlertTriangle, DollarSign, BarChart2, ShieldAlert, Star, Zap, Database, Clock } from 'lucide-react'
 import { useLanguage } from '../i18n/index'
 import LanguageToggle from '../components/LanguageToggle'
+import { trackRadarOpen, trackApiError } from '../lib/analytics'
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -165,9 +166,10 @@ export default function RadarPage() {
   const [error, setError]     = useState('')
 
   useEffect(() => {
+    trackRadarOpen()
     getRadar()
       .then(d  => { setData(d); setLoading(false) })
-      .catch(e => { setError(e.message); setLoading(false) })
+      .catch(e => { setError(e.message); setLoading(false); trackApiError('/api/radar') })
   }, [])
 
   const isEmpty = data && data.total_companies_scanned === 0

@@ -6,6 +6,7 @@ import { useLanguage } from '../i18n/index'
 import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
 import PredictionAccuracyCard from '../components/PredictionAccuracyCard'
+import * as analytics from '../lib/analytics'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -175,10 +176,15 @@ export default function Scanner() {
 
         if (st.status === 'completed' || st.status === 'failed' || st.status === 'idle') {
           stopPolling()
-          // Reload cache from disk
           const fresh = await getScannerLatest()
           setCache(fresh)
           setIsRefreshing(false)
+          const durationMs = Date.now() - ((window as any).__scanStart ?? Date.now())
+          if (st.status === 'completed') {
+            analytics.trackScannerCompleted(st.progress ?? 0, durationMs)
+          } else if (st.status === 'failed') {
+            analytics.trackScannerFailed('status_failed')
+          }
         }
       } catch { /* keep polling */ }
     }, 2000)
@@ -195,17 +201,20 @@ export default function Scanner() {
     if (isRefreshing) return
     setIsRefreshing(true)
     setScanStatus(null)
+    analytics.trackScannerRun()
+    const scanStart = Date.now()
     try {
       const res = await postScannerRefresh()
       if (res.status === 'already_running') {
-        // Already running — just poll for progress
         startPolling()
         return
       }
-      // started — poll for progress
       startPolling()
+      // When polling completes we track completion inside the poll effect
+      ;(window as any).__scanStart = scanStart
     } catch (e) {
       console.error('[scanner] refresh error:', e)
+      analytics.trackScannerError(String(e))
       setIsRefreshing(false)
     }
   }

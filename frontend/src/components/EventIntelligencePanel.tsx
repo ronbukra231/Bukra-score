@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '../i18n/index'
 import { Link } from 'react-router-dom'
+import { trackEventIntelligenceOpen } from '../lib/analytics'
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -272,7 +273,12 @@ export default function EventIntelligencePanel({ symbol }: Props) {
     if (!symbol) return
     fetch(`${BASE}/events/company/${symbol}`)
       .then(r => r.ok ? r.json() : null)
-      .then(d => setData(d))
+      .then(d => {
+        setData(d)
+        if (d?.events?.length > 0) {
+          trackEventIntelligenceOpen(symbol, d.events.length)
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [symbol])
