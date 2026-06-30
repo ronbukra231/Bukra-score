@@ -264,6 +264,65 @@ def get_graph(max_edges: int = _MAX_EDGES_IN_RESPONSE) -> dict:
     }
 
 
+def update_from_event(event: dict) -> None:
+    """
+    When a confirmed (or high-importance) business event is stored,
+    teach the knowledge graph about the observed relationship.
+
+    New node types added here:
+      event_category — e.g. "AI Announcement", "Supply Chain"
+      company        — the primary company symbol
+      sector         — already exists, reused
+
+    New edge types:
+      event_affected  — category affected this company
+      event_chain     — category affected a secondary company (second-order)
+      event_confirmed — category + sentiment was later confirmed by financials
+    """
+    cat        = event.get("category", "")
+    symbol     = event.get("symbol", "")
+    sentiment  = event.get("sentiment", "Neutral")
+    status     = event.get("status", "Detected")
+    affected   = event.get("affected_companies", [])
+    importance = event.get("importance", "Medium")
+    today      = time.strftime("%Y-%m-%d")
+
+    if not cat or not symbol:
+        return
+
+    ev = {"event_id": event.get("id"), "date": today, "importance": importance}
+
+    with _lock:
+        data  = _read()
+        nodes = data.setdefault("nodes", {})
+        edges = data.setdefault("edges", {})
+
+        cat_nid = _upsert_node(nodes, "event_category", cat)
+        sym_nid = _upsert_node(nodes, "company", symbol, {"sentiment": sentiment})
+
+        _upsert_edge(edges, cat_nid, sym_nid, "event_affected", ev)
+
+        # Sector linkage if available
+        if event.get("sector"):
+            sec_nid = _upsert_node(nodes, "sector", event["sector"])
+            _upsert_edge(edges, cat_nid, sec_nid, "associated_with", ev)
+
+        # Second-order companies — the event chain
+        for secondary in affected:
+            sec_sym_nid = _upsert_node(nodes, "company", secondary.upper())
+            _upsert_edge(edges, sym_nid, sec_sym_nid, "event_chain", ev)
+            _upsert_edge(edges, cat_nid, sec_sym_nid, "event_affected", ev)
+
+        # When confirmed — upgrade the edge with a confirmation
+        if status == "Confirmed":
+            out_label = f"{cat}:{sentiment}"
+            out_nid   = _upsert_node(nodes, "event_outcome", out_label)
+            _upsert_edge(edges, cat_nid, out_nid, "event_confirmed", ev)
+            _upsert_edge(edges, sym_nid, out_nid, "event_confirmed", ev)
+
+        _write({"nodes": nodes, "edges": edges})
+
+
 def get_stats() -> dict:
     data  = _read()
     nodes = data.get("nodes", {})

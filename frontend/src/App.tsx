@@ -12,6 +12,7 @@ import ResearchQuestions from './pages/ResearchQuestions'
 import BeliefChanges from './pages/BeliefChanges'
 import KnowledgeGraph from './pages/KnowledgeGraph'
 import MarketBrain from './pages/MarketBrain'
+import MarketIntelligence from './pages/MarketIntelligence'
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/beliefs" element={<BeliefChanges />} />
           <Route path="/graph" element={<KnowledgeGraph />} />
           <Route path="/brain" element={<MarketBrain />} />
+          <Route path="/intelligence" element={<MarketIntelligence />} />
           <Route path="/accuracy" element={<Accuracy />} />
           <Route path="/legal" element={<Legal />} />
         </Routes>

@@ -261,6 +261,9 @@ export default function Scanner() {
           <Link to="/brain" className="text-violet-300 hover:text-violet-200 text-xs font-semibold hidden md:block transition">
             {t.brain_navLabel}
           </Link>
+          <Link to="/intelligence" className="text-teal-300 hover:text-teal-200 text-xs font-semibold hidden md:block transition">
+            {t.intel_navLabel}
+          </Link>
           <LanguageToggle />
         </div>
         {/* Thin refresh progress strip at very top */}

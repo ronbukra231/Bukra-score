@@ -131,6 +131,12 @@ export default function Home() {
           >
             {t.brain_navLabel} 🧬
           </Link>
+          <Link
+            to="/intelligence"
+            className="bg-gray-800 hover:bg-gray-700 text-teal-300 font-bold rounded-2xl px-7 py-3.5 text-base transition border border-teal-500/30 hover:border-teal-500/60"
+          >
+            {t.intel_navLabel} 🔭
+          </Link>
         </div>
       </div>
 

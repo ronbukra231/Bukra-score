@@ -455,6 +455,72 @@ export interface Translations {
   radar_confidence: string
   radar_navLabel: string
 
+  // ── Event Intelligence ────────────────────────────────────────────────────
+  intel_navLabel: string
+  intel_pageTitle: string
+  intel_pageSubtitle: string
+  intel_pageTagline: string
+  intel_thesisTitle: string
+  intel_thesisPositive: string
+  intel_thesisNegative: string
+  intel_thesisNeutral: string
+  intel_thesisMixed: string
+  intel_monitoring: string
+  intel_noEvents: string
+  intel_noEventsSub: string
+  intel_eventTimeline: string
+  intel_mostImportant: string
+  intel_confirmationNeeded: string
+  intel_expectedEffects: string
+  intel_statusDetected: string
+  intel_statusAnalyzing: string
+  intel_statusMonitoring: string
+  intel_statusConfirmed: string
+  intel_statusRejected: string
+  intel_importanceLow: string
+  intel_importanceMedium: string
+  intel_importanceHigh: string
+  intel_importanceCritical: string
+  intel_sentimentPositive: string
+  intel_sentimentNegative: string
+  intel_sentimentNeutral: string
+  intel_sentimentMixed: string
+  intel_effectRevenue: string
+  intel_effectMargins: string
+  intel_effectFCF: string
+  intel_effectOpIncome: string
+  intel_effectDebt: string
+  intel_effectCompetitive: string
+  intel_effectMarketShare: string
+  intel_effectCapAlloc: string
+  intel_horizonImmediate: string
+  intel_horizonNextQ: string
+  intel_horizon6M: string
+  intel_horizon12M: string
+  intel_horizonLT: string
+  intel_confidence: string
+  intel_source: string
+  intel_affectedCompanies: string
+  intel_secondOrderEffects: string
+  intel_requiresConfirmation: string
+  intel_supportingEvidence: string
+  intel_contradictingEvidence: string
+  intel_themes: string
+  intel_themeConfirmRate: string
+  intel_themeCount: string
+  intel_chains: string
+  intel_chainDesc: string
+  intel_noChains: string
+  intel_fastestGrowing: string
+  intel_mostConfirmed: string
+  intel_rejectedNarr: string
+  intel_macroEvents: string
+  intel_statTotal: string
+  intel_statConfirmed: string
+  intel_statMonitoring: string
+  intel_statCategories: string
+  intel_disclaimer: string
+
   // ── Market Brain (World Model) ──────────────────────────────────────────────
   brain_navLabel: string
   brain_title: string

@@ -11,6 +11,7 @@ import SmartAnalystSummary from '../components/SmartAnalystSummary'
 import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
 import IntelligencePanel from '../components/IntelligencePanel'
+import EventIntelligencePanel from '../components/EventIntelligencePanel'
 
 // ── Security helpers ──────────────────────────────────────────────────────────
 function isSafeUrl(url?: string | null): boolean {
@@ -364,6 +365,7 @@ export default function Company() {
               <div className="space-y-6">
                 <BukraScoreCard score={data.score} />
                 <IntelligencePanel intelligence={data.intelligence ?? null} />
+                <EventIntelligencePanel symbol={sym} />
                 <BukraRules history={data.financials?.history ?? []} />
               </div>
             </div>
