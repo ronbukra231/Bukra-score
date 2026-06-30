@@ -133,6 +133,18 @@ def _resolve_pending():
             beat_spy_3m=beat_spy,
             alpha_3m=alpha_3m,
         )
+
+        # Teach the world model: this pattern preceded this outcome
+        try:
+            import services.world_model    as wm
+            import services.knowledge_graph as kg
+            pat_sig = snap.get("pattern_sig")
+            if pat_sig:
+                wm.record_outcome(pat_sig, snap["ticker"], bool(beat_spy), alpha_3m)
+                kg.record_outcome(pat_sig, snap["ticker"], bool(beat_spy), alpha_3m)
+        except Exception as wm_err:
+            print(f"[world-model] outcome update failed for {snap['ticker']}: {wm_err}")
+
         resolved += 1
         print(
             f"[accuracy] resolved {snap['ticker']} snap={snap_date}: "

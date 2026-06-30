@@ -14,6 +14,7 @@ from routers.accuracy import router as accuracy_router
 from routers.intelligence import router as intelligence_router
 from routers.discoveries import router as discoveries_router
 from routers.memory import router as memory_router
+from routers.world_model import router as world_model_router
 from services.accuracy_db import init_db
 from services.provider_monitor import log_hourly_report, get_snapshot
 
@@ -70,6 +71,7 @@ app.include_router(accuracy_router)
 app.include_router(intelligence_router)
 app.include_router(discoveries_router)
 app.include_router(memory_router)
+app.include_router(world_model_router)
 
 
 # ── Security headers middleware ────────────────────────────────────────────────

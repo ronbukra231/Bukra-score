@@ -28,6 +28,8 @@ def _conn() -> sqlite3.Connection:
 # ── Schema migration ──────────────────────────────────────────────────────────
 
 _NEW_COLS = [
+    # World model — pattern signature at time of scan
+    ("pattern_sig",       "TEXT"),
     # Alpha (excess return vs SPY)
     ("alpha_3m",          "REAL"),
     # 1-month horizon
@@ -231,16 +233,18 @@ def save_snapshot(
     bukra_score: int,
     price_at_score: Optional[float],
     spy_price_at: Optional[float] = None,
+    pattern_sig: Optional[str]   = None,
 ) -> int:
     now = datetime.now(timezone.utc)
     with _conn() as con:
         cur = con.execute("""
             INSERT INTO snapshots
               (ticker, company_name, sector, bukra_score, price_at_score,
-               snapshot_date, is_sample, spy_price_at, outcome_status, created_at)
-            VALUES (?,?,?,?,?,?,0,?,'pending',?)
+               snapshot_date, is_sample, spy_price_at, outcome_status, created_at,
+               pattern_sig)
+            VALUES (?,?,?,?,?,?,0,?,'pending',?,?)
         """, (ticker, company_name, sector, bukra_score, price_at_score,
-              now.date().isoformat(), spy_price_at, now.isoformat()))
+              now.date().isoformat(), spy_price_at, now.isoformat(), pattern_sig))
         con.commit()
         return cur.lastrowid
 

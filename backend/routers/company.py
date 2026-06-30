@@ -15,6 +15,8 @@ from services.analyst_summary import generate_smart_analyst_summary
 from services.accuracy_db import save_snapshot
 from services.intelligence import build_company_intelligence
 from services.scan_history import get_previous_snapshot, save_intelligence_snapshot
+import services.world_model   as world_model
+import services.knowledge_graph as knowledge_graph
 
 router = APIRouter(prefix="/api", tags=["company"])
 
@@ -119,12 +121,22 @@ def company_page(request: Request, symbol: str):
     prev_snap    = get_previous_snapshot(sym)
     intelligence = build_company_intelligence(info, financials, score_data, prev_snap)
 
-    # Persist snapshot in background so it's available on next page load
+    # Persist snapshot and update world model in background
     def _save_intel():
         try:
-            save_intelligence_snapshot(sym, score_data, intelligence, info)
+            snap = save_intelligence_snapshot(sym, score_data, intelligence, info)
+            # World model: observe this company's financial pattern
+            snapshot_for_wm = {
+                "symbol":  sym,
+                "sector":  info.get("sector", ""),
+                "score":   score_data.get("score"),
+                "trend":   intelligence.get("trend", {}),
+                "signals": intelligence.get("signals", []),
+            }
+            sig = world_model.observe(snapshot_for_wm)
+            knowledge_graph.update_from_scan(snapshot_for_wm, sig)
         except Exception as e:
-            logger.warning("[intelligence] snapshot save failed for %s: %s", sym, e)
+            logger.warning("[world-model] update failed for %s: %s", sym, e)
     threading.Thread(target=_save_intel, daemon=True).start()
 
     # AI explanation — never crashes the response if unavailable

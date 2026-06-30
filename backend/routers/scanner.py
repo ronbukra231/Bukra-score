@@ -26,6 +26,8 @@ from services.accuracy_db import save_snapshot
 from services.intelligence import build_company_intelligence
 from services.scan_history import get_previous_snapshot, save_intelligence_snapshot
 from services.research_agent import run_research_scan
+import services.world_model    as world_model
+import services.knowledge_graph as knowledge_graph
 
 logger = logging.getLogger("bukra.scanner")
 router = APIRouter(prefix="/api", tags=["scanner"])
@@ -103,14 +105,24 @@ def _score_ticker(entry: dict) -> Optional[dict]:
 
         rules_data = compute_bukra_rules(financials)
 
-        # Intelligence layer — save snapshot for Radar page
+        # Intelligence layer — save snapshot for Radar page + update world model
+        intelligence = None
         try:
             prev_snap    = get_previous_snapshot(ticker)
             intelligence = build_company_intelligence(info, financials, score_data, prev_snap)
             save_intelligence_snapshot(ticker, score_data, intelligence, info)
+            # World model observation
+            snapshot_for_wm = {
+                "symbol":  ticker,
+                "sector":  info.get("sector", ""),
+                "score":   score_data.get("score"),
+                "trend":   intelligence.get("trend", {}),
+                "signals": intelligence.get("signals", []),
+            }
+            sig = world_model.observe(snapshot_for_wm)
+            knowledge_graph.update_from_scan(snapshot_for_wm, sig)
         except Exception as e:
-            logger.warning("[scanner] intelligence failed for %s: %s", ticker, e)
-            intelligence = None
+            logger.warning("[scanner] intelligence/world-model failed for %s: %s", ticker, e)
         breakdown    = score_data.get("breakdown", {})
         max_scores   = score_data.get("max_scores", {})
         explanations = score_data.get("explanations", {})

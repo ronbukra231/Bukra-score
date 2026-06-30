@@ -454,4 +454,37 @@ export interface Translations {
   radar_trend: string
   radar_confidence: string
   radar_navLabel: string
+
+  // ── Market Brain (World Model) ──────────────────────────────────────────────
+  brain_navLabel: string
+  brain_title: string
+  brain_subtitle: string
+  brain_tagline: string
+  brain_noData: string
+  brain_noDataSub: string
+  brain_statPatterns: string
+  brain_statObservations: string
+  brain_statCompanies: string
+  brain_statWithOutcomes: string
+  brain_statNodes: string
+  brain_statEdges: string
+  brain_sectionPatterns: string
+  brain_sectionEmerging: string
+  brain_sectionStrengthened: string
+  brain_sectionWeakened: string
+  brain_sectionRelationships: string
+  brain_patternFreq: string
+  brain_patternConfidence: string
+  brain_patternSuccessRate: string
+  brain_patternCompanies: string
+  brain_patternSectors: string
+  brain_patternFirstSeen: string
+  brain_patternNoOutcomes: string
+  brain_edgeWeight: string
+  brain_edgeType: string
+  brain_nodeType: string
+  brain_nodeObservations: string
+  brain_statusEmerging: string
+  brain_statusConfirmed: string
+  brain_statusLearning: string
 }

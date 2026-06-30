@@ -1,0 +1,183 @@
+{
+  "nodes": {
+    "sector::technology": {
+      "id": "sector::technology",
+      "type": "sector",
+      "label": "Technology",
+      "observation_count": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30"
+    },
+    "score_tier::60-69": {
+      "id": "score_tier::60-69",
+      "type": "score_tier",
+      "label": "60-69",
+      "observation_count": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30"
+    },
+    "trend::improving": {
+      "id": "trend::improving",
+      "type": "trend",
+      "label": "Improving",
+      "observation_count": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30"
+    },
+    "signal::qualityupgrade": {
+      "id": "signal::qualityupgrade",
+      "type": "signal",
+      "label": "QualityUpgrade",
+      "observation_count": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30"
+    },
+    "pattern::חוב_יורד_·_ציון_60-69": {
+      "id": "pattern::חוב_יורד_·_ציון_60-69",
+      "type": "pattern",
+      "label": "חוב יורד · ציון 60-69",
+      "observation_count": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "signature": "fcf:flat|margin:flat|debt:improving|rev:flat|trend:Improving|tier:60-69",
+      "frequency": 1
+    }
+  },
+  "edges": {
+    "sector::technology▶associated_with▶score_tier::60-69": {
+      "source": "sector::technology",
+      "target": "score_tier::60-69",
+      "type": "associated_with",
+      "weight": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "evidence": [
+        {
+          "company": "AAPL",
+          "date": "2026-06-30",
+          "score": 66
+        }
+      ]
+    },
+    "sector::technology▶associated_with▶trend::improving": {
+      "source": "sector::technology",
+      "target": "trend::improving",
+      "type": "associated_with",
+      "weight": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "evidence": [
+        {
+          "company": "AAPL",
+          "date": "2026-06-30",
+          "score": 66
+        }
+      ]
+    },
+    "signal::qualityupgrade▶associated_with▶sector::technology": {
+      "source": "signal::qualityupgrade",
+      "target": "sector::technology",
+      "type": "associated_with",
+      "weight": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "evidence": [
+        {
+          "company": "AAPL",
+          "date": "2026-06-30",
+          "score": 66
+        }
+      ]
+    },
+    "signal::qualityupgrade▶associated_with▶score_tier::60-69": {
+      "source": "signal::qualityupgrade",
+      "target": "score_tier::60-69",
+      "type": "associated_with",
+      "weight": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "evidence": [
+        {
+          "company": "AAPL",
+          "date": "2026-06-30",
+          "score": 66
+        }
+      ]
+    },
+    "signal::qualityupgrade▶associated_with▶trend::improving": {
+      "source": "signal::qualityupgrade",
+      "target": "trend::improving",
+      "type": "associated_with",
+      "weight": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "evidence": [
+        {
+          "company": "AAPL",
+          "date": "2026-06-30",
+          "score": 66
+        }
+      ]
+    },
+    "pattern::חוב_יורד_·_ציון_60-69▶sector_correlation▶sector::technology": {
+      "source": "pattern::חוב_יורד_·_ציון_60-69",
+      "target": "sector::technology",
+      "type": "sector_correlation",
+      "weight": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "evidence": [
+        {
+          "company": "AAPL",
+          "date": "2026-06-30",
+          "score": 66
+        }
+      ]
+    },
+    "pattern::חוב_יורד_·_ציון_60-69▶associated_with▶score_tier::60-69": {
+      "source": "pattern::חוב_יורד_·_ציון_60-69",
+      "target": "score_tier::60-69",
+      "type": "associated_with",
+      "weight": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "evidence": [
+        {
+          "company": "AAPL",
+          "date": "2026-06-30",
+          "score": 66
+        }
+      ]
+    },
+    "pattern::חוב_יורד_·_ציון_60-69▶associated_with▶trend::improving": {
+      "source": "pattern::חוב_יורד_·_ציון_60-69",
+      "target": "trend::improving",
+      "type": "associated_with",
+      "weight": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "evidence": [
+        {
+          "company": "AAPL",
+          "date": "2026-06-30",
+          "score": 66
+        }
+      ]
+    },
+    "pattern::חוב_יורד_·_ציון_60-69▶associated_with▶signal::qualityupgrade": {
+      "source": "pattern::חוב_יורד_·_ציון_60-69",
+      "target": "signal::qualityupgrade",
+      "type": "associated_with",
+      "weight": 1,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "evidence": [
+        {
+          "company": "AAPL",
+          "date": "2026-06-30",
+          "score": 66
+        }
+      ]
+    }
+  }
+}

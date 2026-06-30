@@ -1,0 +1,36 @@
+{
+  "patterns": {
+    "fcf:flat|margin:flat|debt:improving|rev:flat|trend:Improving|tier:60-69": {
+      "pattern_id": "P0001",
+      "pattern_signature": "fcf:flat|margin:flat|debt:improving|rev:flat|trend:Improving|tier:60-69",
+      "label": "חוב יורד · ציון 60-69",
+      "companies": [
+        "AAPL"
+      ],
+      "sectors": [
+        "Technology"
+      ],
+      "frequency": 1,
+      "success_rate": null,
+      "confidence": 0.1439,
+      "first_seen": "2026-06-30",
+      "last_seen": "2026-06-30",
+      "supporting_evidence": [
+        {
+          "company": "AAPL",
+          "sector": "Technology",
+          "score": 66,
+          "date": "2026-06-30"
+        }
+      ],
+      "contradicting_evidence": [],
+      "outcome_count": 0,
+      "positive_outcome_count": 0
+    }
+  },
+  "meta": {
+    "total_observations": 1,
+    "total_companies": 1,
+    "last_updated": "2026-06-30T06:23:21Z"
+  }
+}
