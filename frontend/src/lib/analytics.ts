@@ -2,24 +2,22 @@
  * Bukra Analytics — production-grade GA4 integration.
  *
  * Architecture:
- *   - Single initialisation, lazy script injection, duplicate-guard
+ *   - gtag.js is loaded in index.html so it appears in View Source and is
+ *     detected by Google's tag checker, crawlers, and CSP auditors.
+ *   - This file is a pure wrapper — no script injection, just window.gtag calls.
  *   - All tracking goes through one trackEvent() so switching providers
- *     (Mixpanel, PostHog, Amplitude, Clarity) requires changing only this file
- *   - Debug mode: every event is console.log'd in development
- *   - Privacy: no IP, no PII, no manual cookies — anonymous only
+ *     (Mixpanel, PostHog, Amplitude, Clarity) requires changing only this file.
+ *   - Debug mode: every event is console.log'd in development, silent in prod.
+ *   - Privacy: anonymize_ip=true, no ad signals, no PII, no manual cookies.
  *
  * Usage:
  *   import * as analytics from '../lib/analytics'
- *   analytics.initAnalytics()           // once, at app boot
+ *   analytics.initAnalytics()           // call once at app boot (sets debug flag)
  *   analytics.trackPage('/company/AAPL')
  *   analytics.trackCompanyOpen('AAPL', 72, 'Technology')
  */
 
-const MEASUREMENT_ID = 'G-G2LSV3V5T9'
-const IS_DEV         = import.meta.env.DEV
-const GTAG_URL       = `https://www.googletagmanager.com/gtag/js?id=${MEASUREMENT_ID}`
-
-// ── Internal state ────────────────────────────────────────────────────────────
+const IS_DEV = import.meta.env.DEV
 
 let _initialised = false
 
@@ -33,35 +31,14 @@ declare global {
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 
 /**
- * Inject gtag.js asynchronously and configure GA4.
- * Safe to call multiple times — initialises only once.
+ * Called once at app boot (main.tsx).
+ * gtag.js is already loaded from index.html — this just confirms the guard
+ * and logs a confirmation in development.
  */
 export function initAnalytics(): void {
   if (_initialised || typeof window === 'undefined') return
   _initialised = true
-
-  // Bootstrap dataLayer before script loads
-  window.dataLayer = window.dataLayer ?? []
-  window.gtag = function (...args: unknown[]) {
-    window.dataLayer.push(args)
-  }
-
-  window.gtag('js', new Date())
-  window.gtag('config', MEASUREMENT_ID, {
-    send_page_view:         false,  // we send page_view manually for SPA accuracy
-    anonymize_ip:           true,
-    allow_google_signals:   false,  // no remarketing
-    allow_ad_personalization_signals: false,
-    cookie_flags:           'SameSite=None;Secure',
-  })
-
-  // Lazy-load the gtag script
-  const script = document.createElement('script')
-  script.async   = true
-  script.src     = GTAG_URL
-  document.head.appendChild(script)
-
-  _debug('init', { measurement_id: MEASUREMENT_ID })
+  _debug('init', { measurement_id: 'G-G2LSV3V5T9', gtag_present: typeof window.gtag === 'function' })
 }
 
 // ── Core primitives ───────────────────────────────────────────────────────────
