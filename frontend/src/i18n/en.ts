@@ -11,6 +11,8 @@ const en: Translations = {
   home_footer: 'Bukra Capital · Research only · Not investment advice',
   home_h1_line1: 'Most people buy stocks.',
   home_h1_line2: 'Few understand the business.',
+  home_slogan: 'Check before you invest.',
+  home_slogan_sub: 'A long-term business quality index — before buying a stock, check the score.',
   home_subheadline: 'Bukra Score helps investors understand the business behind the stock before making a decision.',
   home_description: 'The system analyzes real financial data from public companies and translates it into a simple 0–100 score based on 5 principles selected by Bukra to evaluate long-term business quality.',
   home_explainTitle: 'What is Bukra Score?',

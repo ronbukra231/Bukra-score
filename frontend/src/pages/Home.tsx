@@ -47,14 +47,19 @@ export default function Home() {
           <span className="text-brand-400">{t.home_h1_line2}</span>
         </h1>
 
-        {/* Subheadline */}
-        <p className="text-gray-300 text-lg md:text-xl max-w-2xl mb-4 leading-relaxed font-medium">
-          {t.home_subheadline}
-        </p>
+        {/* Slogan — brand line */}
+        <div className="mb-6">
+          <p className="text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
+            {t.home_slogan}
+          </p>
+          <p className="text-gray-500 text-sm md:text-base mt-2 leading-relaxed max-w-lg mx-auto">
+            {t.home_slogan_sub}
+          </p>
+        </div>
 
-        {/* Description */}
-        <p className="text-gray-500 text-sm md:text-base max-w-xl mb-10 leading-relaxed">
-          {t.home_description}
+        {/* Subheadline */}
+        <p className="text-gray-400 text-sm md:text-base max-w-xl mb-10 leading-relaxed">
+          {t.home_subheadline}
         </p>
 
         {/* Search */}

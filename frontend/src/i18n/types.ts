@@ -15,6 +15,8 @@ export interface Translations {
   // New hero copy
   home_h1_line1: string
   home_h1_line2: string
+  home_slogan: string
+  home_slogan_sub: string
   home_subheadline: string
   home_description: string
   // Explanation card
