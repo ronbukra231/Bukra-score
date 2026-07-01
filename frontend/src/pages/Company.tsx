@@ -12,6 +12,8 @@ import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
 import IntelligencePanel from '../components/IntelligencePanel'
 import * as analytics from '../lib/analytics'
+import { useAuth } from '../contexts/AuthContext'
+import UserMenu from '../components/UserMenu'
 
 // ── Security helpers ──────────────────────────────────────────────────────────
 function isSafeUrl(url?: string | null): boolean {
@@ -134,11 +136,71 @@ function LoadingStages({ steps }: { steps: string[] }) {
   )
 }
 
+// ── Guest wall ────────────────────────────────────────────────────────────────
+
+function GuestWall({ sym, score, t, isHe }: { sym: string; score?: number; t: any; isHe: boolean }) {
+  return (
+    <div className="max-w-xl mx-auto py-10 text-center space-y-6">
+      {/* Teaser score */}
+      <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gray-950/60 backdrop-blur-sm rounded-3xl z-10 flex flex-col items-center justify-center gap-3">
+          <div className="text-4xl">🔒</div>
+          <p className="text-white font-bold text-lg">{t.auth_guestTitle}</p>
+          <p className="text-gray-400 text-sm max-w-xs">{t.auth_guestBody}</p>
+          <div className="flex gap-3 mt-2">
+            <a
+              href="/login"
+              className="bg-brand-600 hover:bg-brand-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition"
+            >
+              {t.auth_guestSignUp}
+            </a>
+            <a
+              href="/login"
+              className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-semibold px-5 py-2.5 rounded-xl transition border border-gray-700"
+            >
+              {t.auth_guestSignIn}
+            </a>
+          </div>
+        </div>
+        {/* Background teaser (blurred behind overlay) */}
+        <div className="blur-sm select-none pointer-events-none">
+          <div className="text-8xl font-black text-white/20 mb-2">{score ?? '—'}</div>
+          <div className="text-gray-500 text-sm">{isHe ? 'ציון בוקרה' : 'Bukra Score'} · {sym}</div>
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            {['רווחיות', 'צמיחה', 'חוב', 'תזרים', 'יציבות'].map(c => (
+              <div key={c} className="bg-gray-800 rounded-xl h-16 flex items-center justify-center">
+                <span className="text-gray-600 text-xs">{c}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* What you'll unlock */}
+      <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 text-right" dir={isHe ? 'rtl' : 'ltr'}>
+        <p className="text-gray-400 text-xs uppercase tracking-widest mb-3 font-semibold">
+          {isHe ? 'מה תקבל לאחר ההרשמה' : "What you'll unlock"}
+        </p>
+        <ul className="space-y-2">
+          {(isHe
+            ? ['ציון בוקרה המלא עם פירוט', 'ניתוח AI בעברית', 'גרפים פיננסיים — 5 שנים', 'חוזקות, חולשות וסיכונים', 'סיכום אנליסטים חכם']
+            : ['Full Bukra Score with breakdown', 'AI analysis in plain language', 'Financial charts — 5 years', 'Strengths, weaknesses & risks', 'Smart analyst summary']
+          ).map(item => (
+            <li key={item} className="flex items-center gap-2 text-gray-300 text-sm">
+              <span className="text-brand-400 text-xs">✓</span> {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Company() {
   const { symbol } = useParams<{ symbol: string }>()
-  const { t } = useLanguage()
+  const { t, isHe } = useLanguage()
 
   const [data, setData]       = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -195,6 +257,7 @@ export default function Company() {
   }, [sym, load])
 
   const loadingSteps = [t.co_loadingStep1, t.co_loadingStep2, t.co_loadingStep3]
+  const { user } = useAuth()
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -211,6 +274,7 @@ export default function Company() {
             {t.nav_appName}
           </div>
           <LanguageToggle />
+          <UserMenu />
         </div>
       </div>
 
@@ -324,65 +388,56 @@ export default function Company() {
               <Stat label={t.stat_countryAndCurrency} value={`${data.info.country || '—'} / ${data.info.currency || 'USD'}`} />
             </div>
 
-            {/* Smart Analyst Summary — full-width, above charts */}
-            <SmartAnalystSummary data={data.analyst_summary ?? null} />
-
-            {/* Main 2-column layout */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-              {/* Left column: Charts + About + AI */}
-              <div className="xl:col-span-2 space-y-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-4 h-4 text-brand-400" />
-                    <h2 className="text-white font-bold text-lg">{t.co_chartsTitle}</h2>
-                    {data.financials?.source === 'mock' && (
-                      <span className="text-amber-500 text-xs bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">
-                        {t.co_mockBadge}
-                      </span>
-                    )}
-                  </div>
-
-                  {data.financials?.history?.length ? (
-                    <FinancialCharts history={data.financials.history} />
-                  ) : (
-                    <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center">
-                      <div className="text-3xl mb-3">📊</div>
-                      <p className="text-gray-400 text-sm">
-                        {t.co_noChartsTitle} {sym}
-                      </p>
-                      <p className="text-gray-600 text-xs mt-1">
-                        {t.co_noChartsBody}
-                      </p>
+            {/* ── Logged-in: full analysis ─────────────────────────────── */}
+            {user ? (
+              <>
+                <SmartAnalystSummary data={data.analyst_summary ?? null} />
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  <div className="xl:col-span-2 space-y-6">
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <TrendingUp className="w-4 h-4 text-brand-400" />
+                        <h2 className="text-white font-bold text-lg">{t.co_chartsTitle}</h2>
+                        {data.financials?.source === 'mock' && (
+                          <span className="text-amber-500 text-xs bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">
+                            {t.co_mockBadge}
+                          </span>
+                        )}
+                      </div>
+                      {data.financials?.history?.length ? (
+                        <FinancialCharts history={data.financials.history} />
+                      ) : (
+                        <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center">
+                          <div className="text-3xl mb-3">📊</div>
+                          <p className="text-gray-400 text-sm">{t.co_noChartsTitle} {sym}</p>
+                          <p className="text-gray-600 text-xs mt-1">{t.co_noChartsBody}</p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-
-                {data.info.description && (
-                  <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-                    <h3 className="text-white font-semibold text-sm mb-2">{t.co_about}</h3>
-                    <p className="text-gray-400 text-sm leading-7 line-clamp-4">
-                      {data.info.description}
-                    </p>
+                    {data.info.description && (
+                      <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+                        <h3 className="text-white font-semibold text-sm mb-2">{t.co_about}</h3>
+                        <p className="text-gray-400 text-sm leading-7 line-clamp-4">{data.info.description}</p>
+                      </div>
+                    )}
+                    <AIExplanation
+                      explanation={data.explanation ?? null}
+                      loading={false}
+                      error={data.explanation_error ?? ''}
+                      englishDescription={data.info.description || ''}
+                    />
                   </div>
-                )}
-
-                {/* AI Explanation — comes bundled in /page response */}
-                <AIExplanation
-                  explanation={data.explanation ?? null}
-                  loading={false}
-                  error={data.explanation_error ?? ''}
-                  englishDescription={data.info.description || ''}
-                />
-              </div>
-
-              {/* Right column: Score + Intelligence + Rules */}
-              <div className="space-y-6">
-                <BukraScoreCard score={data.score} />
-                <IntelligencePanel intelligence={data.intelligence ?? null} />
-                <BukraRules history={data.financials?.history ?? []} />
-              </div>
-            </div>
+                  <div className="space-y-6">
+                    <BukraScoreCard score={data.score} />
+                    <IntelligencePanel intelligence={data.intelligence ?? null} />
+                    <BukraRules history={data.financials?.history ?? []} />
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* ── Guest wall ─────────────────────────────────────────────── */
+              <GuestWall sym={sym} score={data.score?.total} t={t} isHe={isHe} />
+            )}
           </div>
         )}
       </div>

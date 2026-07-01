@@ -5,6 +5,7 @@ import { getScannerLatest, postScannerRefresh, getScannerStatus } from '../api/c
 import { useLanguage } from '../i18n/index'
 import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
+import UserMenu from '../components/UserMenu'
 import PredictionAccuracyCard from '../components/PredictionAccuracyCard'
 import * as analytics from '../lib/analytics'
 
@@ -253,6 +254,7 @@ export default function Scanner() {
             {t.radar_navLabel} ⬡
           </Link>
           <LanguageToggle />
+          <UserMenu />
         </div>
         {/* Thin refresh progress strip at very top */}
         {isRefreshing && (

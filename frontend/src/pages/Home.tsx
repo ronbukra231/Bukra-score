@@ -2,8 +2,10 @@ import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
+import UserMenu from '../components/UserMenu'
 import PredictionAccuracyCard from '../components/PredictionAccuracyCard'
 import { useLanguage } from '../i18n/index'
+import { useAuth } from '../contexts/AuthContext'
 
 const POPULAR = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'BRK-B', 'JPM']
 
@@ -17,6 +19,7 @@ const PRINCIPLES = [
 
 export default function Home() {
   const { t, isHe } = useLanguage()
+  const { user } = useAuth()
   const searchRef = useRef<HTMLDivElement>(null)
 
   function focusSearch() {
@@ -27,9 +30,10 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col" dir={isHe ? 'rtl' : 'ltr'}>
 
-      {/* Language toggle */}
-      <div className={`flex px-4 pt-4 ${isHe ? 'justify-start' : 'justify-end'}`}>
-        <LanguageToggle />
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 pt-4">
+        {isHe ? <UserMenu /> : <LanguageToggle />}
+        {isHe ? <LanguageToggle /> : <UserMenu />}
       </div>
 
       {/* ── Hero ── */}
@@ -100,6 +104,22 @@ export default function Home() {
           >
             {t.radar_navLabel} ⬡
           </Link>
+          {!user && (
+            <>
+              <Link
+                to="/login"
+                className="bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-2xl px-7 py-3.5 text-base transition border border-gray-700"
+              >
+                {t.auth_login}
+              </Link>
+              <Link
+                to="/login"
+                className="bg-brand-600/15 hover:bg-brand-600/25 text-brand-400 font-bold rounded-2xl px-7 py-3.5 text-base transition border border-brand-500/40 hover:border-brand-500/70"
+              >
+                {t.auth_guestSignUp}
+              </Link>
+            </>
+          )}
         </div>
       </div>
 

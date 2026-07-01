@@ -3,7 +3,9 @@ import time
 import threading
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from fastapi import APIRouter, HTTPException, Query, Request
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from middleware.auth import optional_user
 
 logger = logging.getLogger("bukra.company")
 from limiter import limiter
@@ -88,7 +90,7 @@ def search(request: Request, q: str = Query(..., min_length=1, max_length=100)):
 
 @router.get("/company/{symbol}/page")
 @limiter.limit("30/minute")
-def company_page(request: Request, symbol: str):
+def company_page(request: Request, symbol: str, user: Optional[dict] = Depends(optional_user)):
     """
     Single optimised endpoint for the frontend company page.
     Returns info + financials + score + rules + AI explanation in one request.
@@ -100,6 +102,8 @@ def company_page(request: Request, symbol: str):
     cached = _page_get(sym)
     if cached:
         logger.info("[page] %s | cache=HIT | score=%s", sym, cached.get("score", {}).get("score"))
+        if not user:
+            return {"info": cached.get("info", {}), "from_cache": True, "guest": True}
         return {**cached, "from_cache": True}
 
     # Fetch info + financials in parallel to cut latency roughly in half
@@ -189,6 +193,15 @@ def company_page(request: Request, symbol: str):
         _page_set(sym, result)
     elif info.get("name") and not has_financials:
         logger.warning("[page] %s | NOT caching — financials empty (source=%s)", sym, financials.get("source"))
+
+    # Strip proprietary analysis for unauthenticated (guest) requests
+    if not user:
+        return {
+            "info":       info,
+            "from_cache": False,
+            "perf":       {"totalMs": elapsed_ms},
+            "guest":      True,
+        }
 
     return result
 

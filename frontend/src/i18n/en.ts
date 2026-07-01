@@ -537,6 +537,22 @@ const en: Translations = {
   intel_statMonitoring: 'monitoring',
   intel_statCategories: 'categories',
   intel_disclaimer: 'Bukra is not a news website. Bukra is an intelligence analyst. The Bukra Score is never changed by events directly. Events create hypotheses. Financial statements confirm or reject them.',
+
+  // Auth
+  auth_login: 'Login',
+  auth_signup: 'Sign Up',
+  auth_logout: 'Logout',
+  auth_continueGoogle: 'Continue with Google',
+  auth_email: 'Email',
+  auth_password: 'Password',
+  auth_or: 'or',
+  auth_noAccount: "Don't have an account?",
+  auth_haveAccount: 'Already have an account?',
+  auth_backHome: 'Back to Home',
+  auth_guestTitle: 'Full analysis available after sign in',
+  auth_guestBody: 'Sign up free for full Bukra Score, AI analysis, financial charts, and more.',
+  auth_guestSignIn: 'Sign In',
+  auth_guestSignUp: 'Sign Up Free',
 }
 
 export default en

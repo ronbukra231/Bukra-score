@@ -1,12 +1,16 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { LanguageProvider } from './i18n/index'
+import { AuthProvider } from './contexts/AuthContext'
 import RouteTracker from './components/RouteTracker'
+import AdminGuard from './components/AdminGuard'
 import Home from './pages/Home'
 import Company from './pages/Company'
 import Scanner from './pages/Scanner'
 import Accuracy from './pages/Accuracy'
 import Legal from './pages/Legal'
 import Radar from './pages/Radar'
+import Login from './pages/Login'
+import AdminLogin from './pages/AdminLogin'
 import ResearchJournal from './pages/ResearchJournal'
 import ResearchMemory from './pages/ResearchMemory'
 import ResearchQuestions from './pages/ResearchQuestions'
@@ -14,30 +18,37 @@ import BeliefChanges from './pages/BeliefChanges'
 import KnowledgeGraph from './pages/KnowledgeGraph'
 import MarketBrain from './pages/MarketBrain'
 import MarketIntelligence from './pages/MarketIntelligence'
-import AdminGuard from './components/AdminGuard'
 
 export default function App() {
   return (
     <LanguageProvider>
-      <BrowserRouter>
-        {/* Fires page_view + route_load_time on every navigation */}
-        <RouteTracker />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/company/:symbol" element={<Company />} />
-          <Route path="/scanner" element={<Scanner />} />
-          <Route path="/radar" element={<Radar />} />
-          <Route path="/journal" element={<AdminGuard><ResearchJournal /></AdminGuard>} />
-          <Route path="/memory" element={<AdminGuard><ResearchMemory /></AdminGuard>} />
-          <Route path="/questions" element={<AdminGuard><ResearchQuestions /></AdminGuard>} />
-          <Route path="/beliefs" element={<AdminGuard><BeliefChanges /></AdminGuard>} />
-          <Route path="/graph" element={<AdminGuard><KnowledgeGraph /></AdminGuard>} />
-          <Route path="/brain" element={<AdminGuard><MarketBrain /></AdminGuard>} />
-          <Route path="/intelligence" element={<AdminGuard><MarketIntelligence /></AdminGuard>} />
-          <Route path="/accuracy" element={<Accuracy />} />
-          <Route path="/legal" element={<Legal />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <RouteTracker />
+          <Routes>
+            {/* Public */}
+            <Route path="/" element={<Home />} />
+            <Route path="/company/:symbol" element={<Company />} />
+            <Route path="/scanner" element={<Scanner />} />
+            <Route path="/radar" element={<Radar />} />
+            <Route path="/accuracy" element={<Accuracy />} />
+            <Route path="/legal" element={<Legal />} />
+
+            {/* Auth */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+
+            {/* Admin-only internal intelligence */}
+            <Route path="/journal"      element={<AdminGuard><ResearchJournal /></AdminGuard>} />
+            <Route path="/memory"       element={<AdminGuard><ResearchMemory /></AdminGuard>} />
+            <Route path="/questions"    element={<AdminGuard><ResearchQuestions /></AdminGuard>} />
+            <Route path="/beliefs"      element={<AdminGuard><BeliefChanges /></AdminGuard>} />
+            <Route path="/graph"        element={<AdminGuard><KnowledgeGraph /></AdminGuard>} />
+            <Route path="/brain"        element={<AdminGuard><MarketBrain /></AdminGuard>} />
+            <Route path="/intelligence" element={<AdminGuard><MarketIntelligence /></AdminGuard>} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </LanguageProvider>
   )
 }

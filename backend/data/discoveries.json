@@ -1,0 +1,27 @@
+{
+  "discoveries": [],
+  "research_notes": [
+    {
+      "scan_date": "2026-06-29T23:08:54Z",
+      "companies_analyzed": 1,
+      "candidates_found": 0,
+      "new_discoveries": 0,
+      "confirmed_discoveries": 0,
+      "notes": [
+        "נסרקו 1 חברות — נדרשות לפחות 2 לניתוח דפוסים."
+      ],
+      "summary": "אין מספיק נתונים לניתוח דפוסים."
+    },
+    {
+      "scan_date": "2026-06-29T23:20:17Z",
+      "companies_analyzed": 1,
+      "candidates_found": 0,
+      "new_discoveries": 0,
+      "confirmed_discoveries": 0,
+      "notes": [
+        "נסרקו 1 חברות — נדרשות ≥2 לניתוח דפוסים."
+      ],
+      "summary": "אין מספיק נתונים לניתוח דפוסים."
+    }
+  ]
+}

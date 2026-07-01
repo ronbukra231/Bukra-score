@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "id": "38736f45",
+      "question": "האם שחיקת מרווח תפעולי מקדימה ירידת ROIC?",
+      "hypothesis": "חברות עם שחיקה רצופה של 3+ אחוזים במרווח התפעולי יציגו ירידת ROIC בסריקה העוקבת.",
+      "priority": "High",
+      "sector": "All",
+      "tags": [
+        "margins",
+        "ROIC",
+        "predictive"
+      ],
+      "generated_by": "standing_bank",
+      "status": "open",
+      "related_discoveries": [],
+      "created_at": "2026-06-29T23:20:57Z",
+      "last_updated": "2026-06-29T23:20:57Z",
+      "notes": [],
+      "resolved_at": null,
+      "resolution_summary": null
+    },
+    {
+      "id": "c92d36be",
+      "question": "האם שיפור ב-FCF מוביל להרחבת מרווחים בפיגור של 2 סריקות?",
+      "hypothesis": "חברות עם שיפור >15% ב-FCF יציגו הרחבת מרווח נקי בממוצע 2 סריקות לאחר מכן.",
+      "priority": "High",
+      "sector": "All",
+      "tags": [
+        "FCF",
+        "margins",
+        "lag"
+      ],
+      "generated_by": "standing_bank",
+      "status": "open",
+      "related_discoveries": [],
+      "created_at": "2026-06-29T23:20:57Z",
+      "last_updated": "2026-06-29T23:20:57Z",
+      "notes": [],
+      "resolved_at": null,
+      "resolution_summary": null
+    },
+    {
+      "id": "0837ecb6",
+      "question": "האם חברות עם חוב גדל מהכנסות מציגות ירידת ROE?",
+      "hypothesis": "חברות בהן גידול החוב עולה על גידול ההכנסות בשנתיים רצופות יציגו ירידת ROE תוך שנה.",
+      "priority": "Medium",
+      "sector": "All",
+      "tags": [
+        "debt",
+        "ROE",
+        "leverage"
+      ],
+      "generated_by": "standing_bank",
+      "status": "open",
+      "related_discoveries": [],
+      "created_at": "2026-06-29T23:20:57Z",
+      "last_updated": "2026-06-29T23:20:57Z",
+      "notes": [],
+      "resolved_at": null,
+      "resolution_summary": null
+    },
+    {
+      "id": "c4088e1c",
+      "question": "האם היחלשות סקטוריאלית מופיעה בו-זמנית עם ירידת מחיר?",
+      "hypothesis": "ירידת מגמה ב-60%+ מחברות סקטור תתואם עם ביצועי ביטחוני גרועים ב-12 חודש.",
+      "priority": "Medium",
+      "sector": "All",
+      "tags": [
+        "sector",
+        "price",
+        "correlation"
+      ],
+      "generated_by": "standing_bank",
+      "status": "open",
+      "related_discoveries": [],
+      "created_at": "2026-06-29T23:20:57Z",
+      "last_updated": "2026-06-29T23:20:57Z",
+      "notes": [],
+      "resolved_at": null,
+      "resolution_summary": null
+    },
+    {
+      "id": "7c885036",
+      "question": "האם ניתוק שווי-איכות הוא תופעה מחזורית?",
+      "hypothesis": "ניתוק בין ערך עסקי לתמחור שוק מתרחש בתדירות גבוהה יותר בתקופות עלייה מהירה בריבית.",
+      "priority": "Medium",
+      "sector": "All",
+      "tags": [
+        "valuation",
+        "cycles",
+        "rates"
+      ],
+      "generated_by": "standing_bank",
+      "status": "open",
+      "related_discoveries": [],
+      "created_at": "2026-06-29T23:20:57Z",
+      "last_updated": "2026-06-29T23:20:57Z",
+      "notes": [],
+      "resolved_at": null,
+      "resolution_summary": null
+    },
+    {
+      "id": "453b91c7",
+      "question": "האם חברות עם Inventory גדל מהמכירות מציגות ירידת ROE לאחר שנה?",
+      "hypothesis": "עלייה ב-Inventory/Sales ratio מעל 15% תתואם עם ירידת ROE בשנה הבאה.",
+      "priority": "High",
+      "sector": "All",
+      "tags": [
+        "inventory",
+        "ROE",
+        "predictive"
+      ],
+      "generated_by": "standing_bank",
+      "status": "open",
+      "related_discoveries": [],
+      "created_at": "2026-06-29T23:20:57Z",
+      "last_updated": "2026-06-29T23:20:57Z",
+      "notes": [],
+      "resolved_at": null,
+      "resolution_summary": null
+    },
+    {
+      "id": "2436a991",
+      "question": "האם חברות עם רמת ביטחון נמוכה מציגות תנודתיות ציון גבוהה יותר?",
+      "hypothesis": "חברות עם רמת ביטחון Low יציגו שונות ציון גבוהה פי 2 בין סריקות.",
+      "priority": "Low",
+      "sector": "All",
+      "tags": [
+        "confidence",
+        "score",
+        "volatility"
+      ],
+      "generated_by": "standing_bank",
+      "status": "open",
+      "related_discoveries": [],
+      "created_at": "2026-06-29T23:20:57Z",
+      "last_updated": "2026-06-29T23:20:57Z",
+      "notes": [],
+      "resolved_at": null,
+      "resolution_summary": null
+    }
+  ]
+}

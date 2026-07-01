@@ -555,4 +555,20 @@ export interface Translations {
   brain_statusEmerging: string
   brain_statusConfirmed: string
   brain_statusLearning: string
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  auth_login: string
+  auth_signup: string
+  auth_logout: string
+  auth_continueGoogle: string
+  auth_email: string
+  auth_password: string
+  auth_or: string
+  auth_noAccount: string
+  auth_haveAccount: string
+  auth_backHome: string
+  auth_guestTitle: string
+  auth_guestBody: string
+  auth_guestSignIn: string
+  auth_guestSignUp: string
 }

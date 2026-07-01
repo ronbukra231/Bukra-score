@@ -536,6 +536,22 @@ const he: Translations = {
   intel_statMonitoring: 'במעקב',
   intel_statCategories: 'קטגוריות',
   intel_disclaimer: 'בוקרה אינה אתר חדשות. בוקרה היא אנליסטית אינטליגנציה. ציון הבוקרה לעולם לא משתנה ישירות מאירועים. אירועים יוצרים השערות. דוחות כספיים מאשרים או דוחים אותן.',
+
+  // Auth
+  auth_login: 'כניסה',
+  auth_signup: 'הרשמה',
+  auth_logout: 'יציאה',
+  auth_continueGoogle: 'המשך עם Google',
+  auth_email: 'אימייל',
+  auth_password: 'סיסמה',
+  auth_or: 'או',
+  auth_noAccount: 'אין לך חשבון עדיין?',
+  auth_haveAccount: 'כבר יש לך חשבון?',
+  auth_backHome: 'חזרה לדף הבית',
+  auth_guestTitle: 'ניתוח מלא זמין לאחר כניסה',
+  auth_guestBody: 'הירשם בחינם לגישה מלאה לציון בוקרה, ניתוח AI, גרפים פיננסיים ועוד.',
+  auth_guestSignIn: 'כניסה לחשבון',
+  auth_guestSignUp: 'הרשמה חינמית',
 }
 
 export default he
