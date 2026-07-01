@@ -152,7 +152,7 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   const pushActivity = useCallback((item: Omit<ActivityItem, 'id' | 'timestamp'>) => {
     if (!uid) return
     setActivity(prev => {
-      const next = [{ ...item, id: crypto.randomUUID(), timestamp: new Date().toISOString() }, ...prev].slice(0, MAX_ACTIVITY)
+      const next = [{ ...item, id: crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36), timestamp: new Date().toISOString() }, ...prev].slice(0, MAX_ACTIVITY)
       lss(skey(uid, 'activity'), next)
       return next
     })
@@ -194,7 +194,7 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
 
   const createCollection = useCallback((data: Pick<Collection, 'name' | 'nameHe' | 'icon' | 'color' | 'description'>): string => {
     if (!uid) return ''
-    const id = crypto.randomUUID()
+    const id = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36)
     setCollections(prev => {
       const next = [...prev, { ...data, id, companies: [], createdAt: new Date().toISOString(), isDefault: false, order: prev.length }]
       lss(skey(uid, 'collections'), next)

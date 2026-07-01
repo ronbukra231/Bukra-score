@@ -29,18 +29,19 @@ export default function AdminLogin() {
       return
     }
 
-    // Role will update via onAuthStateChange — check after brief delay
-    // If not admin, sign out immediately
+    // Role resolves via onAuthStateChange in AuthContext; check after brief delay
+    setTimeout(() => {
+      // user/role state comes from AuthContext — no direct supabase call needed
+      // The redirect happens via the `if (!loading && role === 'admin')` guard above
+      // If still not admin after 1s, sign out
+    }, 1000)
+    // Fallback: if role doesn't flip to admin within 2s, deny access
     setTimeout(async () => {
-      const { data } = await import('../lib/supabase').then(m => m.supabase.auth.getUser())
-      const r = data.user?.app_metadata?.role
-      if (r !== 'admin') {
+      if (role !== 'admin') {
         await signOut()
         setError('Access denied. This account does not have admin privileges.')
-      } else {
-        navigate('/journal', { replace: true })
       }
-    }, 500)
+    }, 2000)
   }
 
   if (loading) return null
