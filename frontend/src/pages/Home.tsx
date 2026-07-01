@@ -104,6 +104,14 @@ export default function Home() {
           >
             {t.radar_navLabel} ⬡
           </Link>
+          {user && (
+            <Link
+              to="/desk"
+              className="bg-brand-600/15 hover:bg-brand-600/25 text-brand-400 font-bold rounded-2xl px-7 py-3.5 text-base transition border border-brand-500/40 hover:border-brand-500/70"
+            >
+              🏠 {t.desk_nav}
+            </Link>
+          )}
           {!user && (
             <>
               <Link

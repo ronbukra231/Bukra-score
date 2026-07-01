@@ -1,15 +1,23 @@
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../i18n/index'
 import LanguageToggle from '../components/LanguageToggle'
 
 export default function Login() {
-  const { signIn, signUp, signInWithGoogle, loading } = useAuth()
+  const { signIn, signUp, signInWithGoogle, loading, user } = useAuth()
   const { t, isHe } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: string })?.from ?? '/'
+  const from = (location.state as { from?: string })?.from ?? '/desk'
+
+  // Handle OAuth redirect back — user becomes non-null after Google OAuth
+  useEffect(() => {
+    if (user) {
+      const dest = !from || from === '/' || from === '/login' ? '/desk' : from
+      navigate(dest, { replace: true })
+    }
+  }, [user, from, navigate])
 
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
@@ -28,7 +36,8 @@ export default function Login() {
       if (err) {
         setError(isHe ? 'פרטי הכניסה שגויים. נסה שוב.' : 'Incorrect credentials. Please try again.')
       } else {
-        navigate(from, { replace: true })
+        const dest = !from || from === '/' || from === '/login' ? '/desk' : from
+        navigate(dest, { replace: true })
       }
     } else {
       const err = await signUp(email, password)

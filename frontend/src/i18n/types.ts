@@ -556,6 +556,38 @@ export interface Translations {
   brain_statusConfirmed: string
   brain_statusLearning: string
 
+  // ── Research Desk ─────────────────────────────────────────────────────────
+  desk_title: string
+  desk_subtitle: string
+  desk_greeting_prefix: string
+  desk_stats_companies: string
+  desk_stats_saved: string
+  desk_stats_searches: string
+  desk_stats_watchlist: string
+  desk_recent_title: string
+  desk_recent_empty: string
+  desk_recent_empty_sub: string
+  desk_recent_btn: string
+  desk_watchlist_title: string
+  desk_watchlist_empty: string
+  desk_watchlist_empty_sub: string
+  desk_watchlist_add: string
+  desk_watchlist_saved: string
+  desk_activity_title: string
+  desk_activity_empty: string
+  desk_activity_researched: string
+  desk_activity_searched: string
+  desk_activity_saved: string
+  desk_activity_removed: string
+  desk_coming_title: string
+  desk_coming_badge: string
+  desk_coming_portfolio: string
+  desk_coming_alerts: string
+  desk_coming_score_alerts: string
+  desk_coming_report: string
+  desk_coming_ai: string
+  desk_nav: string
+
   // ── Auth ──────────────────────────────────────────────────────────────────
   auth_login: string
   auth_signup: string

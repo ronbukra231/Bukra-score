@@ -13,6 +13,7 @@ import LanguageToggle from '../components/LanguageToggle'
 import IntelligencePanel from '../components/IntelligencePanel'
 import * as analytics from '../lib/analytics'
 import { useAuth } from '../contexts/AuthContext'
+import { useUserData } from '../contexts/UserDataContext'
 import UserMenu from '../components/UserMenu'
 
 // ── Security helpers ──────────────────────────────────────────────────────────
@@ -258,6 +259,20 @@ export default function Company() {
 
   const loadingSteps = [t.co_loadingStep1, t.co_loadingStep2, t.co_loadingStep3]
   const { user } = useAuth()
+  const { trackCompanyView, addToWatchlist, removeFromWatchlist, isInWatchlist } = useUserData()
+
+  // Track company view once per data load (logged-in users only)
+  useEffect(() => {
+    if (data && user) {
+      trackCompanyView({
+        symbol: sym,
+        name:   data.info?.name ?? sym,
+        score:  data.score?.total ?? null,
+        sector: data.info?.sector ?? null,
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.info?.name, user?.id])
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -335,9 +350,34 @@ export default function Company() {
                   </Link>
                 </div>
 
-                <h1 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">
-                  {data.info.name}
-                </h1>
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <h1 className="text-2xl md:text-3xl font-black text-white leading-tight">
+                    {data.info.name}
+                  </h1>
+                  {user && (
+                    <button
+                      onClick={() => {
+                        if (isInWatchlist(sym)) {
+                          removeFromWatchlist(sym)
+                        } else {
+                          addToWatchlist({
+                            symbol: sym,
+                            name:   data.info?.name ?? sym,
+                            score:  data.score?.total ?? null,
+                            sector: data.info?.sector ?? null,
+                          })
+                        }
+                      }}
+                      className={`flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
+                        isInWatchlist(sym)
+                          ? 'bg-emerald-950 border-emerald-700 text-emerald-400 hover:bg-red-950 hover:border-red-700 hover:text-red-400'
+                          : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-brand-500 hover:text-brand-400'
+                      }`}
+                    >
+                      {isInWatchlist(sym) ? t.desk_watchlist_saved : `☆ ${t.desk_watchlist_add}`}
+                    </button>
+                  )}
+                </div>
 
                 <div className="flex flex-wrap gap-4 text-sm">
                   {isSafeUrl(data.info.website) && (
