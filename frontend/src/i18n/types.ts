@@ -587,6 +587,50 @@ export interface Translations {
   desk_coming_report: string
   desk_coming_ai: string
   desk_nav: string
+  desk_all_companies: string
+  desk_notes_count: string
+  desk_last_visit: string
+  desk_updates_since: string
+
+  // ── Collections ───────────────────────────────────────────────────────────
+  coll_header: string
+  coll_under_research: string
+  coll_watchlist: string
+  coll_buy_candidates: string
+  coll_high_conviction: string
+  coll_rejected: string
+  coll_my_collections: string
+  coll_new: string
+  coll_name_placeholder: string
+  coll_desc_placeholder: string
+  coll_create: string
+  coll_cancel: string
+  coll_empty: string
+  coll_delete: string
+
+  // ── Save Modal ─────────────────────────────────────────────────────────────
+  save_title: string
+  save_subtitle: string
+  save_done: string
+  save_new_collection: string
+  save_added: string
+
+  // ── Research Notes ─────────────────────────────────────────────────────────
+  notes_title: string
+  notes_placeholder: string
+  notes_private: string
+  notes_last_edit: string
+  notes_delete: string
+  notes_empty: string
+  notes_open: string
+
+  // ── Quick Actions (Company page) ───────────────────────────────────────────
+  qa_save: string
+  qa_notes: string
+  qa_compare: string
+  qa_share: string
+  qa_saved_in: string
+  qa_open_desk: string
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   auth_login: string

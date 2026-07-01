@@ -569,6 +569,50 @@ const en: Translations = {
   desk_coming_report: 'Weekly Research Report',
   desk_coming_ai: 'AI Portfolio Review',
   desk_nav: 'Research Desk',
+  desk_all_companies: 'All Companies',
+  desk_notes_count: 'Notes',
+  desk_last_visit: 'Last visited',
+  desk_updates_since: 'Updates since last visit',
+
+  // Collections
+  coll_header: 'My Collections',
+  coll_under_research: 'Companies Under Research',
+  coll_watchlist: 'Watchlist',
+  coll_buy_candidates: 'Buy Candidates',
+  coll_high_conviction: 'High Conviction',
+  coll_rejected: 'Rejected',
+  coll_my_collections: 'Custom Collections',
+  coll_new: '+ New Collection',
+  coll_name_placeholder: 'Collection name...',
+  coll_desc_placeholder: 'Short description (optional)',
+  coll_create: 'Create Collection',
+  coll_cancel: 'Cancel',
+  coll_empty: 'No companies in this collection yet.',
+  coll_delete: 'Delete Collection',
+
+  // Save Modal
+  save_title: 'Save Company',
+  save_subtitle: 'Choose a collection',
+  save_done: 'Done',
+  save_new_collection: '+ Create New Collection',
+  save_added: 'Added',
+
+  // Research Notes
+  notes_title: 'Research Notes',
+  notes_placeholder: 'Write your research notes here...\n\nE.g.: Great management. Waiting for quarterly earnings. Worth revisiting.',
+  notes_private: 'Private notes — visible only to you',
+  notes_last_edit: 'Updated',
+  notes_delete: 'Delete notes',
+  notes_empty: 'No notes yet.',
+  notes_open: 'Notes',
+
+  // Quick Actions
+  qa_save: 'Save',
+  qa_notes: 'Notes',
+  qa_compare: 'Compare',
+  qa_share: 'Share',
+  qa_saved_in: 'Saved in',
+  qa_open_desk: 'Open Research Desk',
 
   // Auth
   auth_login: 'Login',

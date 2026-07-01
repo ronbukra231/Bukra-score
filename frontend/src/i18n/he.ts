@@ -568,6 +568,50 @@ const he: Translations = {
   desk_coming_report: 'דוח מחקר שבועי',
   desk_coming_ai: 'סקירת תיק AI',
   desk_nav: 'חדר המחקר',
+  desk_all_companies: 'כל החברות',
+  desk_notes_count: 'הערות',
+  desk_last_visit: 'ביקור אחרון',
+  desk_updates_since: 'עדכונים מאז הביקור האחרון',
+
+  // Collections
+  coll_header: 'האוספים שלי',
+  coll_under_research: 'חברות במחקר',
+  coll_watchlist: 'רשימת מעקב',
+  coll_buy_candidates: 'מועמדים לקנייה',
+  coll_high_conviction: 'אמונה גבוהה',
+  coll_rejected: 'נדחו',
+  coll_my_collections: 'אוספים מותאמים',
+  coll_new: '+ אוסף חדש',
+  coll_name_placeholder: 'שם האוסף...',
+  coll_desc_placeholder: 'תיאור קצר (אופציונלי)',
+  coll_create: 'צור אוסף',
+  coll_cancel: 'ביטול',
+  coll_empty: 'לא נוספו חברות לאוסף זה עדיין.',
+  coll_delete: 'מחק אוסף',
+
+  // Save Modal
+  save_title: 'שמור חברה',
+  save_subtitle: 'בחר לאיזה אוסף להוסיף',
+  save_done: 'סיום',
+  save_new_collection: '+ צור אוסף חדש',
+  save_added: 'נוסף',
+
+  // Research Notes
+  notes_title: 'הערות מחקר',
+  notes_placeholder: 'רשום כאן את המחשבות שלך על החברה...\n\nלמשל: ניהול מצוין. ממתין לדוח הרבעוני. שווה לחזור.',
+  notes_private: 'הערות אישיות — מוצגות רק לך',
+  notes_last_edit: 'עודכן',
+  notes_delete: 'מחק הערות',
+  notes_empty: 'אין הערות עדיין.',
+  notes_open: 'הערות',
+
+  // Quick Actions
+  qa_save: 'שמור',
+  qa_notes: 'הערות',
+  qa_compare: 'השווה',
+  qa_share: 'שתף',
+  qa_saved_in: 'שמור ב',
+  qa_open_desk: 'פתח חדר מחקר',
 
   // Auth
   auth_login: 'כניסה',

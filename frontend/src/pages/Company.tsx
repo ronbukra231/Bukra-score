@@ -15,6 +15,9 @@ import * as analytics from '../lib/analytics'
 import { useAuth } from '../contexts/AuthContext'
 import { useUserData } from '../contexts/UserDataContext'
 import UserMenu from '../components/UserMenu'
+import SaveModal from '../components/SaveModal'
+import type { SaveTarget } from '../components/SaveModal'
+import ResearchNotes from '../components/ResearchNotes'
 
 // ── Security helpers ──────────────────────────────────────────────────────────
 function isSafeUrl(url?: string | null): boolean {
@@ -259,7 +262,9 @@ export default function Company() {
 
   const loadingSteps = [t.co_loadingStep1, t.co_loadingStep2, t.co_loadingStep3]
   const { user } = useAuth()
-  const { trackCompanyView, addToWatchlist, removeFromWatchlist, isInWatchlist } = useUserData()
+  const { trackCompanyView, getCompanyCollections, getNote } = useUserData()
+  const [saveModal, setSaveModal]   = useState<SaveTarget | null>(null)
+  const [notesOpen, setNotesOpen]   = useState(false)
 
   // Track company view once per data load (logged-in users only)
   useEffect(() => {
@@ -350,34 +355,69 @@ export default function Company() {
                   </Link>
                 </div>
 
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <h1 className="text-2xl md:text-3xl font-black text-white leading-tight">
-                    {data.info.name}
-                  </h1>
-                  {user && (
-                    <button
-                      onClick={() => {
-                        if (isInWatchlist(sym)) {
-                          removeFromWatchlist(sym)
-                        } else {
-                          addToWatchlist({
+                <h1 className="text-2xl md:text-3xl font-black text-white mb-3 leading-tight">
+                  {data.info.name}
+                </h1>
+
+                {/* ── Quick actions (logged-in only) ── */}
+                {user && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {/* Save */}
+                    {(() => {
+                      const savedIn = getCompanyCollections(sym)
+                      return (
+                        <button
+                          onClick={() => setSaveModal({
                             symbol: sym,
                             name:   data.info?.name ?? sym,
                             score:  data.score?.total ?? null,
                             sector: data.info?.sector ?? null,
-                          })
-                        }
-                      }}
-                      className={`flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
-                        isInWatchlist(sym)
-                          ? 'bg-emerald-950 border-emerald-700 text-emerald-400 hover:bg-red-950 hover:border-red-700 hover:text-red-400'
-                          : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-brand-500 hover:text-brand-400'
-                      }`}
+                          })}
+                          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
+                            savedIn.length > 0
+                              ? 'bg-emerald-950 border-emerald-700/60 text-emerald-400'
+                              : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-brand-500 hover:text-brand-400'
+                          }`}
+                        >
+                          {savedIn.length > 0 ? `✓ ${t.qa_saved_in} ${savedIn.map(c => c.icon).join('')}` : `☆ ${t.qa_save}`}
+                        </button>
+                      )
+                    })()}
+
+                    {/* Notes */}
+                    {(() => {
+                      const hasNote = !!getNote(sym)
+                      return (
+                        <button
+                          onClick={() => setNotesOpen(true)}
+                          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
+                            hasNote
+                              ? 'bg-violet-950 border-violet-700/60 text-violet-400'
+                              : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-violet-500 hover:text-violet-400'
+                          }`}
+                        >
+                          {hasNote ? `📝 ${t.qa_notes}` : `📝 ${t.qa_notes}`}
+                        </button>
+                      )
+                    })()}
+
+                    {/* Compare — scaffold for future */}
+                    <button
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-gray-800 bg-gray-800 text-gray-600 cursor-not-allowed"
+                      title={t.desk_coming_badge}
                     >
-                      {isInWatchlist(sym) ? t.desk_watchlist_saved : `☆ ${t.desk_watchlist_add}`}
+                      ⇄ {t.qa_compare}
                     </button>
-                  )}
-                </div>
+
+                    {/* Open desk */}
+                    <Link
+                      to="/desk"
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-gray-800 bg-gray-800 text-gray-400 hover:text-white hover:border-gray-700 transition"
+                    >
+                      🏠 {t.qa_open_desk}
+                    </Link>
+                  </div>
+                )}
 
                 <div className="flex flex-wrap gap-4 text-sm">
                   {isSafeUrl(data.info.website) && (
@@ -481,6 +521,23 @@ export default function Company() {
           </div>
         )}
       </div>
+
+      {/* Save modal */}
+      {saveModal && (
+        <SaveModal
+          isOpen={!!saveModal}
+          onClose={() => setSaveModal(null)}
+          company={saveModal}
+        />
+      )}
+
+      {/* Research notes panel */}
+      <ResearchNotes
+        isOpen={notesOpen}
+        onClose={() => setNotesOpen(false)}
+        symbol={sym}
+        companyName={data?.info?.name ?? sym}
+      />
     </div>
   )
 }
