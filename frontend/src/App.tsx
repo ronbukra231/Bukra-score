@@ -14,6 +14,7 @@ import BeliefChanges from './pages/BeliefChanges'
 import KnowledgeGraph from './pages/KnowledgeGraph'
 import MarketBrain from './pages/MarketBrain'
 import MarketIntelligence from './pages/MarketIntelligence'
+import AdminGuard from './components/AdminGuard'
 
 export default function App() {
   return (
@@ -26,13 +27,13 @@ export default function App() {
           <Route path="/company/:symbol" element={<Company />} />
           <Route path="/scanner" element={<Scanner />} />
           <Route path="/radar" element={<Radar />} />
-          <Route path="/journal" element={<ResearchJournal />} />
-          <Route path="/memory" element={<ResearchMemory />} />
-          <Route path="/questions" element={<ResearchQuestions />} />
-          <Route path="/beliefs" element={<BeliefChanges />} />
-          <Route path="/graph" element={<KnowledgeGraph />} />
-          <Route path="/brain" element={<MarketBrain />} />
-          <Route path="/intelligence" element={<MarketIntelligence />} />
+          <Route path="/journal" element={<AdminGuard><ResearchJournal /></AdminGuard>} />
+          <Route path="/memory" element={<AdminGuard><ResearchMemory /></AdminGuard>} />
+          <Route path="/questions" element={<AdminGuard><ResearchQuestions /></AdminGuard>} />
+          <Route path="/beliefs" element={<AdminGuard><BeliefChanges /></AdminGuard>} />
+          <Route path="/graph" element={<AdminGuard><KnowledgeGraph /></AdminGuard>} />
+          <Route path="/brain" element={<AdminGuard><MarketBrain /></AdminGuard>} />
+          <Route path="/intelligence" element={<AdminGuard><MarketIntelligence /></AdminGuard>} />
           <Route path="/accuracy" element={<Accuracy />} />
           <Route path="/legal" element={<Legal />} />
         </Routes>

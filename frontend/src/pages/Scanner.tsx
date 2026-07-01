@@ -252,27 +252,6 @@ export default function Scanner() {
           <Link to="/radar" className="text-brand-400 hover:text-brand-300 text-xs font-semibold hidden md:block transition">
             {t.radar_navLabel} ⬡
           </Link>
-          <Link to="/journal" className="text-purple-400 hover:text-purple-300 text-xs font-semibold hidden md:block transition">
-            {t.journal_navLabel} ⬡
-          </Link>
-          <Link to="/memory" className="text-violet-400 hover:text-violet-300 text-xs font-semibold hidden md:block transition">
-            {t.memory_navLabel} 🧠
-          </Link>
-          <Link to="/questions" className="text-blue-400 hover:text-blue-300 text-xs font-semibold hidden md:block transition">
-            {t.questions_navLabel}
-          </Link>
-          <Link to="/beliefs" className="text-orange-400 hover:text-orange-300 text-xs font-semibold hidden md:block transition">
-            {t.beliefs_navLabel}
-          </Link>
-          <Link to="/graph" className="text-indigo-400 hover:text-indigo-300 text-xs font-semibold hidden md:block transition">
-            {t.graph_navLabel}
-          </Link>
-          <Link to="/brain" className="text-violet-300 hover:text-violet-200 text-xs font-semibold hidden md:block transition">
-            {t.brain_navLabel}
-          </Link>
-          <Link to="/intelligence" className="text-teal-300 hover:text-teal-200 text-xs font-semibold hidden md:block transition">
-            {t.intel_navLabel}
-          </Link>
           <LanguageToggle />
         </div>
         {/* Thin refresh progress strip at very top */}
