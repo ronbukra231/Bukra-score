@@ -11,7 +11,7 @@ interface AuthContextValue {
   role: Role
   signIn: (email: string, password: string) => Promise<AuthError | null>
   signUp: (email: string, password: string) => Promise<AuthError | null>
-  signInWithGoogle: () => Promise<void>
+  signInWithGoogle: () => Promise<string | null>
   signOut: () => Promise<void>
 }
 
@@ -66,12 +66,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return error
   }
 
-  async function signInWithGoogle() {
-    if (!supabase) return
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    })
+  // Returns null on success (redirect pending), or an error message string on failure
+  async function signInWithGoogle(): Promise<string | null> {
+    if (!supabase) return 'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.'
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      })
+      if (error) {
+        console.error('[Bukra] Google OAuth error:', error)
+        return error.message
+      }
+      return null
+    } catch (err) {
+      console.error('[Bukra] Google OAuth unexpected error:', err)
+      return 'An unexpected error occurred. Please try again.'
+    }
   }
 
   async function signOut() {

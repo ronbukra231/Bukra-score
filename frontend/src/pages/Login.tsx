@@ -1,6 +1,7 @@
 import { useState, FormEvent, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { supabaseConfigured } from '../lib/supabase'
 import { useLanguage } from '../i18n/index'
 import LanguageToggle from '../components/LanguageToggle'
 
@@ -25,6 +26,8 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [signupDone, setSignupDone] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleError, setGoogleError] = useState<string | null>(null)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -51,8 +54,16 @@ export default function Login() {
   }
 
   async function handleGoogle() {
-    await signInWithGoogle()
-    // redirect handled by Supabase OAuth flow
+    if (!supabaseConfigured) return
+    setGoogleError(null)
+    setGoogleLoading(true)
+    const err = await signInWithGoogle()
+    if (err) {
+      // signInWithGoogle only returns an error string — null means redirect is underway
+      setGoogleError(err)
+      setGoogleLoading(false)
+    }
+    // On success, browser redirects to Google — keep spinner until navigation
   }
 
   if (loading) return null
@@ -114,13 +125,47 @@ export default function Login() {
               </div>
 
               {/* Google OAuth */}
-              <button
-                onClick={handleGoogle}
-                className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-gray-900 font-semibold rounded-xl px-4 py-3 transition mb-4"
-              >
-                <GoogleIcon />
-                {t.auth_continueGoogle}
-              </button>
+              {supabaseConfigured ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleGoogle}
+                    disabled={googleLoading}
+                    className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 disabled:opacity-60 disabled:cursor-wait text-gray-900 font-semibold rounded-xl px-4 py-3 transition mb-1"
+                  >
+                    {googleLoading ? (
+                      <svg className="w-4 h-4 animate-spin text-gray-600" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                    ) : (
+                      <GoogleIcon />
+                    )}
+                    {googleLoading
+                      ? (isHe ? 'מעביר לגוגל...' : 'Redirecting to Google...')
+                      : t.auth_continueGoogle}
+                  </button>
+                  {googleError && (
+                    <p className="text-red-400 text-xs text-center mb-3 px-1">{googleError}</p>
+                  )}
+                </>
+              ) : (
+                <div className="w-full mb-4">
+                  <div className="w-full flex items-center justify-center gap-3 bg-gray-800 text-gray-500 font-semibold rounded-xl px-4 py-3 cursor-not-allowed select-none opacity-60 mb-1">
+                    <GoogleIcon />
+                    {t.auth_continueGoogle}
+                  </div>
+                  <p className="text-amber-500/80 text-xs text-center px-1">
+                    {isHe
+                      ? 'התחברות עם גוגל אינה מוגדרת עדיין.'
+                      : 'Google login is not configured yet.'}
+                    {' '}
+                    <span className="text-gray-600">
+                      {isHe ? '(VITE_SUPABASE_URL חסר)' : '(VITE_SUPABASE_URL missing)'}
+                    </span>
+                  </p>
+                </div>
+              )}
 
               {/* Divider */}
               <div className="flex items-center gap-3 mb-4">
