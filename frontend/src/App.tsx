@@ -19,6 +19,7 @@ import AdminGuard from './components/AdminGuard'
 import Diagnostics from './pages/Diagnostics'
 import Login from './pages/Login'
 import CapitalLab from './pages/CapitalLab'
+import RequireAuth from './components/RequireAuth'
 
 export default function App() {
   return (
@@ -43,7 +44,7 @@ export default function App() {
           <Route path="/legal" element={<Legal />} />
           <Route path="/system-check" element={<Diagnostics />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/capital-lab" element={<CapitalLab />} />
+          <Route path="/capital-lab" element={<RequireAuth><CapitalLab /></RequireAuth>} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>

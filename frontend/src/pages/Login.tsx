@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 function hebrewError(msg: string): string {
@@ -12,7 +12,9 @@ function hebrewError(msg: string): string {
 
 export default function Login() {
   const { signIn, signInWithGoogle } = useAuth()
-  const navigate   = useNavigate()
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const returnTo  = (location.state as { from?: string } | null)?.from ?? '/'
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
@@ -37,7 +39,7 @@ export default function Login() {
     }
 
     // onAuthStateChange in AuthContext updates session automatically
-    navigate('/')
+    navigate(returnTo, { replace: true })
   }
 
   return (
