@@ -21,6 +21,7 @@ import BeliefChanges from './pages/BeliefChanges'
 import KnowledgeGraph from './pages/KnowledgeGraph'
 import MarketBrain from './pages/MarketBrain'
 import MarketIntelligence from './pages/MarketIntelligence'
+import Diagnostics from './pages/Diagnostics'
 
 export default function App() {
   return (
@@ -53,6 +54,9 @@ export default function App() {
             <Route path="/graph"        element={<AdminGuard><KnowledgeGraph /></AdminGuard>} />
             <Route path="/brain"        element={<AdminGuard><MarketBrain /></AdminGuard>} />
             <Route path="/intelligence" element={<AdminGuard><MarketIntelligence /></AdminGuard>} />
+
+            {/* System diagnostics — unlisted but public for debugging */}
+            <Route path="/system-check" element={<Diagnostics />} />
           </Routes>
         </BrowserRouter>
         </UserDataProvider>

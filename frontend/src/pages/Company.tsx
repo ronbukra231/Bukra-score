@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowRight, ExternalLink, TrendingUp, Building2, Globe } from 'lucide-react'
-import { getCompanyPage, getCompanyPageSWR } from '../api/client'
+import { getCompanyPage, getCompanyPageSWR, invalidateCompanyCache } from '../api/client'
 import { useLanguage } from '../i18n/index'
 import FinancialCharts from '../components/FinancialCharts'
 import BukraScoreCard from '../components/BukraScoreCard'
@@ -211,17 +211,30 @@ export default function Company() {
   const [error, setError]     = useState('')
   const mountedRef = useRef(true)
 
+  // Auth must be declared before `load` so the closure captures it correctly
+  const { user } = useAuth()
+  const { trackCompanyView, getCompanyCollections, getNote } = useUserData()
+  const [saveModal, setSaveModal]   = useState<SaveTarget | null>(null)
+  const [notesOpen, setNotesOpen]   = useState(false)
+
   const sym = symbol?.toUpperCase() ?? ''
 
   const load = useCallback((s: string) => {
     setError('')
     const loadStart = performance.now()
 
-    // Stale-while-revalidate: show cached data instantly, refresh silently.
-    // mountedRef guards against setting state after the component unmounts
-    // (e.g. user navigates away before background refresh completes).
+    // Stale-while-revalidate: returns null if no valid (non-guest) cache exists.
+    // Guest-only cached responses are never returned by getCompanyPageSWR.
     const cached = getCompanyPageSWR(s, (fresh) => {
-      if (mountedRef.current) {
+      if (!mountedRef.current) return
+      // Validate fresh response before applying it
+      if (fresh?.guest === true && user) {
+        // Backend returned guest-only despite being logged in.
+        // This means SUPABASE_JWT_SECRET is missing on the backend.
+        // Show the data we have but warn in console.
+        console.warn('[Bukra] Auth mismatch: user is logged in but backend returned guest response. Check SUPABASE_JWT_SECRET on backend.')
+      }
+      if (fresh?.info?.name) {
         setData(fresh)
         setLoading(false)
       }
@@ -230,28 +243,36 @@ export default function Company() {
     if (cached) {
       setData(cached)
       setLoading(false)
-      analytics.trackCompanyOpen(s, cached?.score?.total, cached?.company?.sector)
+      analytics.trackCompanyOpen(s, cached?.score?.score, cached?.info?.sector)
     } else {
       setLoading(true)
       setData(null)
       getCompanyPage(s)
         .then((d) => {
-          if (mountedRef.current) {
-            setData(d)
-            setLoading(false)
-            analytics.trackCompanyOpen(s, d?.score?.total, d?.company?.sector)
-            analytics.trackCompanyLoadTime(s, Math.round(performance.now() - loadStart))
+          if (!mountedRef.current) return
+          if (!d?.info?.name) {
+            // Response came back but is missing the company name — treat as error
+            throw new Error('נתוני החברה חסרים. אנא נסה שוב.')
           }
+          if (d?.guest === true && user) {
+            console.warn('[Bukra] Auth mismatch: user logged in but API returned guest response. Check backend SUPABASE_JWT_SECRET.')
+          }
+          setData(d)
+          setLoading(false)
+          analytics.trackCompanyOpen(s, d?.score?.score, d?.info?.sector)
+          analytics.trackCompanyLoadTime(s, Math.round(performance.now() - loadStart))
         })
         .catch((e) => {
-          if (mountedRef.current) {
-            setError(e.message || 'שגיאה בטעינת נתוני החברה')
-            setLoading(false)
-            analytics.trackApiError('/api/company/' + s, undefined, s)
-          }
+          if (!mountedRef.current) return
+          // Invalidate stale cache so next load retries from network
+          invalidateCompanyCache(s)
+          setError(e.message || 'שגיאה בטעינת נתוני החברה')
+          setLoading(false)
+          analytics.trackApiError('/api/company/' + s, undefined, s)
         })
     }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   useEffect(() => {
     mountedRef.current = true
@@ -260,11 +281,23 @@ export default function Company() {
     return () => { mountedRef.current = false }
   }, [sym, load])
 
+  // When auth state changes (e.g. user just logged in), invalidate the cache
+  // and reload so the full authenticated response replaces any guest-only data.
+  const prevUserIdRef = useRef<string | null | undefined>(undefined)
+  useEffect(() => {
+    const prev = prevUserIdRef.current
+    prevUserIdRef.current = user?.id ?? null
+    // undefined means first render — skip
+    if (prev === undefined) return
+    // User just logged in (null → id) or out (id → null): reload
+    if (prev !== (user?.id ?? null) && sym) {
+      invalidateCompanyCache(sym)
+      load(sym)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
+
   const loadingSteps = [t.co_loadingStep1, t.co_loadingStep2, t.co_loadingStep3]
-  const { user } = useAuth()
-  const { trackCompanyView, getCompanyCollections, getNote } = useUserData()
-  const [saveModal, setSaveModal]   = useState<SaveTarget | null>(null)
-  const [notesOpen, setNotesOpen]   = useState(false)
 
   // Track company view once per data load (logged-in users only)
   useEffect(() => {
