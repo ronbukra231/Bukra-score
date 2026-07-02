@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
+import UserMenu from '../components/UserMenu'
 import PredictionAccuracyCard from '../components/PredictionAccuracyCard'
 import { useLanguage } from '../i18n/index'
 
@@ -27,8 +28,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col" dir={isHe ? 'rtl' : 'ltr'}>
 
-      {/* Language toggle */}
-      <div className={`flex px-4 pt-4 ${isHe ? 'justify-start' : 'justify-end'}`}>
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-4 pt-4">
+        <UserMenu />
         <LanguageToggle />
       </div>
 
