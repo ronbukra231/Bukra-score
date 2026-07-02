@@ -52,8 +52,16 @@ export async function searchCompanies(q: string) {
 }
 
 // ── Company page localStorage cache (30-min TTL, stale-while-revalidate) ─────
-const PAGE_CACHE_KEY = 'bukra_page_cache'
+// Bump PAGE_CACHE_VERSION whenever the response schema changes — old entries
+// will be evicted automatically on first load rather than causing silent data errors.
+const PAGE_CACHE_VERSION = 'v3'
+const PAGE_CACHE_KEY = `bukra_page_cache_${PAGE_CACHE_VERSION}`
 const PAGE_CACHE_TTL = 30 * 60 * 1000 // 30 minutes
+
+// Evict caches from older versions on first run
+;['bukra_page_cache', 'bukra_page_cache_v1', 'bukra_page_cache_v2'].forEach(k => {
+  try { localStorage.removeItem(k) } catch {}
+})
 // Tracks in-flight requests to avoid duplicate simultaneous fetches
 const _inflight: Map<string, Promise<any>> = new Map()
 
@@ -137,6 +145,13 @@ export async function getCompanyPage(symbol: string): Promise<any> {
         : 'שגיאה בטעינת נתוני החברה. אנא נסה שוב.')
       err.status = res.status
       throw err
+    }
+    // Guard against HTML responses (e.g. misconfigured proxy returning index.html)
+    const ct = res.headers.get('content-type') ?? ''
+    if (!ct.includes('application/json')) {
+      const e: any = new Error('תגובה לא תקינה מהשרת. אנא נסה שוב.')
+      e.retryable = true
+      throw e
     }
     const data = await res.json()
     setPageCached(sym, data)

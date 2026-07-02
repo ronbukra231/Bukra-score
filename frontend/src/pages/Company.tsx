@@ -305,7 +305,7 @@ export default function Company() {
       trackCompanyView({
         symbol: sym,
         name:   data.info?.name ?? sym,
-        score:  data.score?.total ?? null,
+        score:  data.score?.score ?? null,
         sector: data.info?.sector ?? null,
       })
     }
@@ -365,8 +365,8 @@ export default function Company() {
         {data && !loading && (
           <div className="space-y-8">
 
-            {/* Guest-mode banner — shown when backend returned stripped data */}
-            {data.guest === true && (
+            {/* Guest-mode banner — only shown to unauthenticated visitors */}
+            {data.guest === true && !user && (
               <div className="bg-amber-900/20 border border-amber-700/40 rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="flex-1">
                   <p className="text-amber-300 font-semibold text-sm">
@@ -384,6 +384,19 @@ export default function Company() {
                 >
                   {isHe ? 'התחבר' : 'Sign in'}
                 </Link>
+              </div>
+            )}
+            {/* Auth mismatch: logged in but backend returned guest (SUPABASE_JWT_SECRET missing on Render) */}
+            {data.guest === true && user && (
+              <div className="bg-red-900/20 border border-red-700/40 rounded-2xl px-5 py-3">
+                <p className="text-red-300 font-semibold text-sm">
+                  {isHe ? 'תצורת שרת חסרה — הציון אינו זמין' : 'Backend configuration missing — score unavailable'}
+                </p>
+                <p className="text-red-400/60 text-xs mt-0.5">
+                  {isHe
+                    ? 'SUPABASE_JWT_SECRET חסר בהגדרות Render. הוסף אותו כדי לאפשר ניתוח מלא.'
+                    : 'SUPABASE_JWT_SECRET is not set on Render. Add it to enable full analysis for authenticated users.'}
+                </p>
               </div>
             )}
 
@@ -425,7 +438,7 @@ export default function Company() {
                           onClick={() => setSaveModal({
                             symbol: sym,
                             name:   data.info?.name ?? sym,
-                            score:  data.score?.total ?? null,
+                            score:  data.score?.score ?? null,
                             sector: data.info?.sector ?? null,
                           })}
                           className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
@@ -571,7 +584,7 @@ export default function Company() {
               </>
             ) : (
               /* ── Guest wall ─────────────────────────────────────────────── */
-              <GuestWall sym={sym} score={data.score?.total} t={t} isHe={isHe} />
+              <GuestWall sym={sym} score={data.score?.score} t={t} isHe={isHe} />
             )}
           </div>
         )}
