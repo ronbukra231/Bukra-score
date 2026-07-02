@@ -15,6 +15,7 @@ import KnowledgeGraph from './pages/KnowledgeGraph'
 import MarketBrain from './pages/MarketBrain'
 import MarketIntelligence from './pages/MarketIntelligence'
 import AdminGuard from './components/AdminGuard'
+import Diagnostics from './pages/Diagnostics'
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/intelligence" element={<AdminGuard><MarketIntelligence /></AdminGuard>} />
           <Route path="/accuracy" element={<Accuracy />} />
           <Route path="/legal" element={<Legal />} />
+          <Route path="/system-check" element={<Diagnostics />} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>

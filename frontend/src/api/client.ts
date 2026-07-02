@@ -15,15 +15,50 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   }
 }
 
+// ── Fetch with retry + timeout ────────────────────────────────────────────────
+// Render free tier cold-starts in 30-60s. Per-attempt timeout must exceed that.
+// Backoff must also be long enough for Render to wake before the next attempt.
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit = {},
+  retries = 1,
+  timeoutMs = 45_000,
+): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController()
+    const tid = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal })
+      clearTimeout(tid)
+      return res
+    } catch (err: any) {
+      clearTimeout(tid)
+      const isLast = attempt === retries
+      if (isLast) throw err
+      // Long backoff so a cold-starting Render instance has time to wake up
+      await new Promise(r => setTimeout(r, 8_000 * (attempt + 1)))
+    }
+  }
+  throw new Error('Unexpected retry loop exit')
+}
+
 export async function searchCompanies(q: string) {
-  const res = await fetch(`${BASE}/search?q=${encodeURIComponent(q)}`)
+  const res = await fetchWithRetry(`${BASE}/search?q=${encodeURIComponent(q)}`, {}, 1, 10_000)
   if (!res.ok) throw new Error('לא נמצאו תוצאות')
   return res.json()
 }
 
 // ── Company page localStorage cache (30-min TTL, stale-while-revalidate) ─────
-const PAGE_CACHE_KEY = 'bukra_page_cache'
+// Bump PAGE_CACHE_VERSION whenever the response schema changes — old entries
+// will be evicted automatically on first load rather than causing silent data errors.
+const PAGE_CACHE_VERSION = 'v3'
+const PAGE_CACHE_KEY = `bukra_page_cache_${PAGE_CACHE_VERSION}`
 const PAGE_CACHE_TTL = 30 * 60 * 1000 // 30 minutes
+
+// Evict caches from older versions on first run
+;['bukra_page_cache', 'bukra_page_cache_v1', 'bukra_page_cache_v2'].forEach(k => {
+  try { localStorage.removeItem(k) } catch {}
+})
 // Tracks in-flight requests to avoid duplicate simultaneous fetches
 const _inflight: Map<string, Promise<any>> = new Map()
 
@@ -65,13 +100,33 @@ export async function getCompanyPage(symbol: string): Promise<any> {
 
   const fetchFresh = async (): Promise<any> => {
     const headers = await getAuthHeaders()
-    const res = await fetch(`${BASE}/company/${sym}/page`, { headers })
+    let res: Response
+    try {
+      res = await fetchWithRetry(`${BASE}/company/${sym}/page`, { headers }, 1, 45_000)
+    } catch (err: any) {
+      const isColdStart = err?.name === 'AbortError' || err?.message?.includes('abort')
+      const msg = isColdStart
+        ? 'השרת מתעורר — אנא נסה שוב בעוד כמה שניות.'
+        : 'בעיית חיבור. בדוק את החיבור לאינטרנט ונסה שוב.'
+      const e: any = new Error(msg)
+      e.retryable = true
+      throw e
+    }
     if (!res.ok) {
       const err: any = new Error(res.status === 404
         ? `לא מצאנו חברה עם הסימבול ${sym}. בדוק את האיות או נסה סימבול אחר.`
+        : res.status === 503
+        ? 'הנתונים אינם זמינים כרגע. אנא נסה שוב.'
         : 'שגיאה בטעינת נתוני החברה. אנא נסה שוב.')
       err.status = res.status
       throw err
+    }
+    // Guard against HTML responses (e.g. misconfigured proxy returning index.html)
+    const ct = res.headers.get('content-type') ?? ''
+    if (!ct.includes('application/json')) {
+      const e: any = new Error('תגובה לא תקינה מהשרת. אנא נסה שוב.')
+      e.retryable = true
+      throw e
     }
     const data = await res.json()
     setPageCached(sym, data)

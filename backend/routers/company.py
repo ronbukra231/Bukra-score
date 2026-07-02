@@ -102,12 +102,21 @@ def company_page(request: Request, symbol: str):
         logger.info("[page] %s | cache=HIT | score=%s", sym, cached.get("score", {}).get("score"))
         return {**cached, "from_cache": True}
 
-    # Fetch info + financials in parallel to cut latency roughly in half
+    # Fetch info + financials in parallel. Hard 35-second wall-clock timeout
+    # prevents a hung yfinance/yahooquery call from blocking the response forever.
     with ThreadPoolExecutor(max_workers=2) as pool:
         info_fut = pool.submit(get_company_info, sym)
         fin_fut  = pool.submit(get_five_year_financials, sym)
-        info       = info_fut.result()
-        financials = fin_fut.result()
+        try:
+            info = info_fut.result(timeout=35)
+        except Exception as e:
+            logger.error("[page] %s | info fetch timed out or failed: %s", sym, e)
+            raise HTTPException(status_code=503, detail="הנתונים אינם זמינים כרגע. אנא נסה שוב.")
+        try:
+            financials = fin_fut.result(timeout=35)
+        except Exception as e:
+            logger.warning("[page] %s | financials fetch failed, continuing with empty: %s", sym, e)
+            financials = {"years": [], "history": [], "raw": {}, "source": "timeout"}
 
     if not info.get("name"):
         raise HTTPException(status_code=404, detail=f"הסימבול {sym} לא נמצא")

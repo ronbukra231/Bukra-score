@@ -108,6 +108,18 @@ async def _generic_error(request: Request, exc: Exception):
 def startup():
     init_db()
 
+    # Warn loudly if JWT secret is missing — all users will be treated as guests
+    # (no score/financials returned) until this is set on the backend host.
+    jwt_secret = os.getenv("SUPABASE_JWT_SECRET", "")
+    if not jwt_secret:
+        logger.warning(
+            "[auth] SUPABASE_JWT_SECRET is not set. "
+            "All API requests will be treated as guest (no score/financials). "
+            "Set this env var on Render to enable authenticated responses."
+        )
+    else:
+        logger.info("[auth] SUPABASE_JWT_SECRET is configured — JWT auth enabled")
+
     scheduler = BackgroundScheduler(timezone="UTC")
     scheduler.add_job(
         trigger_scan_if_idle,
@@ -135,12 +147,17 @@ def startup():
 @app.get("/health")
 def health():
     snap = get_snapshot()
-    fmp_key_set = bool(os.getenv("FMP_API_KEY", "").strip())
-    provider    = os.getenv("DATA_PROVIDER", "auto") if fmp_key_set else "yahoo"
-    fmp_status  = "ok" if snap["fmp_failure_rate_pct"] < 20 else "degraded"
+    fmp_key_set    = bool(os.getenv("FMP_API_KEY", "").strip())
+    provider       = os.getenv("DATA_PROVIDER", "auto") if fmp_key_set else "yahoo"
+    fmp_status     = "ok" if snap["fmp_failure_rate_pct"] < 20 else "degraded"
+    jwt_configured = bool(os.getenv("SUPABASE_JWT_SECRET", "").strip())
     return {
         "status":   "ok",
         "provider": provider,
+        "auth": {
+            "jwt_configured": jwt_configured,
+            "note": "ok" if jwt_configured else "SUPABASE_JWT_SECRET missing — all requests are guest-only",
+        },
         "fmp": {
             "configured": fmp_key_set,
             "status":     fmp_status if fmp_key_set else "not_configured",
