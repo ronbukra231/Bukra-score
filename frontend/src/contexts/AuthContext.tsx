@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
+import type { AuthError, Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 
 export type Role = 'guest' | 'user' | 'premium' | 'admin'
@@ -10,6 +10,7 @@ interface AuthContextValue {
   loading:         boolean
   role:            Role
   isAuthenticated: boolean
+  signIn:          (email: string, password: string) => Promise<AuthError | null>
   signOut:         () => Promise<void>
   getAccessToken:  () => Promise<string | null>
 }
@@ -56,6 +57,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  async function signIn(email: string, password: string): Promise<AuthError | null> {
+    if (!supabase) return null
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    return error
+  }
+
   async function signOut(): Promise<void> {
     if (!supabase) return
     await supabase.auth.signOut()
@@ -78,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       role:            deriveRole(user),
       isAuthenticated: user !== null,
+      signIn,
       signOut,
       getAccessToken,
     }}>

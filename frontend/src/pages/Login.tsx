@@ -1,9 +1,43 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+
+function hebrewError(msg: string): string {
+  if (/invalid.*credentials|invalid login/i.test(msg)) return 'אימייל או סיסמה שגויים'
+  if (/email.*not.*confirmed/i.test(msg))              return 'יש לאמת את כתובת האימייל לפני הכניסה'
+  if (/too many requests/i.test(msg))                  return 'יותר מדי ניסיונות — אנא המתן ונסה שוב'
+  if (/network/i.test(msg))                            return 'בעיית רשת — בדוק את החיבור לאינטרנט'
+  return 'שגיאה בהתחברות — אנא נסה שוב'
+}
 
 export default function Login() {
-  const [email, setEmail]       = useState('')
+  const { signIn } = useAuth()
+  const navigate   = useNavigate()
+
+  const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
+  const [error,    setError]    = useState<string | null>(null)
+  const [loading,  setLoading]  = useState(false)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setError(null)
+
+    if (!email.trim())    { setError('יש להזין כתובת אימייל');  return }
+    if (!password)        { setError('יש להזין סיסמה');          return }
+
+    setLoading(true)
+    const authError = await signIn(email.trim(), password)
+    setLoading(false)
+
+    if (authError) {
+      setError(hebrewError(authError.message))
+      return
+    }
+
+    // onAuthStateChange in AuthContext updates session automatically
+    navigate('/')
+  }
 
   return (
     <div
@@ -11,13 +45,24 @@ export default function Login() {
       className="min-h-screen bg-gray-950 flex items-center justify-center px-4"
     >
       <div className="w-full max-w-md">
-        {/* Logo / title */}
+        {/* Title */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-1">ציון בוקרא</h1>
           <p className="text-gray-400 text-sm">התחבר לחשבון שלך</p>
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 space-y-5">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="bg-gray-900 border border-gray-800 rounded-2xl p-8 space-y-5"
+        >
+          {/* Error banner */}
+          {error && (
+            <div className="bg-red-900/40 border border-red-700 text-red-300 text-sm rounded-lg px-4 py-2.5">
+              {error}
+            </div>
+          )}
+
           {/* Email */}
           <div>
             <label className="block text-sm text-gray-300 mb-1.5" htmlFor="email">
@@ -30,7 +75,8 @@ export default function Login() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+              disabled={loading}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition"
             />
           </div>
 
@@ -46,17 +92,18 @@ export default function Login() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+              disabled={loading}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition"
             />
           </div>
 
-          {/* Login button — placeholder, no action yet */}
+          {/* Login button */}
           <button
-            type="button"
-            disabled
-            className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition"
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition"
           >
-            התחברות בקרוב
+            {loading ? 'מתחבר...' : 'התחברות'}
           </button>
 
           {/* Divider */}
@@ -66,7 +113,7 @@ export default function Login() {
             <div className="flex-1 h-px bg-gray-700" />
           </div>
 
-          {/* Google button — disabled placeholder */}
+          {/* Google — disabled placeholder */}
           <button
             type="button"
             disabled
@@ -81,7 +128,7 @@ export default function Login() {
             </svg>
             כניסה עם Google — בקרוב
           </button>
-        </div>
+        </form>
 
         {/* Back to homepage */}
         <p className="text-center mt-6 text-sm text-gray-500">
