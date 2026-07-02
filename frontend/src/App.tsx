@@ -17,6 +17,7 @@ import MarketBrain from './pages/MarketBrain'
 import MarketIntelligence from './pages/MarketIntelligence'
 import AdminGuard from './components/AdminGuard'
 import Diagnostics from './pages/Diagnostics'
+import Login from './pages/Login'
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/accuracy" element={<Accuracy />} />
           <Route path="/legal" element={<Legal />} />
           <Route path="/system-check" element={<Diagnostics />} />
+          <Route path="/login" element={<Login />} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>
