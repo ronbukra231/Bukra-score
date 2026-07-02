@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { LanguageProvider } from './i18n/index'
+import { AuthProvider } from './contexts/AuthContext'
 import RouteTracker from './components/RouteTracker'
 import Home from './pages/Home'
 import Company from './pages/Company'
@@ -19,6 +20,7 @@ import Diagnostics from './pages/Diagnostics'
 
 export default function App() {
   return (
+    <AuthProvider>
     <LanguageProvider>
       <BrowserRouter>
         {/* Fires page_view + route_load_time on every navigation */}
@@ -41,5 +43,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </LanguageProvider>
+    </AuthProvider>
   )
 }
