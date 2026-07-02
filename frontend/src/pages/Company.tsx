@@ -365,6 +365,28 @@ export default function Company() {
         {data && !loading && (
           <div className="space-y-8">
 
+            {/* Guest-mode banner — shown when backend returned stripped data */}
+            {data.guest === true && (
+              <div className="bg-amber-900/20 border border-amber-700/40 rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-amber-300 font-semibold text-sm">
+                    {isHe ? 'הציון הפיננסי והניתוח דורשים התחברות' : 'Score & analysis require sign in'}
+                  </p>
+                  <p className="text-amber-400/70 text-xs mt-0.5">
+                    {isHe
+                      ? 'הנתונים הבסיסיים מוצגים. התחבר כדי לראות את ציון בוקרה, פיננסים ותובנות.'
+                      : 'Basic info is shown. Sign in to see the Bukra Score, financials, and AI analysis.'}
+                  </p>
+                </div>
+                <Link
+                  to="/login"
+                  className="flex-shrink-0 bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm rounded-xl px-4 py-2 transition"
+                >
+                  {isHe ? 'התחבר' : 'Sign in'}
+                </Link>
+              </div>
+            )}
+
             {/* Company header */}
             <div className="flex flex-col md:flex-row md:items-start gap-6">
               <div className="flex-1">

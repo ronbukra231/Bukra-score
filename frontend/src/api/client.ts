@@ -18,11 +18,13 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 }
 
 // ── Fetch with retry + timeout ────────────────────────────────────────────────
+// Render free tier cold-starts in 30-60s. Per-attempt timeout must exceed that.
+// Backoff must also be long enough for Render to wake before the next attempt.
 async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
-  retries = 2,
-  timeoutMs = 25_000,
+  retries = 1,
+  timeoutMs = 45_000,
 ): Promise<Response> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController()
@@ -35,8 +37,8 @@ async function fetchWithRetry(
       clearTimeout(tid)
       const isLast = attempt === retries
       if (isLast) throw err
-      // Exponential backoff: 1s, 2s
-      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+      // Long backoff so a cold-starting Render instance has time to wake up
+      await new Promise(r => setTimeout(r, 8_000 * (attempt + 1)))
     }
   }
   throw new Error('Unexpected retry loop exit')
@@ -114,10 +116,24 @@ export async function getCompanyPage(symbol: string): Promise<any> {
 
   const fetchFresh = async (): Promise<any> => {
     const headers = await getAuthHeaders()
-    const res = await fetchWithRetry(`${BASE}/company/${sym}/page`, { headers }, 2, 28_000)
+    let res: Response
+    try {
+      res = await fetchWithRetry(`${BASE}/company/${sym}/page`, { headers }, 1, 45_000)
+    } catch (err: any) {
+      // AbortError = timeout; likely Render cold start
+      const isColdStart = err?.name === 'AbortError' || err?.message?.includes('abort')
+      const msg = isColdStart
+        ? 'השרת מתעורר — אנא נסה שוב בעוד כמה שניות.'
+        : 'בעיית חיבור. בדוק את החיבור לאינטרנט ונסה שוב.'
+      const e: any = new Error(msg)
+      e.retryable = true
+      throw e
+    }
     if (!res.ok) {
       const err: any = new Error(res.status === 404
         ? `לא מצאנו חברה עם הסימבול ${sym}. בדוק את האיות או נסה סימבול אחר.`
+        : res.status === 503
+        ? 'הנתונים אינם זמינים כרגע. אנא נסה שוב.'
         : 'שגיאה בטעינת נתוני החברה. אנא נסה שוב.')
       err.status = res.status
       throw err
@@ -223,7 +239,15 @@ export async function runDiagnostics(): Promise<DiagnosticResult[]> {
     const ms = Date.now() - t0
     if (res.ok) {
       const body = await res.json()
-      results.push({ name: 'Backend Health', status: 'ok', detail: `${body.status ?? 'ok'}`, ms })
+      const jwtOk = body.auth?.jwt_configured === true
+      results.push({
+        name: 'Backend Health',
+        status: jwtOk ? 'ok' : 'warn',
+        detail: jwtOk
+          ? `ok — JWT auth enabled`
+          : `ok — but SUPABASE_JWT_SECRET missing: all users get guest-only data (no score/financials)`,
+        ms,
+      })
     } else {
       results.push({ name: 'Backend Health', status: 'error', detail: `HTTP ${res.status}`, ms })
     }
