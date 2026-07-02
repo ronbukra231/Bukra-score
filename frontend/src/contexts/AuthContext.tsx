@@ -10,9 +10,10 @@ interface AuthContextValue {
   loading:         boolean
   role:            Role
   isAuthenticated: boolean
-  signIn:          (email: string, password: string) => Promise<AuthError | null>
-  signOut:         () => Promise<void>
-  getAccessToken:  () => Promise<string | null>
+  signIn:             (email: string, password: string) => Promise<AuthError | null>
+  signInWithGoogle:   () => Promise<string | null>
+  signOut:            () => Promise<void>
+  getAccessToken:     () => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -63,6 +64,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return error
   }
 
+  async function signInWithGoogle(): Promise<string | null> {
+    if (!supabase) return 'Supabase is not configured.'
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      })
+      if (error) return error.message
+      return null
+    } catch (err) {
+      return err instanceof Error ? err.message : 'An unexpected error occurred.'
+    }
+  }
+
   async function signOut(): Promise<void> {
     if (!supabase) return
     await supabase.auth.signOut()
@@ -86,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role:            deriveRole(user),
       isAuthenticated: user !== null,
       signIn,
+      signInWithGoogle,
       signOut,
       getAccessToken,
     }}>
