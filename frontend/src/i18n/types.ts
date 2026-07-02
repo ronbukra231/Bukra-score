@@ -52,6 +52,9 @@ export interface Translations {
   co_loadingStep1: string
   co_loadingStep2: string
   co_loadingStep3: string
+  co_guestLockedTitle: string
+  co_guestLockedBody: string
+  co_guestSignIn: string
 
   // ── Stat card labels ──────────────────────────────────────────────────────
   stat_marketCap: string

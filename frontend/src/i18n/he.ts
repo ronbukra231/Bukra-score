@@ -44,6 +44,9 @@ const he: Translations = {
   co_loadingStep1: 'מאתר נתונים פיננסיים...',
   co_loadingStep2: 'מחשב ציון בוקרה...',
   co_loadingStep3: 'מכין ניתוח בינה מלאכותית בעברית...',
+  co_guestLockedTitle: 'ניתוח מלא זמין לחברים בלבד',
+  co_guestLockedBody: 'הירשם כדי לצפות בציון בוקרה, ניתוח פיננסי מלא, והסברים בעברית.',
+  co_guestSignIn: 'כניסה לחשבון',
 
   stat_marketCap: 'שווי שוק',
   stat_pe: 'מכפיל רווח P/E',

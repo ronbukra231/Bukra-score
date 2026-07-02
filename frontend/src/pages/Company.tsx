@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowRight, ExternalLink, TrendingUp, Building2, Globe } from 'lucide-react'
+import { ArrowRight, ExternalLink, TrendingUp, Building2, Globe, Lock } from 'lucide-react'
 import { getCompanyPage, getCompanyPageSWR } from '../api/client'
 import { useLanguage } from '../i18n/index'
 import FinancialCharts from '../components/FinancialCharts'
@@ -99,7 +99,7 @@ function LoadingSkeleton() {
 }
 
 // ── Staged loading indicator ──────────────────────────────────────────────────
-const STAGE_DELAYS = [0, 2500, 6000] // ms thresholds for each step message
+const STAGE_DELAYS = [0, 2500, 6000]
 
 function LoadingStages({ steps }: { steps: string[] }) {
   const [stage, setStage] = useState(0)
@@ -134,6 +134,37 @@ function LoadingStages({ steps }: { steps: string[] }) {
   )
 }
 
+// ── Locked section (guest_limited state) ──────────────────────────────────────
+function LockedSection({ title, lockedTitle, lockedBody, signInLabel }: {
+  title?: string
+  lockedTitle: string
+  lockedBody: string
+  signInLabel: string
+}) {
+  return (
+    <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+      {title && (
+        <div className="px-6 pt-5 pb-2 border-b border-gray-800">
+          <h3 className="text-white font-semibold text-sm">{title}</h3>
+        </div>
+      )}
+      <div className="flex flex-col items-center justify-center gap-3 py-12 px-6 text-center">
+        <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center">
+          <Lock className="w-5 h-5 text-gray-500" />
+        </div>
+        <p className="text-white font-medium text-sm">{lockedTitle}</p>
+        <p className="text-gray-500 text-xs leading-relaxed max-w-xs">{lockedBody}</p>
+        <Link
+          to="/"
+          className="mt-1 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl px-4 py-2 transition"
+        >
+          {signInLabel}
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Company() {
@@ -151,9 +182,7 @@ export default function Company() {
     setError('')
     const loadStart = performance.now()
 
-    // Stale-while-revalidate: show cached data instantly, refresh silently.
-    // mountedRef guards against setting state after the component unmounts
-    // (e.g. user navigates away before background refresh completes).
+    // Guest payloads are never cached, so SWR always returns null for guests.
     const cached = getCompanyPageSWR(s, (fresh) => {
       if (mountedRef.current) {
         setData(fresh)
@@ -164,7 +193,7 @@ export default function Company() {
     if (cached) {
       setData(cached)
       setLoading(false)
-      analytics.trackCompanyOpen(s, cached?.score?.total, cached?.company?.sector)
+      analytics.trackCompanyOpen(s, cached?.score?.score, cached?.info?.sector)
     } else {
       setLoading(true)
       setData(null)
@@ -173,12 +202,13 @@ export default function Company() {
           if (mountedRef.current) {
             setData(d)
             setLoading(false)
-            analytics.trackCompanyOpen(s, d?.score?.total, d?.company?.sector)
+            analytics.trackCompanyOpen(s, d?.score?.score, d?.info?.sector)
             analytics.trackCompanyLoadTime(s, Math.round(performance.now() - loadStart))
           }
         })
         .catch((e) => {
           if (mountedRef.current) {
+            // Only set error for true not_found / backend_error (HTTP non-2xx throws here)
             setError(e.message || 'שגיאה בטעינת נתוני החברה')
             setLoading(false)
             analytics.trackApiError('/api/company/' + s, undefined, s)
@@ -195,6 +225,9 @@ export default function Company() {
   }, [sym, load])
 
   const loadingSteps = [t.co_loadingStep1, t.co_loadingStep2, t.co_loadingStep3]
+
+  // guest_limited: backend returned 200 with info but gated analysis
+  const isGuest = data?.guest === true
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -224,7 +257,7 @@ export default function Company() {
           </div>
         )}
 
-        {/* ── Error ───────────────────────────────────────────────────────── */}
+        {/* ── Error: only for HTTP non-2xx (not_found / backend_error) ────── */}
         {error && !loading && (
           <div className="max-w-md mx-auto py-32 text-center">
             <div className="text-4xl mb-4">⚠️</div>
@@ -244,39 +277,41 @@ export default function Company() {
           </div>
         )}
 
-        {/* ── Content ─────────────────────────────────────────────────────── */}
+        {/* ── Content: full_success OR guest_limited (both have data.info) ── */}
         {data && !loading && (
           <div className="space-y-8">
 
-            {/* Company header */}
+            {/* Company header — always visible for any valid response */}
             <div className="flex flex-col md:flex-row md:items-start gap-6">
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className="bg-brand-600 text-white font-black text-base rounded-xl px-3 py-1 font-mono">
                     {sym}
                   </span>
-                  {data.info.sector && <Tag label={data.info.sector} />}
-                  {data.info.industry && data.info.industry !== data.info.sector && (
+                  {data.info?.sector && <Tag label={data.info.sector} />}
+                  {data.info?.industry && data.info.industry !== data.info.sector && (
                     <Tag label={data.info.industry} />
                   )}
-                  {data.info.country && data.info.country !== 'United States' && (
+                  {data.info?.country && data.info.country !== 'United States' && (
                     <Tag label={data.info.country} />
                   )}
-                  <Link
-                    to="/accuracy"
-                    className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs rounded-full px-2.5 py-1 hover:bg-emerald-500/20 transition"
-                  >
-                    <TrendingUp className="w-3 h-3" />
-                    {t.accuracy_title}
-                  </Link>
+                  {!isGuest && (
+                    <Link
+                      to="/accuracy"
+                      className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs rounded-full px-2.5 py-1 hover:bg-emerald-500/20 transition"
+                    >
+                      <TrendingUp className="w-3 h-3" />
+                      {t.accuracy_title}
+                    </Link>
+                  )}
                 </div>
 
                 <h1 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">
-                  {data.info.name}
+                  {data.info?.name}
                 </h1>
 
                 <div className="flex flex-wrap gap-4 text-sm">
-                  {isSafeUrl(data.info.website) && (
+                  {isSafeUrl(data.info?.website) && (
                     <a
                       href={data.info.website}
                       target="_blank"
@@ -288,7 +323,7 @@ export default function Company() {
                       <ExternalLink className="w-3 h-3 opacity-60" />
                     </a>
                   )}
-                  {data.info.employees && (
+                  {data.info?.employees && (
                     <span className="inline-flex items-center gap-1.5 text-gray-500">
                       <Building2 className="w-3.5 h-3.5" />
                       {data.info.employees.toLocaleString()} {t.co_employees}
@@ -297,7 +332,7 @@ export default function Company() {
                 </div>
               </div>
 
-              {data.info.price && (
+              {data.info?.price && (
                 <div className="text-left md:text-right shrink-0">
                   <div className="text-3xl font-black text-white">{fmtPrice(data.info.price)}</div>
                   <div className="text-gray-400 text-sm">{data.info.currency || 'USD'} · {t.co_currentPrice}</div>
@@ -310,79 +345,120 @@ export default function Company() {
               )}
             </div>
 
-            {/* Key stats grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
-              <Stat label={t.stat_marketCap}          value={fmtMoney(data.info.market_cap)} />
-              <Stat label={t.stat_pe}                 value={data.info.pe_ratio ? data.info.pe_ratio.toFixed(1) : '—'} />
-              <Stat label={t.stat_high52}             value={fmtPrice(data.info['52w_high'])} />
-              <Stat label={t.stat_low52}              value={fmtPrice(data.info['52w_low'])} />
-              <Stat
-                label={t.stat_dividend}
-                value={data.info.dividend_yield ? fmtPct(data.info.dividend_yield, true) : '—'}
-                sub={data.info.dividend_yield ? t.stat_annual : t.stat_noDividend}
-              />
-              <Stat label={t.stat_countryAndCurrency} value={`${data.info.country || '—'} / ${data.info.currency || 'USD'}`} />
-            </div>
+            {/* Key stats — visible when market_cap is present */}
+            {data.info?.market_cap != null && (
+              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
+                <Stat label={t.stat_marketCap}          value={fmtMoney(data.info.market_cap)} />
+                <Stat label={t.stat_pe}                 value={data.info.pe_ratio ? data.info.pe_ratio.toFixed(1) : '—'} />
+                <Stat label={t.stat_high52}             value={fmtPrice(data.info['52w_high'])} />
+                <Stat label={t.stat_low52}              value={fmtPrice(data.info['52w_low'])} />
+                <Stat
+                  label={t.stat_dividend}
+                  value={data.info.dividend_yield ? fmtPct(data.info.dividend_yield, true) : '—'}
+                  sub={data.info.dividend_yield ? t.stat_annual : t.stat_noDividend}
+                />
+                <Stat label={t.stat_countryAndCurrency} value={`${data.info.country || '—'} / ${data.info.currency || 'USD'}`} />
+              </div>
+            )}
 
-            {/* Smart Analyst Summary — full-width, above charts */}
-            <SmartAnalystSummary data={data.analyst_summary ?? null} />
-
-            {/* Main 2-column layout */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-              {/* Left column: Charts + About + AI */}
-              <div className="xl:col-span-2 space-y-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-4 h-4 text-brand-400" />
-                    <h2 className="text-white font-bold text-lg">{t.co_chartsTitle}</h2>
-                    {data.financials?.source === 'mock' && (
-                      <span className="text-amber-500 text-xs bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">
-                        {t.co_mockBadge}
-                      </span>
-                    )}
-                  </div>
-
-                  {data.financials?.history?.length ? (
-                    <FinancialCharts history={data.financials.history} />
-                  ) : (
-                    <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center">
-                      <div className="text-3xl mb-3">📊</div>
-                      <p className="text-gray-400 text-sm">
-                        {t.co_noChartsTitle} {sym}
-                      </p>
-                      <p className="text-gray-600 text-xs mt-1">
-                        {t.co_noChartsBody}
+            {/* ── guest_limited: show description + locked placeholders ─────── */}
+            {isGuest && (
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="xl:col-span-2 space-y-6">
+                  <LockedSection
+                    title={t.co_chartsTitle}
+                    lockedTitle={t.co_guestLockedTitle}
+                    lockedBody={t.co_guestLockedBody}
+                    signInLabel={t.co_guestSignIn}
+                  />
+                  {data.info?.description && (
+                    <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+                      <h3 className="text-white font-semibold text-sm mb-2">{t.co_about}</h3>
+                      <p className="text-gray-400 text-sm leading-7 line-clamp-4">
+                        {data.info.description}
                       </p>
                     </div>
                   )}
+                  <LockedSection
+                    lockedTitle={t.co_guestLockedTitle}
+                    lockedBody={t.co_guestLockedBody}
+                    signInLabel={t.co_guestSignIn}
+                  />
                 </div>
+                <div className="space-y-6">
+                  <LockedSection
+                    title={t.score_title}
+                    lockedTitle={t.co_guestLockedTitle}
+                    lockedBody={t.co_guestLockedBody}
+                    signInLabel={t.co_guestSignIn}
+                  />
+                  <LockedSection
+                    lockedTitle={t.co_guestLockedTitle}
+                    lockedBody={t.co_guestLockedBody}
+                    signInLabel={t.co_guestSignIn}
+                  />
+                </div>
+              </div>
+            )}
 
-                {data.info.description && (
-                  <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-                    <h3 className="text-white font-semibold text-sm mb-2">{t.co_about}</h3>
-                    <p className="text-gray-400 text-sm leading-7 line-clamp-4">
-                      {data.info.description}
-                    </p>
+            {/* ── full_success: complete analysis for authenticated users ──── */}
+            {!isGuest && (
+              <>
+                <SmartAnalystSummary data={data.analyst_summary ?? null} />
+
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  <div className="xl:col-span-2 space-y-6">
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <TrendingUp className="w-4 h-4 text-brand-400" />
+                        <h2 className="text-white font-bold text-lg">{t.co_chartsTitle}</h2>
+                        {data.financials?.source === 'mock' && (
+                          <span className="text-amber-500 text-xs bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">
+                            {t.co_mockBadge}
+                          </span>
+                        )}
+                      </div>
+
+                      {data.financials?.history?.length ? (
+                        <FinancialCharts history={data.financials.history} />
+                      ) : (
+                        <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center">
+                          <div className="text-3xl mb-3">📊</div>
+                          <p className="text-gray-400 text-sm">
+                            {t.co_noChartsTitle} {sym}
+                          </p>
+                          <p className="text-gray-600 text-xs mt-1">
+                            {t.co_noChartsBody}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {data.info?.description && (
+                      <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+                        <h3 className="text-white font-semibold text-sm mb-2">{t.co_about}</h3>
+                        <p className="text-gray-400 text-sm leading-7 line-clamp-4">
+                          {data.info.description}
+                        </p>
+                      </div>
+                    )}
+
+                    <AIExplanation
+                      explanation={data.explanation ?? null}
+                      loading={false}
+                      error={data.explanation_error ?? ''}
+                      englishDescription={data.info?.description || ''}
+                    />
                   </div>
-                )}
 
-                {/* AI Explanation — comes bundled in /page response */}
-                <AIExplanation
-                  explanation={data.explanation ?? null}
-                  loading={false}
-                  error={data.explanation_error ?? ''}
-                  englishDescription={data.info.description || ''}
-                />
-              </div>
-
-              {/* Right column: Score + Intelligence + Rules */}
-              <div className="space-y-6">
-                <BukraScoreCard score={data.score} />
-                <IntelligencePanel intelligence={data.intelligence ?? null} />
-                <BukraRules history={data.financials?.history ?? []} />
-              </div>
-            </div>
+                  <div className="space-y-6">
+                    <BukraScoreCard score={data.score} />
+                    <IntelligencePanel intelligence={data.intelligence ?? null} />
+                    <BukraRules history={data.financials?.history ?? []} />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

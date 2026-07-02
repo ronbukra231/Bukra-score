@@ -44,6 +44,9 @@ const en: Translations = {
   co_loadingStep1: 'Fetching financial data...',
   co_loadingStep2: 'Computing Bukra Score...',
   co_loadingStep3: 'Preparing AI analysis...',
+  co_guestLockedTitle: 'Full analysis available to members only',
+  co_guestLockedBody: 'Sign in to view the Bukra Score, full financial analysis, and AI explanations.',
+  co_guestSignIn: 'Sign in',
 
   stat_marketCap: 'Market Cap',
   stat_pe: 'P/E Ratio',

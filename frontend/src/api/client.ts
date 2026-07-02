@@ -2,6 +2,19 @@
 // In production: set VITE_API_URL=https://your-backend.onrender.com/api
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
+import { supabase } from '../lib/supabase'
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (!supabase) return {}
+  try {
+    const { data } = await supabase.auth.getSession()
+    const token = data.session?.access_token
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch {
+    return {}
+  }
+}
+
 export async function searchCompanies(q: string) {
   const res = await fetch(`${BASE}/search?q=${encodeURIComponent(q)}`)
   if (!res.ok) throw new Error('לא נמצאו תוצאות')
@@ -22,11 +35,15 @@ function getPageCached(symbol: string): any | null {
     const entry = cache[symbol.toUpperCase()]
     if (!entry) return null
     if (Date.now() - entry.ts > PAGE_CACHE_TTL) return null
+    // Never return a cached guest payload to a potentially logged-in session
+    if (entry.data?.guest === true) return null
     return entry.data
   } catch { return null }
 }
 
 function setPageCached(symbol: string, data: any) {
+  // Never cache guest-limited responses — a logged-in user would see stale guest data
+  if (data?.guest === true) return
   try {
     const raw = localStorage.getItem(PAGE_CACHE_KEY)
     const cache = raw ? JSON.parse(raw) : {}
@@ -38,7 +55,7 @@ function setPageCached(symbol: string, data: any) {
   } catch { /* quota exceeded — ignore */ }
 }
 
-/** Optimised single-request endpoint — returns info + financials + score + rules + AI explanation. Cached 24 h server-side. */
+/** Optimised single-request endpoint — returns info + financials + score + rules + AI explanation. */
 export async function getCompanyPage(symbol: string): Promise<any> {
   const sym = symbol.toUpperCase()
 
@@ -47,7 +64,8 @@ export async function getCompanyPage(symbol: string): Promise<any> {
   if (existing) return existing
 
   const fetchFresh = async (): Promise<any> => {
-    const res = await fetch(`${BASE}/company/${sym}/page`)
+    const headers = await getAuthHeaders()
+    const res = await fetch(`${BASE}/company/${sym}/page`, { headers })
     if (!res.ok) {
       const err: any = new Error(res.status === 404
         ? `לא מצאנו חברה עם הסימבול ${sym}. בדוק את האיות או נסה סימבול אחר.`
@@ -68,6 +86,7 @@ export async function getCompanyPage(symbol: string): Promise<any> {
 /**
  * Stale-while-revalidate: returns cached data instantly if available,
  * fires a background refresh, and calls onFresh when the new data arrives.
+ * Guest payloads are never returned from cache — always re-fetched with auth.
  */
 export function getCompanyPageSWR(
   symbol: string,
