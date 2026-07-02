@@ -71,6 +71,14 @@ export default function UserMenu() {
           {/* Nav items */}
           <div className="py-1">
             <Link
+              to="/capital-lab"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-amber-400 hover:bg-gray-800 hover:text-amber-300 text-sm font-semibold transition"
+            >
+              <span>⚗️</span>
+              <span>Capital Lab</span>
+            </Link>
+            <Link
               to="/"
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:bg-gray-800 hover:text-white text-sm transition"

@@ -18,6 +18,7 @@ import MarketIntelligence from './pages/MarketIntelligence'
 import AdminGuard from './components/AdminGuard'
 import Diagnostics from './pages/Diagnostics'
 import Login from './pages/Login'
+import CapitalLab from './pages/CapitalLab'
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/legal" element={<Legal />} />
           <Route path="/system-check" element={<Diagnostics />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/capital-lab" element={<CapitalLab />} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>
