@@ -39,7 +39,11 @@ function setCachedSearch(q: string, data: Result[]) {
   } catch { /* localStorage unavailable */ }
 }
 
-export default function SearchBar({ large = false }: { large?: boolean }) {
+export default function SearchBar({ large = false, variant = 'default' }: {
+  large?: boolean
+  /** 'estate' renders the Research Estate styling — hairlines, warm dark, serif register */
+  variant?: 'default' | 'estate'
+}) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Result[]>([])
   const [loading, setLoading] = useState(false)
@@ -99,7 +103,9 @@ export default function SearchBar({ large = false }: { large?: boolean }) {
     }
   }
 
-  const inputClass = large
+  const inputClass = variant === 'estate'
+    ? 'w-full bg-stone-950/50 border border-stone-800 rounded-2xl py-4 px-6 pr-14 text-lg font-light text-stone-100 placeholder-stone-600 focus:outline-none focus:border-[#c9a962]/50 transition-colors duration-500'
+    : large
     ? 'w-full bg-gray-800 border border-gray-700 rounded-2xl py-4 px-5 pr-14 text-xl text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 transition'
     : 'w-full bg-gray-800 border border-gray-700 rounded-xl py-2.5 px-4 pr-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 transition'
 
@@ -118,19 +124,22 @@ export default function SearchBar({ large = false }: { large?: boolean }) {
           dir={inputDir}
         />
         <Search
-          className={`absolute top-1/2 -translate-y-1/2 left-4 text-gray-400 ${large ? 'w-6 h-6' : 'w-4 h-4'}`}
+          className={`absolute top-1/2 -translate-y-1/2 left-4 ${variant === 'estate' ? 'text-stone-600' : 'text-gray-400'} ${large ? 'w-6 h-6' : 'w-4 h-4'}`}
         />
       </div>
 
       {open && results.length > 0 && (
-        <div className="absolute z-50 w-full mt-2 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+        <div className={`absolute z-50 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border
+          ${variant === 'estate' ? 'bg-[#12100e] border-stone-800' : 'bg-gray-800 border-gray-700'}`}>
           {results.map((r) => (
             <button
               key={r.symbol}
               onClick={() => handleSelect(r.symbol)}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-700 transition text-right"
+              className={`w-full flex items-center gap-3 px-4 py-3 transition text-right
+                ${variant === 'estate' ? 'hover:bg-stone-900' : 'hover:bg-gray-700'}`}
             >
-              <div className="bg-brand-600 text-white text-xs font-bold rounded-lg px-2 py-1 min-w-[56px] text-center">
+              <div className={`text-xs font-bold rounded-lg px-2 py-1 min-w-[56px] text-center
+                ${variant === 'estate' ? 'border border-[#c9a962]/40 text-[#c9a962]' : 'bg-brand-600 text-white'}`}>
                 {r.symbol}
               </div>
               <div>

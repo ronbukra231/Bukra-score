@@ -1,120 +1,167 @@
 /**
- * The Portfolio Office — the investor's private command center.
+ * The Portfolio Office — the investor's home. Where capital is managed.
  *
- * Read-only cockpit: real holdings, allocation, exposure, cash, conviction —
- * once a broker is connected. Until then the office stands ready: the desk
- * is built, the display is dark, the broker connections wait as plaques.
+ * The office is fully furnished from day one: the desk shows capital,
+ * cash and positions; the wall shows exposure; the ledger shows Bukra's
+ * standing counsel. Figures awaiting a broker connection appear as quiet
+ * em-dashes in their final places — a furnished room, never a promise.
  *
- * Bukra never places trades. There is no order UI here and never will be.
+ * Read-only by construction. Bukra never places trades; there is no order
+ * UI here and never will be.
  */
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n/index'
-import { getEstatePortfolio } from '../api/client'
-import { EstateShell, EstatePanel, EstateHeading, GOLD } from '../estate/EstateShell'
+import { getEstatePortfolio, getEstateLibrary } from '../api/client'
+import { EstateShell, EstatePanel, EstateHeading, EstateFigure, GOLD, SERIF } from '../estate/EstateShell'
 
 interface Broker { id: string; name: string; region: string; status: string }
-interface PortfolioView {
+interface View {
   connected: boolean
   brokers: Broker[]
   totalValue: number | null
   cash: number | null
   holdings: any[]
-  allocation: { bySector: any[]; byCountry: any[] }
-  alerts: string[]
+  allocation: { bySector: { label: string; weight: number }[]; byCountry: any[] }
 }
 
 export default function PortfolioOffice() {
   const { isHe } = useLanguage()
-  const [view, setView] = useState<PortfolioView | null>(null)
-  const [error, setError] = useState(false)
+  const [view, setView] = useState<View | null>(null)
+  const [studied, setStudied] = useState<{ symbol: string; score: number | null; status: string | null }[]>([])
+  const [showBrokers, setShowBrokers] = useState(false)
 
   useEffect(() => {
-    getEstatePortfolio().then(setView).catch(() => setError(true))
+    getEstatePortfolio().then(setView).catch(() => setView(null))
+    getEstateLibrary().then(d => setStudied((d.companies ?? []).slice(0, 4))).catch(() => {})
   }, [])
 
+  const connected = view?.connected === true
+
   return (
-    <EstateShell
+    <EstateShell wide
       room="The Portfolio Office" roomHe="משרד התיק הפרטי"
-      subtitle="Your holdings, read with Bukra’s judgement. Read-only — execution always happens at your broker."
-      subtitleHe="האחזקות שלך, נקראות בשיקול הדעת של בוקרא. לקריאה בלבד — הביצוע תמיד אצל הברוקר.">
+      subtitle="Your capital, read with Bukra’s judgement."
+      subtitleHe="ההון שלך, נקרא בשיקול הדעת של בוקרא.">
 
-      {error && (
-        <p className="text-stone-500 text-sm">{isHe ? 'המשרד אינו זמין כרגע.' : 'The office is unavailable right now.'}</p>
-      )}
+      {/* ── The desk — capital at a glance ─────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <EstatePanel>
+          <EstateFigure
+            value={connected ? view!.totalValue?.toLocaleString() ?? null : null}
+            label="Capital" labelHe="הון" />
+        </EstatePanel>
+        <EstatePanel>
+          <EstateFigure
+            value={connected ? view!.cash?.toLocaleString() ?? null : null}
+            label="Cash" labelHe="מזומן" />
+        </EstatePanel>
+        <EstatePanel>
+          <EstateFigure
+            value={connected ? view!.holdings.length : null}
+            label="Positions" labelHe="פוזיציות" />
+        </EstatePanel>
+      </div>
 
-      {view && !view.connected && (
-        <>
-          {/* The dark display — the cockpit exists, awaiting its data */}
-          <EstatePanel className="mb-10 text-center py-16">
-            <div className="text-4xl mb-6 text-stone-700" aria-hidden>▤</div>
-            <h2 className="font-serif text-2xl text-stone-200">
-              {isHe ? 'המשרד מוכן.' : 'The office is ready.'}
-            </h2>
-            <p className="mt-4 text-stone-500 text-sm max-w-md mx-auto leading-relaxed">
-              {isHe
-                ? 'חיבור לברוקר יאיר את הקוקפיט: אחזקות, הקצאה, חשיפה, מזומן — עם הציונים והקונביקציה של בוקרא לצד כל פוזיציה.'
-                : 'Connecting a broker will light the cockpit: holdings, allocation, exposure, cash — with Bukra’s scores and conviction beside every position.'}
-            </p>
-            <p className="mt-6 text-xs tracking-widest uppercase" style={{ color: `${GOLD}99` }}>
-              {isHe ? 'לקריאה בלבד · בוקרא לעולם אינה מבצעת עסקאות' : 'Read-only · Bukra never places trades'}
-            </p>
-          </EstatePanel>
-
-          {/* Broker plaques — future connections, honestly marked */}
-          <EstateHeading en="Broker connections" he="חיבורי ברוקר" />
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {view.brokers.map(b => (
-              <div key={b.id}
-                className="rounded-xl border border-stone-800/70 bg-stone-950/40 px-4 py-5 text-center">
-                <div className="text-stone-300 text-sm font-medium">{b.name}</div>
-                <div className="mt-2 text-[10px] uppercase tracking-[0.2em] text-stone-600">
-                  {b.status === 'available'
-                    ? (isHe ? 'זמין' : 'Available')
-                    : (isHe ? 'בקרוב' : 'Planned')}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {view?.connected && (
-        <>
-          {/* The lit cockpit — renders real data once the first adapter ships */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <EstatePanel>
-              <EstateHeading en="Total value" he="שווי כולל" />
-              <div className="font-serif text-3xl text-stone-100">
-                {view.totalValue?.toLocaleString()}
-              </div>
-            </EstatePanel>
-            <EstatePanel>
-              <EstateHeading en="Cash" he="מזומן" />
-              <div className="font-serif text-3xl text-stone-100">
-                {view.cash?.toLocaleString()}
-              </div>
-            </EstatePanel>
-            <EstatePanel>
-              <EstateHeading en="Positions" he="פוזיציות" />
-              <div className="font-serif text-3xl text-stone-100">{view.holdings.length}</div>
-            </EstatePanel>
-          </div>
-          <EstatePanel>
-            <EstateHeading en="Sector exposure" he="חשיפה סקטוריאלית" />
-            <div className="space-y-3">
-              {view.allocation.bySector.map(s => (
-                <div key={s.label} className="flex items-center gap-4">
-                  <span className="w-40 text-sm text-stone-400">{s.label}</span>
-                  <div className="flex-1 h-1.5 bg-stone-800 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${s.weight * 100}%`, background: GOLD }} />
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+        {/* ── The wall — exposure ──────────────────────────────────────── */}
+        <EstatePanel className="lg:col-span-3">
+          <EstateHeading en="Exposure" he="חשיפה" />
+          {connected && view!.allocation.bySector.length > 0 ? (
+            <div className="space-y-4">
+              {view!.allocation.bySector.map(s => (
+                <div key={s.label} className="flex items-center gap-5">
+                  <span className="w-40 text-sm text-stone-400 font-light">{s.label}</span>
+                  <div className="flex-1 h-px bg-stone-800 relative">
+                    <div className="absolute inset-y-0 left-0 h-px"
+                      style={{ width: `${s.weight * 100}%`, background: GOLD }} />
                   </div>
                   <span className="text-xs text-stone-500 w-12 text-right">{(s.weight * 100).toFixed(1)}%</span>
                 </div>
               ))}
             </div>
-          </EstatePanel>
-        </>
-      )}
+          ) : (
+            <div className="space-y-5">
+              {[
+                isHe ? 'סקטורים' : 'Sectors',
+                isHe ? 'מדינות' : 'Countries',
+                isHe ? 'מטבעות' : 'Currencies',
+              ].map(row => (
+                <div key={row} className="flex items-center gap-5">
+                  <span className="w-40 text-sm text-stone-600 font-light">{row}</span>
+                  <div className="flex-1 h-px bg-stone-800/70" />
+                  <span className="text-xs text-stone-700 w-12 text-right">—</span>
+                </div>
+              ))}
+              <p className="pt-3 text-xs text-stone-600 leading-relaxed font-light">
+                {isHe
+                  ? 'החשיפה תיקרא ישירות מהברוקר שלך, לקריאה בלבד.'
+                  : 'Exposure reads directly from your broker, read-only.'}
+              </p>
+            </div>
+          )}
+        </EstatePanel>
+
+        {/* ── The ledger — Bukra's standing counsel ────────────────────── */}
+        <EstatePanel className="lg:col-span-2">
+          <EstateHeading en="Standing counsel" he="עמדה מתמשכת" />
+          {studied.length > 0 ? (
+            <div className="space-y-5">
+              {studied.map(s => (
+                <Link key={s.symbol} to={`/company/${s.symbol}`}
+                  className="flex items-baseline justify-between group">
+                  <span className="text-stone-300 group-hover:text-stone-100 transition-colors duration-500 font-light"
+                    style={{ fontFamily: SERIF }}>
+                    {s.symbol}
+                  </span>
+                  <span className="flex items-baseline gap-4">
+                    <span className="text-[11px] text-stone-600">{s.status ?? ''}</span>
+                    {s.score != null && (
+                      <span className="text-sm" style={{ color: s.score >= 80 ? GOLD : '#a8a29e' }}>{s.score}</span>
+                    )}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-stone-600 leading-relaxed font-light">
+              {isHe
+                ? 'העמדות שבוקרא מחזיקה לגבי החברות שנחקרו יופיעו כאן — ציון, תזה, וקונביקציה.'
+                : 'Bukra’s standing views on studied companies will rest here — score, thesis, conviction.'}
+            </p>
+          )}
+          <div className="mt-8 pt-6 border-t border-stone-800/50">
+            <Link to="/estate/research"
+              className="text-[11px] uppercase tracking-[0.25em] text-stone-500 hover:text-[#c9a962] transition-colors duration-500">
+              {isHe ? 'אל חדר המחקר ←' : 'To the Research Room →'}
+            </Link>
+          </div>
+        </EstatePanel>
+      </div>
+
+      {/* ── Private connections — quiet, discoverable, never a banner ──── */}
+      <div className="text-center">
+        <button onClick={() => setShowBrokers(v => !v)}
+          className="text-[11px] uppercase tracking-[0.25em] text-stone-600 hover:text-stone-400 transition-colors duration-500">
+          {isHe ? 'חיבורים פרטיים' : 'Private connections'}
+        </button>
+        {showBrokers && view && (
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-5 gap-3 text-left">
+            {view.brokers.map(b => (
+              <div key={b.id}
+                className="rounded-xl border border-stone-800/50 bg-stone-950/30 px-4 py-4 text-center">
+                <div className="text-stone-400 text-[13px] font-light">{b.name}</div>
+                <div className="mt-1.5 text-[10px] uppercase tracking-[0.2em] text-stone-700">
+                  {b.status === 'available' ? (isHe ? 'זמין' : 'Available') : (isHe ? 'בהכנה' : 'In preparation')}
+                </div>
+              </div>
+            ))}
+            <p className="col-span-full mt-3 text-center text-[11px] text-stone-700 tracking-wide">
+              {isHe ? 'לקריאה בלבד. בוקרא לעולם אינה מבצעת עסקאות.' : 'Read-only. Bukra never places trades.'}
+            </p>
+          </div>
+        )}
+      </div>
     </EstateShell>
   )
 }

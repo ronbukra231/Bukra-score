@@ -21,6 +21,7 @@ import Login from './pages/Login'
 import CapitalLab from './pages/CapitalLab'
 import RequireAuth from './components/RequireAuth'
 import EstateHall from './pages/EstateHall'
+import ResearchRoom from './pages/ResearchRoom'
 import PortfolioOffice from './pages/PortfolioOffice'
 import WorldIntelligenceCenter from './pages/WorldIntelligenceCenter'
 import EstateLibrary from './pages/EstateLibrary'
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/capital-lab" element={<RequireAuth><CapitalLab /></RequireAuth>} />
           {/* The Research Estate — rooms, not pages */}
           <Route path="/estate" element={<RequireAuth><EstateHall /></RequireAuth>} />
+          <Route path="/estate/research" element={<RequireAuth><ResearchRoom /></RequireAuth>} />
           <Route path="/estate/portfolio" element={<RequireAuth><PortfolioOffice /></RequireAuth>} />
           <Route path="/estate/world" element={<RequireAuth><WorldIntelligenceCenter /></RequireAuth>} />
           <Route path="/estate/library" element={<RequireAuth><EstateLibrary /></RequireAuth>} />

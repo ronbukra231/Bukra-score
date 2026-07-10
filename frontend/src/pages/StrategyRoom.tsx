@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '../i18n/index'
 import { getEstateBrain } from '../api/client'
-import { EstateShell, EstatePanel, EstateHeading, GOLD } from '../estate/EstateShell'
+import { EstateShell, EstatePanel, EstateHeading, GOLD, SERIF } from '../estate/EstateShell'
 
 interface Edge { cause: string; effect: string; polarity: number; strength: number; origin: string }
 interface Brain {
@@ -38,7 +38,7 @@ export default function StrategyRoom() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
         <EstatePanel>
           <EstateHeading en="Predictions awaiting reality" he="תחזיות ממתינות למציאות" />
-          <div className="font-serif text-4xl text-stone-100">
+          <div className="text-4xl text-stone-100 font-light" style={{ fontFamily: SERIF }}>
             {brain?.learning.pendingPredictions ?? '—'}
           </div>
           <p className="mt-3 text-xs text-stone-600 leading-relaxed">
@@ -47,7 +47,7 @@ export default function StrategyRoom() {
         </EstatePanel>
         <EstatePanel>
           <EstateHeading en="Graded by reality" he="נבחנו על ידי המציאות" />
-          <div className="font-serif text-4xl text-stone-100">
+          <div className="text-4xl text-stone-100 font-light" style={{ fontFamily: SERIF }}>
             {brain?.learning.resolvedPredictions ?? '—'}
           </div>
           <p className="mt-3 text-xs text-stone-600 leading-relaxed">

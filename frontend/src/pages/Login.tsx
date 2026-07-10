@@ -14,7 +14,9 @@ export default function Login() {
   const { signIn, signInWithGoogle } = useAuth()
   const navigate  = useNavigate()
   const location  = useLocation()
-  const returnTo  = (location.state as { from?: string } | null)?.from ?? '/'
+  // The Estate is the authenticated home — login leads there unless the
+  // user was heading somewhere specific.
+  const returnTo  = (location.state as { from?: string } | null)?.from ?? '/estate'
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')

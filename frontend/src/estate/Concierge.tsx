@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n/index'
 import { useAuth } from '../contexts/AuthContext'
 import { getEstateEntry } from '../api/client'
-import { GOLD } from './EstateShell'
+import { GOLD, SERIF } from './EstateShell'
 import { daylight } from './daylight'
 
 interface Entry {
@@ -45,19 +45,20 @@ export default function Concierge() {
     ?? user?.email?.split('@')[0] ?? ''
 
   return (
-    <div className="relative rounded-2xl border border-stone-800/80 bg-stone-950/70 backdrop-blur-sm
-      px-10 py-10 max-w-2xl mx-auto text-center overflow-hidden">
+    <div className="relative rounded-2xl border border-stone-800/70 bg-gradient-to-b from-stone-900/25 to-stone-950/60
+      px-12 py-12 max-w-2xl mx-auto text-center overflow-hidden">
       {/* One thread of light — its warmth is the only urgency signal */}
       <div className="absolute inset-x-16 top-0 h-px"
         style={{ background: `linear-gradient(90deg, transparent, ${entry ? URGENCY_LINE[entry.urgency] : '#57534e'}, transparent)` }} />
 
-      <p className="text-stone-500 text-sm tracking-wide">
+      <p className="text-stone-500 text-sm tracking-wide font-light">
         {isHe ? light.greetingHe : light.greetingEn}{name ? `, ${name}` : ''}.
       </p>
 
       {entry ? (
         <>
-          <h2 className="mt-4 font-serif text-2xl text-stone-100 leading-snug">
+          <h2 className="mt-5 text-[1.7rem] text-stone-100 leading-snug font-light tracking-wide"
+            style={{ fontFamily: SERIF }}>
             {entry.reason}
           </h2>
           {entry.detail && (
