@@ -121,7 +121,7 @@ export default function FutureRelevanceCard({ data }: Props) {
         <div className="mt-5 text-center">
           <span className="text-xs text-gray-600 group-hover:text-gray-400 transition
             border border-gray-800 group-hover:border-gray-700 rounded-full px-3 py-1">
-            View full analysis →
+            {t.fr_viewFull}
           </span>
         </div>
       </button>

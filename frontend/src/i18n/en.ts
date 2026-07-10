@@ -572,6 +572,7 @@ const en: Translations = {
   fr_status0:         'High Disruption Risk',
   fr_timeframe:       'Timeframe',
   fr_close:           'Close',
+  fr_viewFull:        'View full analysis →',
 }
 
 export default en

@@ -59,10 +59,15 @@ export default function FutureRelevanceDrawer({ data, onClose }: Props) {
 
   // Close on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setVisible(false)
+        setTimeout(onClose, 300)
+      }
+    }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  })
+  }, [onClose])
 
   // Lock body scroll
   useEffect(() => {

@@ -590,4 +590,5 @@ export interface Translations {
   fr_status0: string
   fr_timeframe: string
   fr_close: string
+  fr_viewFull: string
 }

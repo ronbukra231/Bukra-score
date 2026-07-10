@@ -571,6 +571,7 @@ const he: Translations = {
   fr_status0:         'סיכון שיבוש גבוה',
   fr_timeframe:       'אופק זמן',
   fr_close:           'סגור',
+  fr_viewFull:        'לניתוח המלא ←',
 }
 
 export default he
