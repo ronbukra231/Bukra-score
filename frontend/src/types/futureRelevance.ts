@@ -50,6 +50,23 @@ export interface FRTimelineEntry {
   reason: string          // why the assessment changed
 }
 
+// Evolving investment thesis — evolves version by version, never rewritten
+export interface FRThesis {
+  currentThesis: string
+  supportingEvidence: string[]
+  counterArguments: string[]
+  knownRisks: string[]
+  unknownRisks: string[]
+  majorAssumptions: string[]
+  confidence: FRConfidence
+  reevaluationTriggers: string[]
+  catalysts: string[]
+  threats: string[]
+  version: number
+  evolvedAt: string
+  evolutionLog: { date: string; note: string }[]
+}
+
 export interface FutureRelevanceData {
   score: number           // 0–100
   confidence: FRConfidence
@@ -63,6 +80,8 @@ export interface FutureRelevanceData {
   isPlaceholder: boolean  // true until real AI engine is wired
   engineVersion?: string
   analystBreakdown?: FRAnalystVerdict[]  // multi-analyst engine verdicts
+  thesis?: FRThesis                      // evolving investment thesis
+  changesSinceLast?: string[]            // knowledge evolution — [] = nothing material
 }
 
 // Status label computed from score

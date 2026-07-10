@@ -591,4 +591,6 @@ export interface Translations {
   fr_timeframe: string
   fr_close: string
   fr_viewFull: string
+  fr_thesisTitle: string
+  fr_whatsNew: string
 }

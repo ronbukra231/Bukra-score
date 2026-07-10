@@ -22,9 +22,11 @@ def build_timeline(symbol: str) -> list[dict]:
             "confidence":    report.get("confidence"),
             "status":        report.get("status"),
             "engineVersion": report.get("engineVersion"),
-            # "reason" is the research summary today; once change detection is
-            # live it becomes the triggering event ("Major acquisition", ...).
-            "reason":        report.get("reasoning", ""),
+            # Knowledge evolution: what changed, or what triggered this run.
+            # Falls back to the research summary for the initial analysis.
+            "reason":        "; ".join(report.get("triggeredBy") or report.get("changes") or [])
+                             or report.get("reasoning", ""),
+            "thesisVersion": (report.get("thesis") or {}).get("version"),
         })
         prev_score = score if score is not None else prev_score
     return entries

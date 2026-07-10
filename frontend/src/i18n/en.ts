@@ -573,6 +573,8 @@ const en: Translations = {
   fr_timeframe:       'Timeframe',
   fr_close:           'Close',
   fr_viewFull:        'View full analysis →',
+  fr_thesisTitle:     'Investment Thesis',
+  fr_whatsNew:        'Since our last analysis',
 }
 
 export default en

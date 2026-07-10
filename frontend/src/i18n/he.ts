@@ -572,6 +572,8 @@ const he: Translations = {
   fr_timeframe:       'אופק זמן',
   fr_close:           'סגור',
   fr_viewFull:        'לניתוח המלא ←',
+  fr_thesisTitle:     'תזת השקעה',
+  fr_whatsNew:        'מאז הניתוח הקודם',
 }
 
 export default he

@@ -2,10 +2,12 @@
 Research Engine — orchestrates one full research run.
 
 Flow:  ResearchContext → all Analysts → Judge → Confidence → Scenarios
+       → Knowledge Evolution (vs previous conclusion) → Investment Thesis
        → Research Memory → API payload
 
-The payload shape is stable and backward compatible with the original
-Future Relevance response consumed by FutureRelevanceCard / Drawer.
+The engine never produces a one-time opinion: every run compares itself
+against the previous conclusion, evolves (or reconfirms) the investment
+thesis, and records the result permanently.
 """
 
 import logging
@@ -16,16 +18,23 @@ from services.future_relevance.analysts import get_analysts
 from services.future_relevance.judge import judge, build_summary
 from services.future_relevance.confidence import compute_confidence
 from services.future_relevance.scenarios import generate_scenarios
+from services.future_relevance.evolution import detect_changes
+from services.future_relevance.thesis import build_thesis
 from services.future_relevance import memory
 
 logger = logging.getLogger("bukra.future_relevance")
 
-ENGINE_VERSION = "2.0.0"
+ENGINE_VERSION = "2.1.0"
 
 
-def run_research(ctx: ResearchContext) -> dict:
-    """Run a full multi-analyst research pass for one company."""
+def run_research(ctx: ResearchContext, trigger_reasons: list = None) -> dict:
+    """
+    Run a full multi-analyst research pass for one company.
+    `trigger_reasons` — set by Background Intelligence when a change event
+    initiated this run; recorded in memory so the timeline can explain WHY.
+    """
     ctx.previous_reports = memory.get_history(ctx.symbol)
+    previous = ctx.previous_reports[-1] if ctx.previous_reports else None
 
     # 1. Every analyst studies the company independently
     reports = []
@@ -44,7 +53,14 @@ def run_research(ctx: ResearchContext) -> dict:
     generated_at   = datetime.now(timezone.utc).isoformat()
     is_placeholder = all(a.is_placeholder for a in get_analysts())
 
-    # 4. Persist to permanent research memory (deduped against latest report)
+    # 4. Knowledge evolution — has anything materially changed since last time?
+    changes = detect_changes(ctx, previous, verdict["score"], confidence, verdict["status"])
+
+    # 5. Investment thesis — evolves or is reconfirmed, never rewritten
+    prev_thesis = previous.get("thesis") if previous else None
+    thesis = build_thesis(ctx, verdict, confidence, reports, generated_at, previous=prev_thesis)
+
+    # 6. Persist to permanent research memory (deduped against latest report)
     record = memory.build_memory_record(
         ctx.symbol,
         engine_version=ENGINE_VERSION,
@@ -55,9 +71,13 @@ def run_research(ctx: ResearchContext) -> dict:
         summary=summary,
         generated_at=generated_at,
     )
+    record["thesis"]  = thesis
+    record["changes"] = changes
+    if trigger_reasons:
+        record["triggeredBy"] = trigger_reasons
     memory.save_report(ctx.symbol, record)
 
-    # 5. API payload — same shape the UI already renders, plus engine metadata
+    # 7. API payload — same shape the UI already renders, plus engine metadata
     return {
         "score":          verdict["score"],
         "confidence":     confidence,
@@ -70,6 +90,8 @@ def run_research(ctx: ResearchContext) -> dict:
         "risks":          verdict["risks"],
         "trends":         verdict["trends"],
         "scenarios":      scenarios,
+        "thesis":         thesis,
+        "changesSinceLast": changes,
         "analystBreakdown": [
             {"key": r.analyst_key, "label": r.label, "score": r.score, "confidence": r.confidence}
             for r in reports

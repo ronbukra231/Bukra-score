@@ -169,6 +169,32 @@ export default function FutureRelevanceDrawer({ data, onClose }: Props) {
             </div>
           </div>
 
+          {/* Knowledge evolution — shown only when something materially changed */}
+          {data.changesSinceLast && data.changesSinceLast.length > 0 && (
+            <div className="bg-blue-500/5 rounded-xl p-4 border border-blue-500/15">
+              <div className="text-blue-300 text-xs font-semibold uppercase tracking-wide mb-2">
+                {t.fr_whatsNew}
+              </div>
+              <ul className="space-y-1">
+                {data.changesSinceLast.map((c, i) => (
+                  <li key={i} className="text-gray-300 text-sm leading-relaxed">{c}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Investment Thesis */}
+          {data.thesis?.currentThesis && (
+            <section>
+              <h3 className="text-white font-semibold text-sm mb-3 uppercase tracking-wide">
+                {t.fr_thesisTitle}
+              </h3>
+              <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+                <p className="text-gray-300 text-sm leading-7">{data.thesis.currentThesis}</p>
+              </div>
+            </section>
+          )}
+
           {/* AI Summary */}
           {aiSummary && (
             <section>
