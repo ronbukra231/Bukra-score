@@ -6,6 +6,11 @@ import en from './en'
 const DICT: Record<Lang, Translations> = { he, en }
 const STORAGE_KEY = 'bukra_lang'
 
+/** Active language for non-React code (API client). Same source as the provider. */
+export function getActiveLang(): Lang {
+  return localStorage.getItem(STORAGE_KEY) === 'en' ? 'en' : 'he'
+}
+
 // ── Context ───────────────────────────────────────────────────────────────────
 
 interface LangCtx {

@@ -3,6 +3,7 @@
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
 import { supabase } from '../lib/supabase'
+import { getActiveLang } from '../i18n/index'
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   if (!supabase) return {}
@@ -51,23 +52,29 @@ export async function searchCompanies(q: string) {
 // ── Company page localStorage cache (30-min TTL, stale-while-revalidate) ─────
 // Bump PAGE_CACHE_VERSION whenever the response schema changes — old entries
 // will be evicted automatically on first load rather than causing silent data errors.
-const PAGE_CACHE_VERSION = 'v3'
+const PAGE_CACHE_VERSION = 'v4'
 const PAGE_CACHE_KEY = `bukra_page_cache_${PAGE_CACHE_VERSION}`
 const PAGE_CACHE_TTL = 30 * 60 * 1000 // 30 minutes
 
 // Evict caches from older versions on first run
-;['bukra_page_cache', 'bukra_page_cache_v1', 'bukra_page_cache_v2'].forEach(k => {
+;['bukra_page_cache', 'bukra_page_cache_v1', 'bukra_page_cache_v2', 'bukra_page_cache_v3'].forEach(k => {
   try { localStorage.removeItem(k) } catch {}
 })
 // Tracks in-flight requests to avoid duplicate simultaneous fetches
 const _inflight: Map<string, Promise<any>> = new Map()
+
+// Cache entries are keyed by symbol + language — Future Relevance content
+// is generated server-side in the active UI language.
+function pageCacheKey(symbol: string): string {
+  return `${symbol.toUpperCase()}:${getActiveLang()}`
+}
 
 function getPageCached(symbol: string): any | null {
   try {
     const raw = localStorage.getItem(PAGE_CACHE_KEY)
     if (!raw) return null
     const cache = JSON.parse(raw)
-    const entry = cache[symbol.toUpperCase()]
+    const entry = cache[pageCacheKey(symbol)]
     if (!entry) return null
     if (Date.now() - entry.ts > PAGE_CACHE_TTL) return null
     // Never return a cached guest payload to a potentially logged-in session
@@ -82,7 +89,7 @@ function setPageCached(symbol: string, data: any) {
   try {
     const raw = localStorage.getItem(PAGE_CACHE_KEY)
     const cache = raw ? JSON.parse(raw) : {}
-    cache[symbol.toUpperCase()] = { ts: Date.now(), data }
+    cache[pageCacheKey(symbol)] = { ts: Date.now(), data }
     // Keep at most 20 entries
     const keys = Object.keys(cache)
     if (keys.length > 20) delete cache[keys[0]]
@@ -92,17 +99,19 @@ function setPageCached(symbol: string, data: any) {
 
 /** Optimised single-request endpoint — returns info + financials + score + rules + AI explanation. */
 export async function getCompanyPage(symbol: string): Promise<any> {
-  const sym = symbol.toUpperCase()
+  const sym  = symbol.toUpperCase()
+  const lang = getActiveLang()
+  const inflightKey = `${sym}:${lang}`
 
-  // Deduplicate concurrent requests for the same symbol
-  const existing = _inflight.get(sym)
+  // Deduplicate concurrent requests for the same symbol + language
+  const existing = _inflight.get(inflightKey)
   if (existing) return existing
 
   const fetchFresh = async (): Promise<any> => {
     const headers = await getAuthHeaders()
     let res: Response
     try {
-      res = await fetchWithRetry(`${BASE}/company/${sym}/page`, { headers }, 1, 45_000)
+      res = await fetchWithRetry(`${BASE}/company/${sym}/page?lang=${lang}`, { headers }, 1, 45_000)
     } catch (err: any) {
       const isColdStart = err?.name === 'AbortError' || err?.message?.includes('abort')
       const msg = isColdStart
@@ -133,9 +142,16 @@ export async function getCompanyPage(symbol: string): Promise<any> {
     return data
   }
 
-  const promise = fetchFresh().finally(() => _inflight.delete(sym))
-  _inflight.set(sym, promise)
+  const promise = fetchFresh().finally(() => _inflight.delete(inflightKey))
+  _inflight.set(inflightKey, promise)
   return promise
+}
+
+/** Research Timeline — how the Future Relevance assessment evolved over time. */
+export async function getFutureRelevanceTimeline(symbol: string) {
+  const res = await fetchWithRetry(`${BASE}/company/${symbol.toUpperCase()}/future-relevance/timeline`, {}, 1, 15_000)
+  if (!res.ok) throw new Error('שגיאה בטעינת ציר הזמן המחקרי')
+  return res.json()
 }
 
 /**

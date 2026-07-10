@@ -11,7 +11,7 @@ from services.data_service import get_company_info, get_five_year_financials, se
 from services.bukra_score import compute_bukra_score
 from services.bukra_rules import compute_bukra_rules
 from services.ai_explanation import get_hebrew_explanation
-from services.future_relevance import compute_future_relevance
+from services.future_relevance import compute_future_relevance, build_timeline
 from services.analyst_summary import generate_smart_analyst_summary
 from services.accuracy_db import save_snapshot
 from services.intelligence import build_company_intelligence
@@ -89,16 +89,18 @@ def search(request: Request, q: str = Query(..., min_length=1, max_length=100)):
 
 @router.get("/company/{symbol}/page")
 @limiter.limit("30/minute")
-def company_page(request: Request, symbol: str):
+def company_page(request: Request, symbol: str, lang: str = Query("he", pattern="^(he|en)$")):
     """
     Single optimised endpoint for the frontend company page.
     Returns info + financials + score + rules + AI explanation in one request.
-    Cached per symbol for 24 hours.
+    Cached per (symbol, lang) for 24 hours — Future Relevance content is
+    generated in the active UI language.
     """
-    sym = _validate_symbol(symbol)
+    sym       = _validate_symbol(symbol)
+    cache_key = f"{sym}:{lang}"
 
     t0     = time.monotonic()
-    cached = _page_get(sym)
+    cached = _page_get(cache_key)
     if cached:
         logger.info("[page] %s | cache=HIT | score=%s", sym, cached.get("score", {}).get("score"))
         return {**cached, "from_cache": True}
@@ -166,10 +168,10 @@ def company_page(request: Request, symbol: str):
     except Exception as e:
         logger.error("[company/page] analyst summary failed for %s: %s", sym, e)
 
-    # Future Relevance — placeholder AI analysis (never blocks response)
+    # Future Relevance — multi-analyst research engine (never blocks response)
     future_relevance = None
     try:
-        future_relevance = compute_future_relevance(sym, info, score_data)
+        future_relevance = compute_future_relevance(sym, info, score_data, lang=lang)
     except Exception as e:
         logger.error("[company/page] future relevance failed for %s: %s", sym, e)
 
@@ -204,11 +206,22 @@ def company_page(request: Request, symbol: str):
     # Only cache when we have real financial data — don't bake in empty financials
     has_financials = bool(financials.get("history"))
     if info.get("name") and has_financials:
-        _page_set(sym, result)
+        _page_set(cache_key, result)
     elif info.get("name") and not has_financials:
         logger.warning("[page] %s | NOT caching — financials empty (source=%s)", sym, financials.get("source"))
 
     return result
+
+
+@router.get("/company/{symbol}/future-relevance/timeline")
+@limiter.limit("30/minute")
+def future_relevance_timeline(request: Request, symbol: str):
+    """
+    Research Timeline — how the Future Relevance assessment of this company
+    evolved over time. Built from permanent Research Memory.
+    """
+    sym = _validate_symbol(symbol)
+    return {"symbol": sym, "timeline": build_timeline(sym)}
 
 
 # ── Legacy endpoints — kept for backward compatibility, rate-limited ───────────

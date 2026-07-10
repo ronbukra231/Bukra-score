@@ -31,6 +31,25 @@ export interface FRScenario {
   timeframe: string     // e.g. "2030–2035"
 }
 
+// One analyst's verdict in the multi-analyst engine
+export interface FRAnalystVerdict {
+  key: string             // e.g. "regulation"
+  label: string           // in the active UI language
+  score: number           // 0–100
+  confidence: 'High' | 'Medium' | 'Low'
+}
+
+// One entry in the Research Timeline (opinion evolution over time)
+export interface FRTimelineEntry {
+  date: string            // ISO date
+  score: number
+  delta: number | null    // change vs previous report
+  confidence: FRConfidence
+  status: string
+  engineVersion: string
+  reason: string          // why the assessment changed
+}
+
 export interface FutureRelevanceData {
   score: number           // 0–100
   confidence: FRConfidence
@@ -42,6 +61,8 @@ export interface FutureRelevanceData {
   scenarios: FRScenario[]
   generatedAt: string     // ISO date
   isPlaceholder: boolean  // true until real AI engine is wired
+  engineVersion?: string
+  analystBreakdown?: FRAnalystVerdict[]  // multi-analyst engine verdicts
 }
 
 // Status label computed from score
