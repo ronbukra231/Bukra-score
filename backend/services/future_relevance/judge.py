@@ -11,17 +11,19 @@ from services.future_relevance.analysts.base import AnalystReport
 
 # Per-analyst weights in the final verdict (must sum to 1.0)
 JUDGE_WEIGHTS: dict[str, float] = {
-    "ai_adoption":        0.12,
-    "industry":           0.12,
-    "technology":         0.10,
-    "competition":        0.10,
-    "consumer_behaviour": 0.06,
-    "regulation":         0.08,
-    "innovation":         0.10,
-    "management":         0.08,
-    "macro":              0.08,
-    "geopolitical":       0.06,
-    "competitive_moat":   0.10,
+    "ai_adoption":        0.11,
+    "industry":           0.11,
+    "technology":         0.09,
+    "competition":        0.09,
+    "consumer_behaviour": 0.05,
+    "regulation":         0.07,
+    "innovation":         0.09,
+    "management":         0.07,
+    "macro":              0.07,
+    "geopolitical":       0.05,
+    "competitive_moat":   0.09,
+    "risk":               0.06,
+    "devils_advocate":    0.05,   # heard, never dominant
 }
 _total = sum(JUDGE_WEIGHTS.values())
 assert abs(_total - 1.0) < 1e-9, f"JUDGE_WEIGHTS must sum to 1.0 — got {_total}"

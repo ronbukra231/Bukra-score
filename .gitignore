@@ -56,3 +56,8 @@ npm-debug.log*
 .cache/
 .turbo/
 backend/data/future_relevance_memory.json
+backend/data/world_themes.json
+backend/data/causal_graph.json
+backend/data/global_events.json
+backend/data/historical_patterns.json
+backend/data/prediction_ledger.json

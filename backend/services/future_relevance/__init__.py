@@ -17,8 +17,15 @@ Components:
     timeline.py          Research Timeline — opinion evolution over time
     change_detection.py  Change Detection — when to recommend re-analysis
     background.py        Background Intelligence — autonomous re-evaluation
+    conviction.py        Conviction Engine — how strongly to believe a prediction
+    ledger.py            Prediction Ledger — permanent, resolvable predictions
     self_eval.py         Self-Evaluation — prediction & confidence calibration
+    self_awareness.py    Self-Awareness — strengths, weaknesses, calibration
     context.py           ResearchContext — the single input object
+
+The global layer above this engine lives in services/world_intelligence/
+(Living World Model, Causal Graph, Global Event Memory, Pattern Recognition,
+Adaptive Triage) — companies are never analyzed in isolation.
 
 The engine never produces a one-time opinion: every run is stored in Research
 Memory, and every new piece of information can strengthen or weaken previous
@@ -31,6 +38,8 @@ from services.future_relevance.timeline import build_timeline
 from services.future_relevance.change_detection import recommend_reanalysis, ChangeEventType
 from services.future_relevance.background import maybe_reanalyze
 from services.future_relevance.self_eval import calibration_report
+from services.future_relevance.self_awareness import self_awareness_report
+from services.future_relevance.ledger import record_prediction, resolve_prediction, get_ledger, calibration
 
 
 def compute_future_relevance(symbol: str, info: dict, score_data: dict, lang: str = "he") -> dict:
@@ -45,6 +54,8 @@ __all__ = [
     "recommend_reanalysis",
     "maybe_reanalyze",
     "calibration_report",
+    "self_awareness_report",
+    "record_prediction", "resolve_prediction", "get_ledger", "calibration",
     "ChangeEventType",
     "ResearchContext",
     "ENGINE_VERSION",

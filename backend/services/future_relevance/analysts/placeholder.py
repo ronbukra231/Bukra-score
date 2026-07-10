@@ -348,6 +348,54 @@ class CompetitiveMoatAnalyst(PlaceholderAnalyst):
         return [{"key": "healthcare", "label": ctx.txt("חדשנות רפואית", "Healthcare Innovation"), "relevance": "Medium"}]
 
 
+class RiskAnalyst(PlaceholderAnalyst):
+    key = "risk"
+    label_he, label_en = "אנליסט סיכונים", "Risk Analyst"
+    offset = -8
+
+    def reasoning(self, ctx, score):
+        return ctx.txt(
+            "תפקידי לשקלל את מה שעלול להשתבש: ריכוזיות הכנסות, תלות טכנולוגית, וסיכוני זנב שאינם במחיר.",
+            "My role is to weigh what can go wrong: revenue concentration, technology dependence, and tail risks not priced in.",
+        )
+
+    def risks(self, ctx, score):
+        return [{
+            "key": "tail_risk", "label": ctx.txt("סיכוני זנב", "Tail Risks"),
+            "severity": "Medium",
+            "summary": ctx.txt(
+                "תרחישי קיצון בעלי הסתברות נמוכה אך השפעה גבוהה אינם משתקפים במדדים הפיננסיים השוטפים.",
+                "Low-probability, high-impact scenarios are not reflected in current financial metrics.",
+            ),
+        }]
+
+
+class DevilsAdvocateAnalyst(PlaceholderAnalyst):
+    """Institutional contrarian — argues against the emerging consensus so
+    the Judge never hears only agreement. Structurally prevents groupthink."""
+    key = "devils_advocate"
+    label_he, label_en = "פרקליט השטן", "Devil's Advocate"
+    offset = -15
+
+    def reasoning(self, ctx, score):
+        return ctx.txt(
+            f"טיעון הנגד: הקונצנזוס לגבי {ctx.name} עלול לשקף הטיית אישוש. "
+            "יתרונות היסטוריים אינם ערובה לרלוונטיות עתידית — ענקיות עבר איבדו דומיננטיות בתוך חמש שנים.",
+            f"The counter-argument: consensus on {ctx.name} may reflect confirmation bias. "
+            "Historical advantages guarantee nothing — past category leaders lost dominance within five years.",
+        )
+
+    def risks(self, ctx, score):
+        return [{
+            "key": "consensus_risk", "label": ctx.txt("סיכון קונצנזוס", "Consensus Risk"),
+            "severity": "Medium",
+            "summary": ctx.txt(
+                "כאשר כל האנליסטים מסכימים, הסבירות שמשהו מהותי הוחמץ עולה. הנחות הליבה דורשות בחינה עוינת.",
+                "When every analyst agrees, the odds something material was missed increase. Core assumptions deserve hostile examination.",
+            ),
+        }]
+
+
 ALL_PLACEHOLDER_ANALYSTS = [
     AIAdoptionAnalyst,
     IndustryAnalyst,
@@ -360,4 +408,6 @@ ALL_PLACEHOLDER_ANALYSTS = [
     MacroAnalyst,
     GeopoliticalAnalyst,
     CompetitiveMoatAnalyst,
+    RiskAnalyst,
+    DevilsAdvocateAnalyst,
 ]

@@ -20,11 +20,12 @@ from services.future_relevance.confidence import compute_confidence
 from services.future_relevance.scenarios import generate_scenarios
 from services.future_relevance.evolution import detect_changes
 from services.future_relevance.thesis import build_thesis
-from services.future_relevance import memory
+from services.future_relevance.conviction import compute_conviction
+from services.future_relevance import memory, ledger
 
 logger = logging.getLogger("bukra.future_relevance")
 
-ENGINE_VERSION = "2.1.0"
+ENGINE_VERSION = "2.2.0"
 
 
 def run_research(ctx: ResearchContext, trigger_reasons: list = None) -> dict:
@@ -60,6 +61,15 @@ def run_research(ctx: ResearchContext, trigger_reasons: list = None) -> dict:
     prev_thesis = previous.get("thesis") if previous else None
     thesis = build_thesis(ctx, verdict, confidence, reports, generated_at, previous=prev_thesis)
 
+    # 5b. Conviction — how strongly Bukra should believe its own prediction.
+    #     Independent from both score and confidence; informed by the
+    #     prediction ledger's realized track record.
+    conviction = compute_conviction(
+        reports,
+        is_placeholder=is_placeholder,
+        historical_accuracy=ledger.historical_hit_rate(ctx.symbol),
+    )
+
     # 6. Persist to permanent research memory (deduped against latest report)
     record = memory.build_memory_record(
         ctx.symbol,
@@ -71,11 +81,26 @@ def run_research(ctx: ResearchContext, trigger_reasons: list = None) -> dict:
         summary=summary,
         generated_at=generated_at,
     )
-    record["thesis"]  = thesis
-    record["changes"] = changes
+    record["thesis"]     = thesis
+    record["changes"]    = changes
+    record["conviction"] = conviction["score"]
     if trigger_reasons:
         record["triggeredBy"] = trigger_reasons
-    memory.save_report(ctx.symbol, record)
+    stored = memory.save_report(ctx.symbol, record)
+
+    # 6b. Prediction ledger — every stored research run is a prediction that
+    #     reality will later grade. Deduped alongside memory (same gate).
+    if stored:
+        ledger.record_prediction(
+            symbol=ctx.symbol,
+            prediction=thesis["currentThesis"],
+            score=verdict["score"],
+            confidence=confidence,
+            conviction=conviction["score"],
+            horizon="10-15y",
+            engine_version=ENGINE_VERSION,
+            module_scores={r.analyst_key: r.score for r in reports},
+        )
 
     # 7. API payload — same shape the UI already renders, plus engine metadata
     return {
@@ -92,6 +117,7 @@ def run_research(ctx: ResearchContext, trigger_reasons: list = None) -> dict:
         "scenarios":      scenarios,
         "thesis":         thesis,
         "changesSinceLast": changes,
+        "conviction":     conviction,
         "analystBreakdown": [
             {"key": r.analyst_key, "label": r.label, "score": r.score, "confidence": r.confidence}
             for r in reports

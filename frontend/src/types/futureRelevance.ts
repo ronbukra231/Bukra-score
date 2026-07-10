@@ -82,6 +82,9 @@ export interface FutureRelevanceData {
   analystBreakdown?: FRAnalystVerdict[]  // multi-analyst engine verdicts
   thesis?: FRThesis                      // evolving investment thesis
   changesSinceLast?: string[]            // knowledge evolution — [] = nothing material
+  // Conviction ≠ confidence: how strongly Bukra should believe its own
+  // prediction, from calibration factors. Not yet surfaced in the UI.
+  conviction?: { score: number; factors: Record<string, number>; capped: boolean }
 }
 
 // Status label computed from score
