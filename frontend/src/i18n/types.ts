@@ -558,4 +558,36 @@ export interface Translations {
   brain_statusEmerging: string
   brain_statusConfirmed: string
   brain_statusLearning: string
+
+  // ── Future Relevance ──────────────────────────────────────────────────────
+  fr_title: string
+  fr_subtitle: string
+  fr_noData: string
+  fr_placeholder: string        // "AI analysis · Placeholder"
+  fr_confidence: string
+  fr_confidenceHigh: string
+  fr_confidenceMedium: string
+  fr_confidenceLow: string
+  fr_driversTitle: string
+  fr_risksTitle: string
+  fr_trendsTitle: string
+  fr_scenariosTitle: string
+  fr_aiSummaryTitle: string
+  fr_bull: string
+  fr_base: string
+  fr_bear: string
+  fr_severityHigh: string
+  fr_severityMedium: string
+  fr_severityLow: string
+  fr_relevanceHigh: string
+  fr_relevanceMedium: string
+  fr_relevanceLow: string
+  fr_disclaimer: string
+  fr_status90: string
+  fr_status80: string
+  fr_status65: string
+  fr_status50: string
+  fr_status0: string
+  fr_timeframe: string
+  fr_close: string
 }

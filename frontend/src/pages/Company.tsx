@@ -11,6 +11,7 @@ import SmartAnalystSummary from '../components/SmartAnalystSummary'
 import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
 import IntelligencePanel from '../components/IntelligencePanel'
+import FutureRelevanceCard from '../components/FutureRelevanceCard'
 import * as analytics from '../lib/analytics'
 
 // ── Security helpers ──────────────────────────────────────────────────────────
@@ -453,6 +454,7 @@ export default function Company() {
 
                   <div className="space-y-6">
                     <BukraScoreCard score={data.score} />
+                    <FutureRelevanceCard data={data.future_relevance ?? null} />
                     <IntelligencePanel intelligence={data.intelligence ?? null} />
                     <BukraRules history={data.financials?.history ?? []} />
                   </div>

@@ -35,6 +35,7 @@ Bukra Score — 0 to 100.
 """
 
 from typing import Optional
+from services.bukra_weights import BUKRA_WEIGHTS
 
 
 # ── Utilities ─────────────────────────────────────────────────────────────────
@@ -695,7 +696,21 @@ def compute_bukra_score(financials: dict, info: dict) -> dict:
         if breakdown[key] > max_val:
             breakdown[key] = max_val  # clamp silently — should never happen
 
-    total = sum(breakdown.values())
+    # ── Legacy score: simple sum (kept for debugging/comparison) ─────────────
+    legacyScore = sum(breakdown.values())
+
+    # ── Weighted score: normalise each category to 0–100 then apply weights ──
+    # Category scores are normalised by their own max before weighting so that
+    # a category's raw max (25 vs 20 vs 15) does not inflate or deflate its
+    # effective contribution.  The result is re-scaled to 0–100.
+    weighted_sum = 0.0
+    for key, raw_score in breakdown.items():
+        max_val = max_scores.get(key, 1)
+        norm    = raw_score / max_val          # 0.0 – 1.0
+        weight  = BUKRA_WEIGHTS.get(key, 0)
+        weighted_sum += norm * weight
+
+    total = round(weighted_sum * 100)          # displayed Bukra Score
 
     # ── Build tier-consistent explanations (generated AFTER scores known) ─────
     explanations = {
@@ -793,7 +808,8 @@ def compute_bukra_score(financials: dict, info: dict) -> dict:
 
     result = {
         # ── Legacy fields (frontend uses these — do not rename or remove) ──
-        "score":             round(total),
+        "score":             total,            # weighted score (new default)
+        "legacyScore":       legacyScore,      # raw sum kept for debugging
         "breakdown":         breakdown,
         "explanations":      explanations,
         "max_scores":        max_scores,
@@ -804,9 +820,11 @@ def compute_bukra_score(financials: dict, info: dict) -> dict:
         "calculationSource": "deterministic",
         # ── Full audit breakdown ──────────────────────────────────────────
         "audit": {
-            "total_score":  round(total),
-            "categories":   categories,
-            "calc_ms":      calc_ms,
+            "total_score":   total,
+            "legacy_score":  legacyScore,
+            "weights_used":  BUKRA_WEIGHTS,
+            "categories":    categories,
+            "calc_ms":       calc_ms,
         },
     }
     if errors:

@@ -11,6 +11,7 @@ from services.data_service import get_company_info, get_five_year_financials, se
 from services.bukra_score import compute_bukra_score
 from services.bukra_rules import compute_bukra_rules
 from services.ai_explanation import get_hebrew_explanation
+from services.future_relevance import compute_future_relevance
 from services.analyst_summary import generate_smart_analyst_summary
 from services.accuracy_db import save_snapshot
 from services.intelligence import build_company_intelligence
@@ -165,6 +166,13 @@ def company_page(request: Request, symbol: str):
     except Exception as e:
         logger.error("[company/page] analyst summary failed for %s: %s", sym, e)
 
+    # Future Relevance — placeholder AI analysis (never blocks response)
+    future_relevance = None
+    try:
+        future_relevance = compute_future_relevance(sym, info, score_data)
+    except Exception as e:
+        logger.error("[company/page] future relevance failed for %s: %s", sym, e)
+
     elapsed_ms = round((time.monotonic() - t0) * 1000)
     breakdown  = score_data.get("breakdown", {})
     logger.info(
@@ -188,6 +196,7 @@ def company_page(request: Request, symbol: str):
         "explanation_error": explanation_error,
         "analyst_summary":   analyst_summary,
         "intelligence":      intelligence,
+        "future_relevance":  future_relevance,
         "from_cache":        False,
         "perf":              {"totalMs": elapsed_ms},
     }
