@@ -9,6 +9,7 @@
 import { type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n/index'
+import { daylight } from './daylight'
 
 export const GOLD = '#c9a962'
 
@@ -22,9 +23,8 @@ export function EstateShell({ room, roomHe, subtitle, subtitleHe, children }: {
   const { isHe } = useLanguage()
   return (
     <div className="min-h-screen bg-[#0c0a09] text-stone-300">
-      {/* Warm ambient light from above — the room is lit, not glowing */}
-      <div className="pointer-events-none fixed inset-0"
-        style={{ background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,169,98,0.07), transparent)' }} />
+      {/* Ambient light from above follows the investor's local time of day */}
+      <div className="pointer-events-none fixed inset-0" style={{ background: daylight().ambient }} />
 
       <div className="relative max-w-6xl mx-auto px-8 py-12">
         {/* Doorway back to the Hall */}

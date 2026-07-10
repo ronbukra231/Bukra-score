@@ -23,9 +23,20 @@ from services.future_relevance import memory as fr_memory
 from services.future_relevance import build_timeline
 from services.future_relevance.ledger import calibration, get_ledger
 from services.world_intelligence.causal_graph import get_edges
+from services.estate_entry import resolve_entry
 
 logger = logging.getLogger("bukra.estate")
 router = APIRouter(prefix="/api/estate", tags=["estate"])
+
+
+@router.get("/entry")
+@limiter.limit("60/minute")
+def estate_entry(request: Request, lang: str = Query("he", pattern="^(he|en)$")):
+    """
+    The Estate Entry Controller: exactly one destination per session,
+    chosen by Bukra. The concierge card renders this verbatim.
+    """
+    return resolve_entry(lang)
 
 
 @router.get("/portfolio")

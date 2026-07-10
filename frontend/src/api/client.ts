@@ -180,6 +180,23 @@ export function getCompanyPageSWR(
 
 // ── The Research Estate (read-only rooms) ─────────────────────────────────────
 
+/**
+ * Estate Entry Controller — Bukra chooses where the session begins.
+ * Memoized per page load: the Concierge and the Hall share one decision.
+ */
+let _entryPromise: Promise<any> | null = null
+export function getEstateEntry(): Promise<any> {
+  if (!_entryPromise) {
+    _entryPromise = fetchWithRetry(`${BASE}/estate/entry?lang=${getActiveLang()}`, {}, 1, 15_000)
+      .then(res => {
+        if (!res.ok) throw new Error('entry unavailable')
+        return res.json()
+      })
+      .catch(err => { _entryPromise = null; throw err })
+  }
+  return _entryPromise
+}
+
 /** Portfolio Office — read-only cockpit. Bukra never places trades. */
 export async function getEstatePortfolio() {
   const res = await fetchWithRetry(`${BASE}/estate/portfolio`, {}, 1, 15_000)
