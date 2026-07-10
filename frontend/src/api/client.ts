@@ -178,6 +178,36 @@ export function getCompanyPageSWR(
   return cached // null means no cache, caller should show full loading state
 }
 
+// ── The Research Estate (read-only rooms) ─────────────────────────────────────
+
+/** Portfolio Office — read-only cockpit. Bukra never places trades. */
+export async function getEstatePortfolio() {
+  const res = await fetchWithRetry(`${BASE}/estate/portfolio`, {}, 1, 15_000)
+  if (!res.ok) throw new Error('שגיאה בטעינת משרד התיק')
+  return res.json()
+}
+
+/** World Intelligence Center — living world model + global event memory. */
+export async function getEstateWorld() {
+  const res = await fetchWithRetry(`${BASE}/estate/world`, {}, 1, 15_000)
+  if (!res.ok) throw new Error('שגיאה בטעינת מרכז המודיעין')
+  return res.json()
+}
+
+/** The Library — every company ever researched. */
+export async function getEstateLibrary() {
+  const res = await fetchWithRetry(`${BASE}/estate/library`, {}, 1, 15_000)
+  if (!res.ok) throw new Error('שגיאה בטעינת הספרייה')
+  return res.json()
+}
+
+/** The Strategy Room — causal graph, learning loop, calibration. */
+export async function getEstateBrain() {
+  const res = await fetchWithRetry(`${BASE}/estate/brain`, {}, 1, 15_000)
+  if (!res.ok) throw new Error('שגיאה בטעינת חדר האסטרטגיה')
+  return res.json()
+}
+
 // ── Scanner (new cache-first API) ─────────────────────────────────────────────
 
 /** Returns cached results from disk instantly. Never triggers a scan. */

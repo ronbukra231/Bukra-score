@@ -20,6 +20,11 @@ import Diagnostics from './pages/Diagnostics'
 import Login from './pages/Login'
 import CapitalLab from './pages/CapitalLab'
 import RequireAuth from './components/RequireAuth'
+import EstateHall from './pages/EstateHall'
+import PortfolioOffice from './pages/PortfolioOffice'
+import WorldIntelligenceCenter from './pages/WorldIntelligenceCenter'
+import EstateLibrary from './pages/EstateLibrary'
+import StrategyRoom from './pages/StrategyRoom'
 
 export default function App() {
   return (
@@ -45,6 +50,12 @@ export default function App() {
           <Route path="/system-check" element={<Diagnostics />} />
           <Route path="/login" element={<Login />} />
           <Route path="/capital-lab" element={<RequireAuth><CapitalLab /></RequireAuth>} />
+          {/* The Research Estate — rooms, not pages */}
+          <Route path="/estate" element={<RequireAuth><EstateHall /></RequireAuth>} />
+          <Route path="/estate/portfolio" element={<RequireAuth><PortfolioOffice /></RequireAuth>} />
+          <Route path="/estate/world" element={<RequireAuth><WorldIntelligenceCenter /></RequireAuth>} />
+          <Route path="/estate/library" element={<RequireAuth><EstateLibrary /></RequireAuth>} />
+          <Route path="/estate/strategy" element={<RequireAuth><StrategyRoom /></RequireAuth>} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>
