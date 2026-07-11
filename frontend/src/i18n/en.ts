@@ -14,7 +14,7 @@ const en: Translations = {
   home_slogan: 'Check before you invest.',
   home_slogan_sub: 'A long-term business quality index — before buying a stock, check the score.',
   home_subheadline: 'Bukra Score helps investors understand the business behind the stock before making a decision.',
-  home_description: 'The system analyzes real financial data from public companies and translates it into a simple 0–100 score based on 5 principles selected by Bukra to evaluate long-term business quality.',
+  home_description: 'The system analyzes real financial data from public companies and translates it into a simple 0–100 score based on 5 principles selected by the Index to evaluate long-term business quality.',
   home_explainTitle: 'What is Bukra Score?',
   home_explainBody: 'Bukra Score is an investor-friendly metric that turns complex financial statements into a simple, clear rating.',
   home_explainP1: 'Consistent growth',
@@ -174,7 +174,7 @@ const en: Translations = {
   accuracy_sampleNote: 'Sample data for testing only',
   accuracy_noHistory: 'Not enough real history yet to measure true accuracy. The system will start accumulating data from today.',
   accuracy_methodology: 'Methodology',
-  accuracy_methodologyDetail: 'Bukra does not predict exact stock prices. It checks whether companies that received high Bukra Scores later performed better than the market benchmark after 3 months.',
+  accuracy_methodologyDetail: 'The Index does not predict exact stock prices. It checks whether companies that received high Bukra Scores later performed better than the market benchmark after 3 months.',
   accuracy_bestPrediction: 'Best prediction',
   accuracy_worstPrediction: 'Worst prediction',
   accuracy_byBucket: 'Accuracy by score range',
@@ -233,7 +233,7 @@ const en: Translations = {
   accuracy_col_hitRate: 'Beat SPY %',
   // Philosophy
   accuracy_philosophy: 'The Bukra Philosophy',
-  accuracy_philosophyBody: 'Bukra evaluates business quality and investment attractiveness — it does not predict prices. The system measures whether high-scoring companies generate excess returns above the market benchmark over time.',
+  accuracy_philosophyBody: 'The Index evaluates business quality and investment attractiveness — it does not predict prices. The Index measures whether high-scoring companies generate excess returns above the market benchmark over time.',
   // Range labels
   accuracy_range95_100: 'Score 95–100',
   accuracy_range90_94:  'Score 90–94',
@@ -311,11 +311,11 @@ const en: Translations = {
 
   // ── Market Brain (World Model) ──────────────────────────────────────────────
   brain_navLabel: 'Brain',
-  brain_title: "Bukra's Brain",
+  brain_title: "The Index Brain",
   brain_subtitle: 'Knowledge grown from observed reality',
-  brain_tagline: "The system doesn't guess. It learns. Every scan adds something Bukra didn't know before.",
+  brain_tagline: "The Index doesn't guess. It learns. Every scan adds something the Index didn't know before.",
   brain_noData: 'The brain is still empty',
-  brain_noDataSub: 'Scan companies so Bukra can start learning patterns',
+  brain_noDataSub: 'Scan companies so the Index can start learning patterns',
   brain_statPatterns: 'patterns observed',
   brain_statObservations: 'total observations',
   brain_statCompanies: 'companies scanned',
@@ -395,7 +395,7 @@ const en: Translations = {
 
   // ── Belief Changes ───────────────────────────────────────────────────────────
   beliefs_navLabel: 'Changed Minds',
-  beliefs_title: "What Bukra Changed Its Mind About",
+  beliefs_title: "What the Index Changed Its Mind About",
   beliefs_subtitle: 'Belief change history',
   beliefs_tagline: 'A system that learns must know when it was wrong.',
   beliefs_noData: 'No belief changes yet',
@@ -485,9 +485,9 @@ const en: Translations = {
   intel_thesisNegative: 'Negative Watch',
   intel_thesisNeutral: 'Neutral',
   intel_thesisMixed: 'Mixed Signals',
-  intel_monitoring: 'Bukra is monitoring',
+  intel_monitoring: 'The Index is monitoring',
   intel_noEvents: 'No business events observed yet',
-  intel_noEventsSub: 'Events will appear as Bukra processes company data',
+  intel_noEventsSub: 'Events will appear as the Index processes company data',
   intel_eventTimeline: 'Event Timeline',
   intel_mostImportant: 'Most Important Events',
   intel_confirmationNeeded: 'Awaiting Confirmation',
@@ -539,7 +539,7 @@ const en: Translations = {
   intel_statConfirmed: 'confirmed',
   intel_statMonitoring: 'monitoring',
   intel_statCategories: 'categories',
-  intel_disclaimer: 'Bukra is not a news website. Bukra is an intelligence analyst. The Bukra Score is never changed by events directly. Events create hypotheses. Financial statements confirm or reject them.',
+  intel_disclaimer: 'Bukra is not a news website. The Index is an intelligence analyst. The Bukra Score is never changed by events directly. Events create hypotheses. Financial statements confirm or reject them.',
 
   // ── Future Relevance ──────────────────────────────────────────────────────
   fr_title:           'Future Relevance',

@@ -378,8 +378,8 @@ export default function MarketBrain() {
           <div className="border-t border-gray-900 pt-8 pb-4">
             <p className="text-gray-700 text-xs leading-relaxed max-w-lg">
               {isHe
-                ? 'כל שורת קוד חדשה צריכה להגדיל את יכולתה של בוקרה להבין שווקים מחר יותר מאשר היום. לא נייעל פיצ׳רים. נייעל אינטליגנציה מצטברת.'
-                : "Every new line of code should increase Bukra's ability to understand markets tomorrow more than today. Never optimize for features. Optimize for compounding intelligence."}
+                ? 'כל שורת קוד חדשה צריכה להגדיל את יכולתו של המדד להבין שווקים מחר יותר מאשר היום. לא נייעל פיצ׳רים. נייעל אינטליגנציה מצטברת.'
+                : "Every new line of code should increase the Index's ability to understand markets tomorrow more than today. Never optimize for features. Optimize for compounding intelligence."}
             </p>
           </div>
         )}

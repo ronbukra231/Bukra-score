@@ -77,7 +77,7 @@ export default function EstateHall() {
       </div>
 
       <footer className="relative text-center pb-10 text-stone-700 text-[11px] tracking-[0.25em] uppercase">
-        {isHe ? 'בוקרא מייעצת · הביצוע תמיד אצל הברוקר' : 'Bukra advises · Execution always happens at your broker'}
+        {isHe ? 'בוקרה היא פלטפורמת מחקר · הביצוע תמיד אצל הברוקר' : 'Bukra is a research platform · Execution always happens at your broker'}
       </footer>
     </div>
   )

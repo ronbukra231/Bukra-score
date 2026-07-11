@@ -41,8 +41,8 @@ export default function PortfolioOffice() {
   return (
     <EstateShell wide
       room="The Portfolio Office" roomHe="משרד התיק הפרטי"
-      subtitle="Your capital, read with Bukra’s judgement."
-      subtitleHe="ההון שלך, נקרא בשיקול הדעת של בוקרא.">
+      subtitle="Your capital, read alongside the Index."
+      subtitleHe="ההון שלך, נקרא לצד הערכות המדד.">
 
       {/* ── The desk — capital at a glance ─────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -126,8 +126,8 @@ export default function PortfolioOffice() {
           ) : (
             <p className="text-sm text-stone-600 leading-relaxed font-light">
               {isHe
-                ? 'העמדות שבוקרא מחזיקה לגבי החברות שנחקרו יופיעו כאן — ציון, תזה, וקונביקציה.'
-                : 'Bukra’s standing views on studied companies will rest here — score, thesis, conviction.'}
+                ? 'הערכות המדד לגבי החברות שנחקרו יופיעו כאן — ציון, תזה, וקונביקציה.'
+                : 'The Index’s standing assessments of studied companies will rest here — score, thesis, conviction.'}
             </p>
           )}
           <div className="mt-8 pt-6 border-t border-stone-800/50">
@@ -157,7 +157,7 @@ export default function PortfolioOffice() {
               </div>
             ))}
             <p className="col-span-full mt-3 text-center text-[11px] text-stone-700 tracking-wide">
-              {isHe ? 'לקריאה בלבד. בוקרא לעולם אינה מבצעת עסקאות.' : 'Read-only. Bukra never places trades.'}
+              {isHe ? 'לקריאה בלבד. בוקרה לעולם אינה מבצעת עסקאות.' : 'Read-only. Bukra never places trades.'}
             </p>
           </div>
         )}

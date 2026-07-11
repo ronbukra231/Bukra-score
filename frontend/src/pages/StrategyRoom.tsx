@@ -31,8 +31,8 @@ export default function StrategyRoom() {
   return (
     <EstateShell
       room="The Strategy Room" roomHe="חדר האסטרטגיה"
-      subtitle="How Bukra thinks: chains of consequence, a learning loop, and honest calibration."
-      subtitleHe="איך בוקרא חושבת: שרשראות של השלכות, לולאת למידה, וכיול כן.">
+      subtitle="How the Index thinks: chains of consequence, a learning loop, and honest calibration."
+      subtitleHe="איך המדד חושב: שרשראות של השלכות, לולאת למידה, וכיול כן.">
 
       {/* The learning loop — the heart, shown honestly */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
@@ -51,7 +51,7 @@ export default function StrategyRoom() {
             {brain?.learning.resolvedPredictions ?? '—'}
           </div>
           <p className="mt-3 text-xs text-stone-600 leading-relaxed">
-            {isHe ? 'מכאן בוקרא לומדת כמה ביטחון מגיע לה.' : 'This is where Bukra learns how much confidence it deserves.'}
+            {isHe ? 'מכאן המדד לומד כמה ביטחון מגיע לו.' : 'This is where the Index learns how much confidence it deserves.'}
           </p>
         </EstatePanel>
         <EstatePanel>
@@ -68,8 +68,8 @@ export default function StrategyRoom() {
           ) : (
             <p className="text-xs text-stone-600 leading-relaxed">
               {isHe
-                ? 'אין עדיין מספיק תחזיות שנבחנו. בוקרא נשארת זהירה עד שהמציאות תבחן את עבודתה.'
-                : 'Not enough graded predictions yet. Bukra stays cautious until reality has graded its work.'}
+                ? 'אין עדיין מספיק תחזיות שנבחנו. המדד נשאר זהיר עד שהמציאות תבחן את עבודתו.'
+                : 'Not enough graded predictions yet. The Index remains cautious until reality has graded its work.'}
             </p>
           )}
         </EstatePanel>
@@ -79,8 +79,8 @@ export default function StrategyRoom() {
       <EstateHeading en="Chains of consequence" he="שרשראות של השלכות" />
       <p className="text-stone-600 text-xs mb-8 max-w-lg leading-relaxed">
         {isHe
-          ? 'בוקרא אינה חושבת כמו מנוע חדשות. כל אירוע נבחן דרך השלכותיו — ועוצמת הקשר דועכת ככל שהשרשרת מתארכת.'
-          : 'Bukra does not think like a news engine. Every event is read through its consequences — and certainty decays as the chain lengthens.'}
+          ? 'המדד אינו חושב כמו מנוע חדשות. כל אירוע נבחן דרך השלכותיו — ועוצמת הקשר דועכת ככל שהשרשרת מתארכת.'
+          : 'The Index does not think like a news engine. Every event is read through its consequences — and certainty decays as the chain lengthens.'}
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {brain?.causalGraph.edges.map((e, i) => (

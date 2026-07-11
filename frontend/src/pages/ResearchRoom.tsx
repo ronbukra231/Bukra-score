@@ -33,8 +33,8 @@ export default function ResearchRoom() {
   return (
     <EstateShell
       room="The Research Room" roomHe="חדר המחקר"
-      subtitle="Bring a company to the desk. Bukra studies its decade, not its day."
-      subtitleHe="הבא חברה אל השולחן. בוקרא חוקרת את העשור שלה, לא את היום שלה.">
+      subtitle="Bring a company to the desk. The Index studies its decade, not its day."
+      subtitleHe="הבא חברה אל השולחן. המדד חוקר את העשור שלה, לא את היום שלה.">
 
       {/* The desk — one instrument, generous air */}
       <div className="max-w-xl mx-auto mb-20">

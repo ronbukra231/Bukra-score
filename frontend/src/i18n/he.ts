@@ -173,7 +173,7 @@ const he: Translations = {
   accuracy_sampleNote: 'נתוני דוגמה לבדיקה בלבד',
   accuracy_noHistory: 'אין עדיין מספיק היסטוריה כדי למדוד דיוק אמיתי. המערכת תתחיל לצבור נתונים מהיום.',
   accuracy_methodology: 'מתודולוגיה',
-  accuracy_methodologyDetail: 'בוקרה אינו מנבא מחירי מניות מדויקים. המערכת בודקת האם חברות שקיבלו ציון בוקרה גבוה הציגו ביצועים טובים יותר מהמדד לאחר 3 חודשים.',
+  accuracy_methodologyDetail: 'המדד אינו מנבא מחירי מניות מדויקים. המדד בודק האם חברות שקיבלו ציון בוקרה גבוה הציגו ביצועים טובים יותר ממדד הייחוס לאחר 3 חודשים.',
   accuracy_bestPrediction: 'התחזית הטובה ביותר',
   accuracy_worstPrediction: 'התחזית הגרועה ביותר',
   accuracy_byBucket: 'דיוק לפי טווח ציון',
@@ -232,7 +232,7 @@ const he: Translations = {
   accuracy_col_hitRate: 'אחוז ניצחון SPY',
   // Philosophy
   accuracy_philosophy: 'הפילוסופיה של בוקרה',
-  accuracy_philosophyBody: 'בוקרה מעריך איכות עסקית ואטרקטיביות השקעה — לא מנבא מחירים. המערכת בודקת האם חברות עם ציון בוקרה גבוה הציגו תשואה עודפת מעל המדד לאורך זמן.',
+  accuracy_philosophyBody: 'המדד מעריך איכות עסקית ואטרקטיביות השקעה — לא מנבא מחירים. המדד בודק האם חברות עם ציון בוקרה גבוה הציגו תשואה עודפת מעל מדד הייחוס לאורך זמן.',
   // Range labels
   accuracy_range95_100: 'ציון 95–100',
   accuracy_range90_94:  'ציון 90–94',
@@ -310,11 +310,11 @@ const he: Translations = {
 
   // ── Market Brain (World Model) ──────────────────────────────────────────────
   brain_navLabel: 'המוח',
-  brain_title: 'המוח של בוקרה',
+  brain_title: 'המוח של המדד',
   brain_subtitle: 'ידע שנצמח מציאות שנצפתה',
-  brain_tagline: 'המערכת לא מדממת. היא לומדת. כל סריקה מוסיפה משהו שבוקרה לא ידעה קודם.',
+  brain_tagline: 'המדד לא מנחש. הוא לומד. כל סריקה מוסיפה משהו שהמדד לא ידע קודם.',
   brain_noData: 'המוח עדיין ריק',
-  brain_noDataSub: 'סרוק חברות כדי שבוקרה תתחיל ללמוד דפוסים',
+  brain_noDataSub: 'סרוק חברות כדי שהמדד יתחיל ללמוד דפוסים',
   brain_statPatterns: 'דפוסים שנצפו',
   brain_statObservations: 'תצפיות כולל',
   brain_statCompanies: 'חברות שנסרקו',
@@ -394,7 +394,7 @@ const he: Translations = {
 
   // ── Belief Changes ───────────────────────────────────────────────────────────
   beliefs_navLabel: 'שינויי עמדה',
-  beliefs_title: 'מה Bukra שינתה את דעתה',
+  beliefs_title: 'מה המדד שינה את דעתו',
   beliefs_subtitle: 'היסטוריית שינויי אמונה',
   beliefs_tagline: 'מערכת שלומדת חייבת לדעת מתי טעתה.',
   beliefs_noData: 'אין שינויי עמדה עדיין',
@@ -484,9 +484,9 @@ const he: Translations = {
   intel_thesisNegative: 'מעקב שלילי',
   intel_thesisNeutral: 'ניטרלי',
   intel_thesisMixed: 'אותות מעורבים',
-  intel_monitoring: 'בוקרה עוקבת אחר',
+  intel_monitoring: 'המדד עוקב אחר',
   intel_noEvents: 'אין אירועים עסקיים שנצפו עדיין',
-  intel_noEventsSub: 'אירועים יופיעו כאשר בוקרה תעבד נתוני חברות',
+  intel_noEventsSub: 'אירועים יופיעו כאשר המדד יעבד נתוני חברות',
   intel_eventTimeline: 'ציר זמן אירועים',
   intel_mostImportant: 'האירועים החשובים ביותר',
   intel_confirmationNeeded: 'ממתין לאישור',
@@ -538,7 +538,7 @@ const he: Translations = {
   intel_statConfirmed: 'מאושרים',
   intel_statMonitoring: 'במעקב',
   intel_statCategories: 'קטגוריות',
-  intel_disclaimer: 'בוקרה אינה אתר חדשות. בוקרה היא אנליסטית אינטליגנציה. ציון הבוקרה לעולם לא משתנה ישירות מאירועים. אירועים יוצרים השערות. דוחות כספיים מאשרים או דוחים אותן.',
+  intel_disclaimer: 'בוקרה אינה אתר חדשות. המדד הוא אנליסט מודיעין. ציון הבוקרה לעולם לא משתנה ישירות מאירועים. אירועים יוצרים השערות. דוחות כספיים מאשרים או דוחים אותן.',
 
   // ── Future Relevance ──────────────────────────────────────────────────────
   fr_title:           'רלוונטיות עתידית',

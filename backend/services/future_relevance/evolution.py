@@ -30,21 +30,21 @@ def detect_changes(ctx: ResearchContext, previous: Optional[dict],
     if prev_score is not None and abs(score - prev_score) >= MATERIAL_SCORE_DELTA:
         if score > prev_score:
             changes.append(ctx.txt(
-                f"חיזקנו את הערכת הרלוונטיות העתידית ({prev_score}→{score}).",
-                f"We strengthened our future-relevance assessment ({prev_score}→{score}).",
+                f"המדד העלה את הערכת הרלוונטיות העתידית ({prev_score}→{score}).",
+                f"The Index raised its future-relevance assessment ({prev_score}→{score}).",
             ))
         else:
             changes.append(ctx.txt(
-                f"הפחתנו את הערכת הרלוונטיות העתידית ({prev_score}→{score}).",
-                f"We lowered our future-relevance assessment ({prev_score}→{score}).",
+                f"המדד הוריד את הערכת הרלוונטיות העתידית ({prev_score}→{score}).",
+                f"The Index lowered its future-relevance assessment ({prev_score}→{score}).",
             ))
 
     if prev_conf and prev_conf != confidence:
         order = {"Low": 0, "Medium": 1, "High": 2}
         if order.get(confidence, 1) > order.get(prev_conf, 1):
-            changes.append(ctx.txt("רמת הביטחון שלנו עלתה.", "Our confidence increased."))
+            changes.append(ctx.txt("רמת הביטחון של המדד עלתה.", "The Index confidence increased."))
         else:
-            changes.append(ctx.txt("רמת הביטחון שלנו ירדה.", "Our confidence decreased."))
+            changes.append(ctx.txt("רמת הביטחון של המדד ירדה.", "The Index confidence decreased."))
 
     if prev_stat and prev_stat != status:
         changes.append(ctx.txt(

@@ -66,8 +66,8 @@ def resolve_entry(lang: str = "he") -> dict:
                                 f"אירוע עולמי זוהה: {latest['title']}.",
                                 f"Global event detected: {latest['title']}."),
             "detail":      _txt(lang,
-                                "בוקרא בחנה את ההשלכות. סקירת המודיעין ממתינה.",
-                                "Bukra has assessed the consequences. The intelligence review is waiting."),
+                                "המדד בחן את ההשלכות. סקירת המודיעין ממתינה.",
+                                "The Index has assessed the consequences. The intelligence review is waiting."),
             "companiesToReview": [],
             "estimatedMinutes":  5,
             "primaryAction":   {"label": _txt(lang, "לסקירת המודיעין", "Review Intelligence"),
@@ -84,10 +84,10 @@ def resolve_entry(lang: str = "he") -> dict:
             "destination": "/estate/library" if n > 1 else f"/company/{flagged[0]['symbol']}",
             "urgency":     "attention",
             "reason":      _txt(lang,
-                                f"הערכת בוקרא השתנתה עבור {n} חברות." if n > 1
-                                else f"הערכת בוקרא עבור {flagged[0]['symbol']} השתנתה.",
-                                f"Bukra's assessment changed for {n} companies." if n > 1
-                                else f"Bukra's assessment of {flagged[0]['symbol']} changed."),
+                                f"הערכת המדד השתנתה עבור {n} חברות." if n > 1
+                                else f"הערכת המדד עבור {flagged[0]['symbol']} השתנתה.",
+                                f"The Index assessment changed for {n} companies." if n > 1
+                                else f"The Index assessment of {flagged[0]['symbol']} changed."),
             "detail":      flagged[0]["changes"][0] if flagged[0]["changes"] else "",
             "companiesToReview": [f["symbol"] for f in flagged],
             "estimatedMinutes":  max(MINUTES_PER_COMPANY, n * MINUTES_PER_COMPANY),
@@ -103,8 +103,8 @@ def resolve_entry(lang: str = "he") -> dict:
         "urgency":     "calm",
         "reason":      _txt(lang, "שום דבר אינו דורש את תשומת לבך היום.",
                                   "Nothing requires your attention today."),
-        "detail":      _txt(lang, "סבלנות היא עמדה. בוקרא ממשיכה לעבוד ברקע.",
-                                  "Patience is a position. Bukra keeps working in the background."),
+        "detail":      _txt(lang, "סבלנות היא עמדה. המדד ממשיך לעבוד ברקע.",
+                                  "Patience is a position. The Index keeps working in the background."),
         "companiesToReview": [],
         "estimatedMinutes":  0,
         "primaryAction":   {"label": _txt(lang, "למשרד התיק", "Open Portfolio"),
