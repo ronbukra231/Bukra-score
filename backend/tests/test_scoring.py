@@ -71,11 +71,13 @@ def test_tier_max_score_zero():
 # ── 2. Safeguards ─────────────────────────────────────────────────────────────
 
 def test_total_equals_sum_of_categories():
-    """Invariant: total score must always equal sum of category breakdown."""
+    """Invariant (weighted methodology): legacyScore equals the category sum;
+    the displayed score is the weighted normalised total, 0-100."""
     h = _make_history()
     result = compute_bukra_score({"history": h}, INFO_GOOD)
-    assert result["score"] == sum(result["breakdown"].values()), \
-        f"total {result['score']} ≠ sum {sum(result['breakdown'].values())}"
+    assert result["legacyScore"] == sum(result["breakdown"].values()), \
+        f"legacy {result['legacyScore']} ≠ sum {sum(result['breakdown'].values())}"
+    assert 0 <= result["score"] <= 100
 
 
 def test_no_category_exceeds_max():

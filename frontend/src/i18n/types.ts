@@ -593,4 +593,91 @@ export interface Translations {
   fr_viewFull: string
   fr_thesisTitle: string
   fr_whatsNew: string
+
+  // ── Valuation & Pricing ───────────────────────────────────────────────────
+  val_sectionTitle: string
+  val_sectionSubtitle: string
+  val_scoreTitle: string
+  val_scoreTooltip: string
+  val_gapTitle: string
+  val_gapTooltip: string
+  val_bubbleTitle: string
+  val_bubbleTooltip: string
+  val_confTitle: string
+  val_confTooltip: string
+  val_estimateNote: string
+  // Band labels
+  val_band_very_attractive: string
+  val_band_attractive: string
+  val_band_reasonable: string
+  val_band_expensive: string
+  val_band_very_expensive: string
+  val_band_extreme: string
+  val_gap_conservative: string
+  val_gap_reasonable: string
+  val_gap_high: string
+  val_gap_aggressive: string
+  val_gap_extreme: string
+  val_bubble_conservative: string
+  val_bubble_reasonable: string
+  val_bubble_elevated: string
+  val_bubble_speculative: string
+  val_bubble_extreme_risk: string
+  val_conf_High: string
+  val_conf_Medium: string
+  val_conf_Low: string
+  val_dq_complete: string
+  val_dq_partial: string
+  val_dq_limited: string
+  val_dq_insufficient: string
+  // Fair value range
+  val_rangeTitle: string
+  val_bear: string
+  val_base: string
+  val_bull: string
+  val_currentPrice: string
+  val_marginOfSafety: string
+  val_estimatedDownside: string
+  val_belowRange: string
+  val_aboveRange: string
+  val_insideRange: string
+  // Market pricing (reverse DCF)
+  val_pricedInTitle: string
+  val_pricedInSubtitle: string
+  val_impliedGrowth: string
+  val_historicalGrowth: string
+  val_impliedMargin: string
+  val_historicalMargin: string
+  val_requiredRevenue: string
+  val_requiredFcf: string
+  val_discountRate: string
+  val_terminalGrowth: string
+  val_terminalDependency: string
+  val_forecastYears: string
+  val_solverCapped: string
+  val_fcfProxyNote: string
+  // Scenarios
+  val_scenariosTitle: string
+  val_assumptions: string
+  val_fairValuePerShare: string
+  val_fairMarketCap: string
+  val_upsideDownside: string
+  // Why this score
+  val_whyTitle: string
+  val_positiveFactors: string
+  val_riskFactors: string
+  val_missingInputs: string
+  val_methodsUsed: string
+  val_dataQualityLabel: string
+  val_calculatedAt: string
+  val_methodology: string
+  // Quality vs price matrix
+  val_matrixTitle: string
+  val_matrixQualityHighPriceLow: string
+  val_matrixBothHigh: string
+  val_matrixNote: string
+  // States
+  val_insufficientTitle: string
+  val_loadingTitle: string
+  val_conclusionTitle: string
 }

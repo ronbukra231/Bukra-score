@@ -12,6 +12,7 @@ from services.bukra_score import compute_bukra_score
 from services.bukra_rules import compute_bukra_rules
 from services.ai_explanation import get_hebrew_explanation
 from services.future_relevance import compute_future_relevance, build_timeline
+from services.valuation import compute_valuation
 from services.analyst_summary import generate_smart_analyst_summary
 from services.accuracy_db import save_snapshot
 from services.intelligence import build_company_intelligence
@@ -175,6 +176,16 @@ def company_page(request: Request, symbol: str, lang: str = Query("he", pattern=
     except Exception as e:
         logger.error("[company/page] future relevance failed for %s: %s", sym, e)
 
+    # Valuation Engine — price attractiveness, independent of Bukra Score.
+    # compute_valuation is fail-safe (returns a structured insufficient-data
+    # result); shares this endpoint's (symbol, lang) 24h cache lifecycle.
+    valuation = None
+    try:
+        valuation = compute_valuation(sym, info, financials, lang=lang,
+                                      bukra_score=score_data.get("score"))
+    except Exception as e:
+        logger.error("[company/page] valuation failed for %s: %s", sym, e)
+
     elapsed_ms = round((time.monotonic() - t0) * 1000)
     breakdown  = score_data.get("breakdown", {})
     logger.info(
@@ -199,6 +210,7 @@ def company_page(request: Request, symbol: str, lang: str = Query("he", pattern=
         "analyst_summary":   analyst_summary,
         "intelligence":      intelligence,
         "future_relevance":  future_relevance,
+        "valuation":         valuation,
         "from_cache":        False,
         "perf":              {"totalMs": elapsed_ms},
     }

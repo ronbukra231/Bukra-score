@@ -8,6 +8,7 @@ import BukraScoreCard from '../components/BukraScoreCard'
 import BukraRules from '../components/BukraRules'
 import AIExplanation from '../components/AIExplanation'
 import SmartAnalystSummary from '../components/SmartAnalystSummary'
+import ValuationSection from '../components/ValuationSection'
 import SearchBar from '../components/SearchBar'
 import LanguageToggle from '../components/LanguageToggle'
 import IntelligencePanel from '../components/IntelligencePanel'
@@ -443,6 +444,11 @@ export default function Company() {
                         </p>
                       </div>
                     )}
+
+                    <ValuationSection
+                      data={data.valuation ?? null}
+                      bukraScore={data.score?.score ?? null}
+                    />
 
                     <AIExplanation
                       explanation={data.explanation ?? null}

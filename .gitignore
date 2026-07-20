@@ -61,3 +61,4 @@ backend/data/causal_graph.json
 backend/data/global_events.json
 backend/data/historical_patterns.json
 backend/data/prediction_ledger.json
+backend/data/valuation_history.json
