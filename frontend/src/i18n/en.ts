@@ -670,6 +670,7 @@ const en: Translations = {
 
   // ── Bukra Portfolio Simulator ─────────────────────────────────────────────
   sim_navLabel: 'Portfolio Simulator',
+  sim_navDesc: 'Build and manage a virtual portfolio',
   sim_disclaimerShort: 'Simulation — virtual money only. No real trades are executed.',
   sim_disclaimerFull: 'Bukra Portfolio Simulator is a simulation tool only. All funds, holdings, trades, returns, and performance shown are virtual. No real trades are executed, no user funds are held, and the information does not constitute investment advice, investment marketing, portfolio management, or a guarantee of returns.',
   sim_virtualMoneyLabel: 'Virtual money for simulation purposes only',

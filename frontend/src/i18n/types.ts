@@ -696,6 +696,7 @@ export interface Translations {
 
   // ── Bukra Portfolio Simulator (Phase 1 — virtual money only) ─────────────
   sim_navLabel: string
+  sim_navDesc: string        // secondary line under the Research Room entry
   sim_disclaimerShort: string
   sim_disclaimerFull: string
   sim_virtualMoneyLabel: string

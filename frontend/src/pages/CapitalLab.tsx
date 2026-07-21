@@ -4,7 +4,22 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../i18n/index'
+import { getDashboard, SimulatorApiError } from '../api/simulatorClient'
 import type { User } from '@supabase/supabase-js'
+
+// Portfolio Simulator entry — routes to onboarding if the user has no
+// virtual portfolio yet, or straight to the existing Overview if they do.
+// Reuses the already-implemented dashboard check; creates nothing new.
+async function goToSimulator(navigate: (path: string) => void) {
+  try {
+    await getDashboard()
+    navigate('/simulator')
+  } catch (e) {
+    if (e instanceof SimulatorApiError && e.status === 404) navigate('/simulator/start')
+    else navigate('/simulator')
+  }
+}
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const ROOM_CSS = `
@@ -98,6 +113,7 @@ function useClock() {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function CapitalLab() {
   const { user, signOut } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const name = firstName(user)
   const ini  = getInitial(user)
@@ -121,13 +137,13 @@ export default function CapitalLab() {
   },[])
 
   useEffect(() => {
-    let t: ReturnType<typeof setTimeout>
+    let flashTimer: ReturnType<typeof setTimeout>
     const flash = () => {
       setLightning(true); setTimeout(()=>setLightning(false),80+Math.random()*120)
-      t=setTimeout(flash,8000+Math.random()*22000)
+      flashTimer=setTimeout(flash,8000+Math.random()*22000)
     }
-    t=setTimeout(flash,6000+Math.random()*8000)
-    return ()=>clearTimeout(t)
+    flashTimer=setTimeout(flash,6000+Math.random()*8000)
+    return ()=>clearTimeout(flashTimer)
   },[])
 
   useEffect(() => {
@@ -149,6 +165,17 @@ export default function CapitalLab() {
   const q = QUOTES[qIdx]
   const timeStr = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})
   const dateStr = now.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}).toUpperCase()
+
+  // Existing four items unchanged; the Portfolio Simulator entry is new and
+  // routes smartly (existing-portfolio → Overview, no portfolio → onboarding).
+  const leftMenu: MenuItem[] = [
+    { icon: '⊕', title: 'Create Index',     desc: 'Build your custom index',              href: '/' },
+    { icon: '⊞', title: 'Advanced Search',  desc: 'Find companies. Uncover opportunities.', href: '/' },
+    { icon: '⬡', title: 'The Library',      desc: 'Your knowledge collection',             href: '/' },
+    { icon: '⚗', title: 'AI Research Lab',  desc: 'AI-powered insights and analysis',      href: '/' },
+    { icon: '💼', title: t.sim_navLabel,     desc: t.sim_navDesc, href: '/simulator',
+      onClick: () => goToSimulator(navigate) },
+  ]
 
   const glass: React.CSSProperties = {
     background: 'rgba(5,3,1,0.84)',
@@ -472,7 +499,7 @@ export default function CapitalLab() {
           width:'232px', ...glass, borderRadius:'8px',
           overflow:'hidden', pointerEvents:'auto',
         }}>
-          {LEFT_MENU.map((item,i) => <LeftMenuItem key={i} item={item} />)}
+          {leftMenu.map((item,i) => <LeftMenuItem key={i} item={item} />)}
         </div>
 
         {/* ── RIGHT PANEL — stats ── */}
@@ -584,22 +611,51 @@ export default function CapitalLab() {
           </div>
         )}
       </div>
+
+      {/* ── Mobile entry — this room's scene has no responsive layout of its
+           own, so on narrow screens the four game-UI panels aren't usable.
+           A single clearly-labeled bar keeps the Portfolio Simulator
+           reachable without redesigning the room. ── */}
+      <button
+        onClick={() => goToSimulator(navigate)}
+        className="sm:hidden fixed inset-x-4 bottom-4 z-20 flex items-center gap-3 rounded-xl px-4 py-3.5"
+        style={{
+          background: 'rgba(5,3,1,0.92)', border: '1px solid rgba(212,168,71,0.30)',
+          backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+        }}
+      >
+        <span style={{
+          width: '34px', height: '34px', flexShrink: 0, borderRadius: '4px',
+          border: '1px solid rgba(212,168,71,0.4)', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', background: 'rgba(12,8,2,0.82)', fontSize: '15px',
+        }}>💼</span>
+        <span style={{ flex: 1, textAlign: 'start' }}>
+          <span style={{ display: 'block', fontSize: '12px', fontWeight: 'bold',
+            letterSpacing: '0.06em', color: 'rgba(238,218,168,0.96)' }}>{t.sim_navLabel}</span>
+          <span style={{ display: 'block', fontSize: '10px', marginTop: '2px',
+            color: 'rgba(178,162,130,0.74)' }}>{t.sim_navDesc}</span>
+        </span>
+        <span style={{ fontSize: '14px', color: 'rgba(212,168,71,0.55)' }}>›</span>
+      </button>
     </div>
   )
 }
 
 // ─── Left Menu ────────────────────────────────────────────────────────────────
-const LEFT_MENU = [
-  { icon: '⊕', title: 'Create Index',     desc: 'Build your custom index',              href: '/' },
-  { icon: '⊞', title: 'Advanced Search',  desc: 'Find companies. Uncover opportunities.', href: '/' },
-  { icon: '⬡', title: 'The Library',      desc: 'Your knowledge collection',             href: '/' },
-  { icon: '⚗', title: 'AI Research Lab',  desc: 'AI-powered insights and analysis',      href: '/' },
-]
+// `onClick` (when present) takes priority over `href` — used by the
+// Portfolio Simulator entry, which needs to check whether a virtual
+// portfolio already exists before deciding where to route.
+type MenuItem = { icon: string; title: string; desc: string; href: string; onClick?: () => void }
 
-function LeftMenuItem({ item }: { item: typeof LEFT_MENU[0] }) {
+function LeftMenuItem({ item }: { item: MenuItem }) {
   const [h, setH] = useState(false)
+  const navigate = useNavigate()
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={() => item.onClick ? item.onClick() : navigate(item.href)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.onClick ? item.onClick() : navigate(item.href) } }}
       style={{
         display:'flex', alignItems:'center', gap:'14px',
         padding:'13px 16px',
