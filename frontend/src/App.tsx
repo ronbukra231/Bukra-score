@@ -26,6 +26,14 @@ import PortfolioOffice from './pages/PortfolioOffice'
 import WorldIntelligenceCenter from './pages/WorldIntelligenceCenter'
 import EstateLibrary from './pages/EstateLibrary'
 import StrategyRoom from './pages/StrategyRoom'
+import SimulatorOnboarding from './pages/simulator/SimulatorOnboarding'
+import SimulatorOverview from './pages/simulator/Overview'
+import DecisionCenter from './pages/simulator/DecisionCenter'
+import SimulatorHoldings from './pages/simulator/Holdings'
+import SimulatorPerformance from './pages/simulator/Performance'
+import SimulatorActivity from './pages/simulator/Activity'
+import SimulatorDecisionHistory from './pages/simulator/DecisionHistory'
+import SimulatorHealth from './pages/simulator/Health'
 
 export default function App() {
   return (
@@ -58,6 +66,15 @@ export default function App() {
           <Route path="/estate/world" element={<RequireAuth><WorldIntelligenceCenter /></RequireAuth>} />
           <Route path="/estate/library" element={<RequireAuth><EstateLibrary /></RequireAuth>} />
           <Route path="/estate/strategy" element={<RequireAuth><StrategyRoom /></RequireAuth>} />
+          {/* Bukra Portfolio Simulator — Phase 1, virtual money only */}
+          <Route path="/simulator/start" element={<RequireAuth><SimulatorOnboarding onCreated={() => {}} /></RequireAuth>} />
+          <Route path="/simulator" element={<RequireAuth><SimulatorOverview /></RequireAuth>} />
+          <Route path="/simulator/decisions" element={<RequireAuth><DecisionCenter /></RequireAuth>} />
+          <Route path="/simulator/holdings" element={<RequireAuth><SimulatorHoldings /></RequireAuth>} />
+          <Route path="/simulator/performance" element={<RequireAuth><SimulatorPerformance /></RequireAuth>} />
+          <Route path="/simulator/activity" element={<RequireAuth><SimulatorActivity /></RequireAuth>} />
+          <Route path="/simulator/history" element={<RequireAuth><SimulatorDecisionHistory /></RequireAuth>} />
+          <Route path="/simulator/health" element={<RequireAuth><SimulatorHealth /></RequireAuth>} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>

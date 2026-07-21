@@ -139,6 +139,14 @@ export default function PortfolioOffice() {
         </EstatePanel>
       </div>
 
+      {/* ── Simulator — practice with virtual money, quietly discoverable ── */}
+      <div className="text-center mb-6">
+        <Link to="/simulator"
+          className="text-[11px] uppercase tracking-[0.25em] text-stone-600 hover:text-[#c9a962] transition-colors duration-500">
+          {isHe ? 'תרגול בסימולטור תיק וירטואלי ←' : 'Practice in the virtual Portfolio Simulator →'}
+        </Link>
+      </div>
+
       {/* ── Private connections — quiet, discoverable, never a banner ──── */}
       <div className="text-center">
         <button onClick={() => setShowBrokers(v => !v)}

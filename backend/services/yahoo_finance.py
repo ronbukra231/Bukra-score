@@ -6,6 +6,7 @@ Mock fallback for info: hardcoded data for common symbols when Yahoo is rate-lim
 """
 
 import time
+from typing import Optional
 import numpy as np
 import requests
 import yfinance as yf
@@ -647,3 +648,70 @@ def get_five_year_financials(symbol: str) -> dict:
 # Keep get_ticker for routers that still use it
 def get_ticker(symbol: str):
     return yf.Ticker(symbol.upper(), session=_yf_session)
+
+
+# ── Price history & dividends — used by the Portfolio Simulator ────────────────
+# Both fail safe: on any provider error they return an empty result rather than
+# raising, so callers can present a transparent "unavailable" state instead of
+# fabricating data.
+
+_PERIOD_MAP = {
+    "1D": "5d", "1W": "1mo", "1M": "3mo", "3M": "6mo", "1Y": "2y", "ALL": "10y",
+}
+
+
+def get_price_history(symbol: str, period: str = "1Y") -> list[dict]:
+    """
+    Daily close prices for `symbol` over `period` (1D/1W/1M/3M/1Y/ALL).
+    Returns [{"date": "YYYY-MM-DD", "close": float}], oldest first. [] on failure.
+    """
+    sym = symbol.upper()
+    cache_key = f"pricehist:{sym}:{period}"
+    cached = _cached(cache_key)
+    if cached is not None:
+        return cached
+
+    yf_period = _PERIOD_MAP.get(period, "2y")
+    try:
+        hist = get_ticker(sym).history(period=yf_period, interval="1d")
+        if hist is None or hist.empty:
+            return []
+        rows = [
+            {"date": ts.strftime("%Y-%m-%d"), "close": round(float(row["Close"]), 4)}
+            for ts, row in hist.iterrows()
+            if row.get("Close") is not None
+        ]
+        return _store(cache_key, rows)
+    except Exception as e:
+        print(f"[price-history] {sym} | failed: {e}")
+        return []
+
+
+def get_latest_price(symbol: str) -> Optional[float]:
+    """Most recent close from price history, or None if unavailable."""
+    hist = get_price_history(symbol, "1W")
+    return hist[-1]["close"] if hist else None
+
+
+def get_dividend_history(symbol: str) -> list[dict]:
+    """
+    Ex-dividend events for `symbol`: [{"date": "YYYY-MM-DD", "amount": float}].
+    Returns [] when the provider has no reliable dividend data — never fabricated.
+    """
+    sym = symbol.upper()
+    cache_key = f"dividends:{sym}"
+    cached = _cached(cache_key)
+    if cached is not None:
+        return cached
+    try:
+        series = get_ticker(sym).dividends
+        if series is None or series.empty:
+            return _store(cache_key, [])
+        rows = [
+            {"date": ts.strftime("%Y-%m-%d"), "amount": round(float(amt), 6)}
+            for ts, amt in series.items()
+        ]
+        return _store(cache_key, rows)
+    except Exception as e:
+        print(f"[dividends] {sym} | failed: {e}")
+        return []

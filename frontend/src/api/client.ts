@@ -5,7 +5,7 @@ const BASE = import.meta.env.VITE_API_URL ?? '/api'
 import { supabase } from '../lib/supabase'
 import { getActiveLang } from '../i18n/index'
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
+export async function getAuthHeaders(): Promise<Record<string, string>> {
   if (!supabase) return {}
   try {
     const { data } = await supabase.auth.getSession()
