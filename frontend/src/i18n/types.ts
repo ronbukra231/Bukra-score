@@ -6,6 +6,19 @@ export interface Translations {
   nav_appName: string
   nav_langToggle: string  // what switching TO (shows "EN" when currently Hebrew)
 
+  // ── User menu (avatar dropdown) ───────────────────────────────────────────
+  um_menuLabel: string
+  um_login: string
+  um_capitalLab: string
+  um_companySearch: string
+  um_companyScanner: string
+  um_admin: string
+  um_logOut: string
+  um_roleGuest: string
+  um_roleUser: string
+  um_rolePremium: string
+  um_roleAdmin: string
+
   // ── Home page ─────────────────────────────────────────────────────────────
   home_badge: string
   home_heading1: string

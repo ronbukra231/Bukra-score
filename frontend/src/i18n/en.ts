@@ -4,6 +4,18 @@ const en: Translations = {
   nav_appName: 'Bukra Capital',
   nav_langToggle: 'עב',
 
+  um_menuLabel: 'User menu',
+  um_login: 'Log in',
+  um_capitalLab: 'Capital Lab',
+  um_companySearch: 'Company Search',
+  um_companyScanner: 'Company Scanner',
+  um_admin: 'Admin',
+  um_logOut: 'Log Out',
+  um_roleGuest: 'Guest',
+  um_roleUser: 'User',
+  um_rolePremium: 'Premium',
+  um_roleAdmin: 'Admin',
+
   home_badge: 'Smart Investment Research ✦',
   home_heading1: 'Understand the Business',
   home_heading2: 'Before You Buy a Stock',

@@ -4,6 +4,18 @@ const he: Translations = {
   nav_appName: 'בוקרה קפיטל',
   nav_langToggle: 'EN',
 
+  um_menuLabel: 'תפריט משתמש',
+  um_login: 'התחבר',
+  um_capitalLab: 'Capital Lab',
+  um_companySearch: 'חיפוש חברות',
+  um_companyScanner: 'סורק חברות',
+  um_admin: 'ניהול',
+  um_logOut: 'התנתקות',
+  um_roleGuest: 'אורח',
+  um_roleUser: 'משתמש',
+  um_rolePremium: 'פרימיום',
+  um_roleAdmin: 'מנהל',
+
   home_badge: 'מחקר השקעות חכם ✦',
   home_heading1: 'הבן את העסק',
   home_heading2: 'לפני שתקנה מניה',
