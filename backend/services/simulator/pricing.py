@@ -8,6 +8,8 @@ import time
 import logging
 from typing import Optional
 
+from yahooquery import Ticker as YQTicker
+
 from services.data_service import get_company_info
 from services.yahoo_finance import get_latest_price
 from services.simulator.config import EXECUTION
@@ -40,20 +42,45 @@ def get_quote(ticker: str) -> dict:
 
 
 # get_price_history (which get_latest_price sits on) only has a yfinance
-# path, no yahooquery fallback — and yfinance's rate is the single most
-# commonly rate-limited (HTTP 429) call in this codebase. A brief retry
-# turns a transient 429 into a working FX rate instead of blocking every
-# non-native-currency simulated trade on the first hiccup.
+# path calling Yahoo's chart/history HTTP endpoint — no yahooquery
+# fallback, and that specific endpoint is the single most commonly
+# rate-limited (HTTP 429) call in this codebase. yahooquery's `.price`
+# lookup hits a different Yahoo endpoint (quoteSummary), so trying it
+# first gives FX lookups a genuinely independent path, not just a retry of
+# the same failing one; a short backoff-retry loop still covers ordinary
+# transient hiccups on either path.
 _FX_MAX_RETRIES = 2
 _FX_RETRY_BACKOFF_S = 1.5
+
+
+def _yq_fx_rate(pair_symbol: str) -> Optional[float]:
+    """yahooquery's quoteSummary-based price lookup — same convention
+    Yahoo uses for forex pairs (e.g. 'USDILS=X') as for equities."""
+    try:
+        t = YQTicker(pair_symbol, timeout=15, validate=False)
+        price_data = t.price
+        if not isinstance(price_data, dict):
+            return None
+        rate = (price_data.get(pair_symbol) or {}).get("regularMarketPrice")
+        return float(rate) if rate else None
+    except Exception as e:
+        logger.info("[pricing] yahooquery FX lookup failed for %s: %s", pair_symbol, type(e).__name__)
+        return None
+
+
+def _fetch_pair_rate(pair_symbol: str) -> Optional[float]:
+    rate = _yq_fx_rate(pair_symbol)
+    if rate is not None and rate > 0:
+        return rate
+    return get_latest_price(pair_symbol)
 
 
 def get_fx_rate(from_ccy: str, to_ccy: str) -> Optional[float]:
     """
     Approximate FX conversion rate for simulation purposes. USD<->ILS via a
     live quote when reachable; identity when currencies match. Returns None
-    (never a fabricated rate) when neither is available after retrying
-    transient failures.
+    (never a fabricated rate) when neither is available after trying both
+    providers and retrying transient failures.
     """
     if from_ccy == to_ccy:
         return 1.0
@@ -65,9 +92,9 @@ def get_fx_rate(from_ccy: str, to_ccy: str) -> Optional[float]:
     rate = None
     for attempt in range(_FX_MAX_RETRIES + 1):
         pair_symbol = f"{from_ccy}{to_ccy}=X"
-        rate = get_latest_price(pair_symbol)
+        rate = _fetch_pair_rate(pair_symbol)
         if rate is None:
-            inverse = get_latest_price(f"{to_ccy}{from_ccy}=X")
+            inverse = _fetch_pair_rate(f"{to_ccy}{from_ccy}=X")
             if inverse and inverse > 0:
                 rate = 1.0 / inverse
         if rate is not None and rate > 0:

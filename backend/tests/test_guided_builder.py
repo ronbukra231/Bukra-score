@@ -541,10 +541,31 @@ def test_analyze_ticker_caches_successful_result():
 
 # ── PRODUCTION REGRESSION: FX rate lookups (needed for any non-native-
 #    currency simulated trade, e.g. buying a USD stock in an ILS portfolio)
-#    have no yahooquery fallback — only yfinance, the most commonly
-#    rate-limited (HTTP 429) path in this codebase. A brief retry turns a
-#    transient failure into a working rate instead of blocking every trade.
+#    only had a yfinance path — the single most commonly rate-limited
+#    (HTTP 429) call in this codebase. Live browser verification (a real
+#    ILS 100,000 portfolio, a real TSM/ADBE recommendation) found "Invest"
+#    failing with "the required exchange rate is not available", confirmed
+#    reproducible against live Yahoo Finance directly, not Render-specific.
+#    yahooquery hits a different Yahoo endpoint and is now tried first,
+#    with a short backoff-retry loop on top for ordinary transient hiccups.
 from services.simulator import pricing as pricing_mod
+
+
+def test_fx_rate_prefers_yahooquery_over_yfinance():
+    with patch("services.simulator.pricing._yq_fx_rate", return_value=3.65), \
+         patch("services.simulator.pricing.get_latest_price") as mock_yf:
+        pricing_mod._FX_CACHE.clear()
+        rate = pricing_mod.get_fx_rate("USD", "ILS")
+    assert rate == 3.65
+    mock_yf.assert_not_called()   # yahooquery succeeded — yfinance never needed
+
+
+def test_fx_rate_falls_back_to_yfinance_when_yahooquery_fails():
+    pricing_mod._FX_CACHE.clear()
+    with patch("services.simulator.pricing._yq_fx_rate", return_value=None), \
+         patch("services.simulator.pricing.get_latest_price", return_value=3.65):
+        rate = pricing_mod.get_fx_rate("USD", "ILS")
+    assert rate == 3.65
 
 
 def test_fx_rate_retries_transient_failure_then_succeeds():
@@ -557,7 +578,8 @@ def test_fx_rate_retries_transient_failure_then_succeeds():
         return None if calls["n"] <= 2 else 3.65   # USD->ILS-shaped rate
 
     pricing_mod._FX_CACHE.clear()
-    with patch("services.simulator.pricing.get_latest_price", side_effect=_flaky), \
+    with patch("services.simulator.pricing._yq_fx_rate", return_value=None), \
+         patch("services.simulator.pricing.get_latest_price", side_effect=_flaky), \
          patch.object(pricing_mod, "_FX_RETRY_BACKOFF_S", 0.01):
         rate = pricing_mod.get_fx_rate("USD", "ILS")
     assert rate == 3.65
@@ -566,7 +588,8 @@ def test_fx_rate_retries_transient_failure_then_succeeds():
 
 def test_fx_rate_gives_up_after_retries_exhausted():
     pricing_mod._FX_CACHE.clear()
-    with patch("services.simulator.pricing.get_latest_price", return_value=None), \
+    with patch("services.simulator.pricing._yq_fx_rate", return_value=None), \
+         patch("services.simulator.pricing.get_latest_price", return_value=None), \
          patch.object(pricing_mod, "_FX_RETRY_BACKOFF_S", 0.01):
         rate = pricing_mod.get_fx_rate("USD", "ILS")
     assert rate is None   # never a fabricated rate

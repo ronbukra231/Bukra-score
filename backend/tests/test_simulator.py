@@ -359,8 +359,12 @@ def test_missing_price_fails_safe(user_id):
 # 27 — Missing FX rate fails safe
 def test_missing_fx_rate_fails_safe(user_id):
     make_portfolio(user_id, currency="ILS")
+    # execution.py does `from services.simulator.pricing import get_fx_rate`
+    # (a direct name import), so the patch must target execution's own
+    # bound name, not pricing's — patching pricing.get_fx_rate here would
+    # leave execution.py calling the real, unmocked function.
     with patch("services.simulator.pricing.get_company_info", return_value=MOCK_AAPL), \
-         patch("services.simulator.pricing.get_fx_rate", return_value=None):
+         patch("services.simulator.execution.get_fx_rate", return_value=None):
         with UserPortfolioLock(user_id) as state:
             r = simulate_buy(state, "AAPL", 1000.0)
     assert not r.ok
