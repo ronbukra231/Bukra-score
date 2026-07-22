@@ -250,7 +250,32 @@ def _run_scan():
         _refresh_lock.release()
 
 
-# ── Public helper (used by scheduler in main.py) ─────────────────────────────
+# ── Public helpers (used by main.py at startup and by the scheduler) ─────────
+
+def cache_needs_refresh(max_age_hours: float = 24 * 7) -> bool:
+    """
+    True if scanner_cache.json is missing, corrupt, or older than
+    max_age_hours. The weekly cron alone assumes a persistently-running
+    process with persistent disk — on a host with an ephemeral filesystem
+    (e.g. Render's free/starter tiers reset local disk on every deploy or
+    restart), the cache can otherwise stay empty indefinitely between
+    Monday 02:00 UTC windows, silently starving every scanner-cache-backed
+    feature (the stock scanner itself, and the Portfolio Simulator's
+    recommendation engine, which reads this same file as its candidate
+    universe).
+    """
+    cache = _read_cache()
+    if not cache or not cache.get("last_updated"):
+        return True
+    try:
+        last = datetime.fromisoformat(cache["last_updated"])
+    except (ValueError, TypeError):
+        return True
+    if last.tzinfo is None:
+        last = last.replace(tzinfo=timezone.utc)
+    age_hours = (datetime.now(timezone.utc) - last).total_seconds() / 3600
+    return age_hours > max_age_hours
+
 
 def trigger_scan_if_idle() -> bool:
     """Start a background scan if none is currently running. Returns True if started."""

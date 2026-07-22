@@ -9,7 +9,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from limiter import limiter
 from routers.company import router as company_router
-from routers.scanner import router as scanner_router, trigger_scan_if_idle
+from routers.scanner import router as scanner_router, trigger_scan_if_idle, cache_needs_refresh
 from routers.accuracy import router as accuracy_router
 from routers.intelligence import router as intelligence_router
 from routers.discoveries import router as discoveries_router
@@ -155,6 +155,17 @@ def startup():
     scheduler.start()
     logger.info("[scheduler] Weekly scan — Mondays 02:00 UTC")
     logger.info("[scheduler] Provider monitor — every hour")
+
+    # The weekly cron alone assumes the process stays up between Monday
+    # 02:00 UTC windows. On a host with an ephemeral filesystem (restarts
+    # wipe local disk), scanner_cache.json can otherwise be empty for days
+    # after every restart — silently starving the scanner and the Portfolio
+    # Simulator's recommendation engine, both of which read this file as
+    # their candidate universe. Self-heal on every boot instead of only
+    # waiting for the weekly window.
+    if cache_needs_refresh():
+        logger.info("[scanner] Cache missing or stale on startup — triggering an immediate background scan.")
+        trigger_scan_if_idle()
 
 
 # ── Health check ──────────────────────────────────────────────────────────────
