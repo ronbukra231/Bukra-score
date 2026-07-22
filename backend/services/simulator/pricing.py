@@ -39,11 +39,21 @@ def get_quote(ticker: str) -> dict:
     }
 
 
+# get_price_history (which get_latest_price sits on) only has a yfinance
+# path, no yahooquery fallback — and yfinance's rate is the single most
+# commonly rate-limited (HTTP 429) call in this codebase. A brief retry
+# turns a transient 429 into a working FX rate instead of blocking every
+# non-native-currency simulated trade on the first hiccup.
+_FX_MAX_RETRIES = 2
+_FX_RETRY_BACKOFF_S = 1.5
+
+
 def get_fx_rate(from_ccy: str, to_ccy: str) -> Optional[float]:
     """
     Approximate FX conversion rate for simulation purposes. USD<->ILS via a
     live quote when reachable; identity when currencies match. Returns None
-    (never a fabricated rate) when neither is available.
+    (never a fabricated rate) when neither is available after retrying
+    transient failures.
     """
     if from_ccy == to_ccy:
         return 1.0
@@ -52,12 +62,20 @@ def get_fx_rate(from_ccy: str, to_ccy: str) -> Optional[float]:
     if cached and (time.time() - cached["ts"]) < _FX_TTL:
         return cached["rate"]
 
-    pair_symbol = f"{from_ccy}{to_ccy}=X"
-    rate = get_latest_price(pair_symbol)
-    if rate is None:
-        inverse = get_latest_price(f"{to_ccy}{from_ccy}=X")
-        if inverse and inverse > 0:
-            rate = 1.0 / inverse
+    rate = None
+    for attempt in range(_FX_MAX_RETRIES + 1):
+        pair_symbol = f"{from_ccy}{to_ccy}=X"
+        rate = get_latest_price(pair_symbol)
+        if rate is None:
+            inverse = get_latest_price(f"{to_ccy}{from_ccy}=X")
+            if inverse and inverse > 0:
+                rate = 1.0 / inverse
+        if rate is not None and rate > 0:
+            break
+        if attempt < _FX_MAX_RETRIES:
+            logger.info("[pricing] FX rate %s->%s unavailable, retrying (attempt %d)", from_ccy, to_ccy, attempt + 1)
+            time.sleep(_FX_RETRY_BACKOFF_S)
+
     if rate is not None and rate > 0:
         _FX_CACHE[key] = {"rate": rate, "ts": time.time()}
         return rate

@@ -537,3 +537,36 @@ def test_analyze_ticker_caches_successful_result():
         second = reco_engine._analyze_ticker("XYZ", "en")
     assert first == second
     assert calls["n"] == 1   # second call served from cache, not re-fetched
+
+
+# ── PRODUCTION REGRESSION: FX rate lookups (needed for any non-native-
+#    currency simulated trade, e.g. buying a USD stock in an ILS portfolio)
+#    have no yahooquery fallback — only yfinance, the most commonly
+#    rate-limited (HTTP 429) path in this codebase. A brief retry turns a
+#    transient failure into a working rate instead of blocking every trade.
+from services.simulator import pricing as pricing_mod
+
+
+def test_fx_rate_retries_transient_failure_then_succeeds():
+    calls = {"n": 0}
+
+    def _flaky(symbol):
+        calls["n"] += 1
+        # Attempt 0 checks both the direct pair and its inverse (2 calls) —
+        # both fail (transient). Attempt 1's direct-pair call succeeds.
+        return None if calls["n"] <= 2 else 3.65   # USD->ILS-shaped rate
+
+    pricing_mod._FX_CACHE.clear()
+    with patch("services.simulator.pricing.get_latest_price", side_effect=_flaky), \
+         patch.object(pricing_mod, "_FX_RETRY_BACKOFF_S", 0.01):
+        rate = pricing_mod.get_fx_rate("USD", "ILS")
+    assert rate == 3.65
+    assert calls["n"] == 3
+
+
+def test_fx_rate_gives_up_after_retries_exhausted():
+    pricing_mod._FX_CACHE.clear()
+    with patch("services.simulator.pricing.get_latest_price", return_value=None), \
+         patch.object(pricing_mod, "_FX_RETRY_BACKOFF_S", 0.01):
+        rate = pricing_mod.get_fx_rate("USD", "ILS")
+    assert rate is None   # never a fabricated rate
