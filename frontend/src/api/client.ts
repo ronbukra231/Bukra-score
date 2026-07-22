@@ -5,10 +5,42 @@ const BASE = import.meta.env.VITE_API_URL ?? '/api'
 import { supabase } from '../lib/supabase'
 import { getActiveLang } from '../i18n/index'
 
+// Refresh proactively if the access token is already expired or expires
+// within this window — avoids sending a token the backend will reject.
+const REFRESH_MARGIN_SECONDS = 60
+
+/**
+ * Reads the current Supabase session and returns an Authorization header,
+ * refreshing the access token first if it is expired or about to expire.
+ * The single source of truth for token attachment — every authenticated
+ * API client (company data, estate, simulator) calls this rather than
+ * touching the Supabase session directly.
+ */
 export async function getAuthHeaders(): Promise<Record<string, string>> {
   if (!supabase) return {}
   try {
-    const { data } = await supabase.auth.getSession()
+    let { data } = await supabase.auth.getSession()
+    let session = data.session
+    const expiresAt = session?.expires_at ?? 0
+    const nowSeconds = Date.now() / 1000
+    if (session && expiresAt - nowSeconds < REFRESH_MARGIN_SECONDS) {
+      const { data: refreshed } = await supabase.auth.refreshSession()
+      session = refreshed.session ?? session
+    }
+    const token = session?.access_token
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch {
+    return {}
+  }
+}
+
+/** Forces a session refresh, bypassing the expiry heuristic — used for the
+ * one-shot retry after a request comes back 401 despite a locally-valid-
+ * looking token (e.g. the token was revoked, or clocks disagree). */
+export async function forceRefreshAuthHeaders(): Promise<Record<string, string>> {
+  if (!supabase) return {}
+  try {
+    const { data } = await supabase.auth.refreshSession()
     const token = data.session?.access_token
     return token ? { Authorization: `Bearer ${token}` } : {}
   } catch {

@@ -834,6 +834,11 @@ export interface Translations {
   sim_addNote: string
   // Errors / empty
   sim_errorGeneric: string
+  sim_errorExpired: string        // session expired, even after one refresh attempt
+  sim_errorUnauthorized: string   // authenticated, but not the owner of this resource
+  sim_errorConfig: string         // backend auth configuration problem — not the user's fault
+  sim_errorNetwork: string        // request never reached the server
+  sim_retrySignIn: string         // action button for the expired-session state
   sim_loading: string
   sim_noPortfolioYet: string
   sim_startSimulation: string

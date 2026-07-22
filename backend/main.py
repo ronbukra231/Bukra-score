@@ -112,17 +112,28 @@ async def _generic_error(request: Request, exc: Exception):
 def startup():
     init_db()
 
-    # Warn loudly if JWT secret is missing — all users will be treated as guests
-    # (no score/financials returned) until this is set on the backend host.
-    jwt_secret = os.getenv("SUPABASE_JWT_SECRET", "")
-    if not jwt_secret:
+    # Report which server-side JWT verification mode is configured. The
+    # Portfolio Simulator (services/auth.py) is the only route group that
+    # verifies the Authorization header; it supports both the legacy HS256
+    # shared secret (SUPABASE_JWT_SECRET) and the newer asymmetric signing
+    # keys via JWKS (SUPABASE_URL) — whichever the live Supabase project
+    # actually uses, chosen per-token from its own `alg` header. Neither
+    # variable is required for the rest of the app (company.py's guest
+    # gating is client-side only), but the Simulator returns 503s without
+    # at least one of them configured correctly.
+    has_secret = bool(os.getenv("SUPABASE_JWT_SECRET", "").strip())
+    has_url    = bool(os.getenv("SUPABASE_URL", "").strip())
+    if not has_secret and not has_url:
         logger.warning(
-            "[auth] SUPABASE_JWT_SECRET is not set. "
-            "All API requests will be treated as guest (no score/financials). "
-            "Set this env var on Render to enable authenticated responses."
+            "[auth] Neither SUPABASE_JWT_SECRET nor SUPABASE_URL is set. "
+            "The Portfolio Simulator API will return 503 for every request "
+            "until one is configured on Render."
         )
     else:
-        logger.info("[auth] SUPABASE_JWT_SECRET is configured — JWT auth enabled")
+        modes = []
+        if has_secret: modes.append("HS256 (SUPABASE_JWT_SECRET)")
+        if has_url:    modes.append("JWKS/RS256/ES256 (SUPABASE_URL)")
+        logger.info("[auth] Simulator JWT verification available: %s", " + ".join(modes))
 
     scheduler = BackgroundScheduler(timezone="UTC")
     scheduler.add_job(
@@ -154,13 +165,21 @@ def health():
     fmp_key_set    = bool(os.getenv("FMP_API_KEY", "").strip())
     provider       = os.getenv("DATA_PROVIDER", "auto") if fmp_key_set else "yahoo"
     fmp_status     = "ok" if snap["fmp_failure_rate_pct"] < 20 else "degraded"
-    jwt_configured = bool(os.getenv("SUPABASE_JWT_SECRET", "").strip())
+    has_secret = bool(os.getenv("SUPABASE_JWT_SECRET", "").strip())
+    has_url    = bool(os.getenv("SUPABASE_URL", "").strip())
+    simulator_auth_modes = [m for m, ok in (("hs256", has_secret), ("jwks", has_url)) if ok]
     return {
         "status":   "ok",
         "provider": provider,
         "auth": {
-            "jwt_configured": jwt_configured,
-            "note": "ok" if jwt_configured else "SUPABASE_JWT_SECRET missing — all requests are guest-only",
+            # Legacy field — unrelated to the Simulator's server-side JWT
+            # verification (never checked outside services/auth.py).
+            "jwt_configured": has_secret,
+            "note": "ok" if has_secret else "SUPABASE_JWT_SECRET missing — all requests are guest-only",
+            "simulator": {
+                "modes_configured": simulator_auth_modes,
+                "note": "ok" if simulator_auth_modes else "Neither SUPABASE_JWT_SECRET nor SUPABASE_URL is set — Simulator API returns 503",
+            },
         },
         "fmp": {
             "configured": fmp_key_set,

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { useLanguage } from '../../i18n/index'
 import SimulatorShell, { SimPanel, GOLD, SERIF } from '../../simulator/SimulatorShell'
 import NoPortfolio from './NoPortfolio'
+import SimulatorErrorState from '../../simulator/ErrorState'
 import ApprovalModal from '../../components/simulator/ApprovalModal'
 import { recLabel, statusLabel } from '../../simulator/labels'
 import { getDashboard, getRecommendations, generateRecommendations, viewRecommendation, SimulatorApiError } from '../../api/simulatorClient'
@@ -15,32 +16,35 @@ export default function DecisionCenter() {
   const { t } = useLanguage()
   const [recs, setRecs] = useState<Recommendation[] | null>(null)
   const [notFound, setNotFound] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<unknown>(null)          // page failed to load at all
+  const [actionError, setActionError] = useState<unknown>(null)  // "Check for recommendations" failed
   const [generating, setGenerating] = useState(false)
   const [active, setActive] = useState<Recommendation | null>(null)
 
   function load() {
     getRecommendations('PENDING')
-      .then(setRecs)
+      .then(recs => { setRecs(recs); setError(null) })
       .catch(e => {
         if (e instanceof SimulatorApiError && e.status === 404) setNotFound(true)
-        else setError(e.message || t.sim_errorGeneric)
+        else setError(e)
       })
   }
 
   useEffect(() => {
     getDashboard().then(load).catch(e => {
       if (e instanceof SimulatorApiError && e.status === 404) setNotFound(true)
+      else setError(e)
     })
   }, [])
 
   async function handleGenerate() {
     setGenerating(true)
+    setActionError(null)
     try {
       await generateRecommendations()
       load()
-    } catch (e: any) {
-      setError(e.message || t.sim_errorGeneric)
+    } catch (e) {
+      setActionError(e)
     } finally {
       setGenerating(false)
     }
@@ -54,6 +58,7 @@ export default function DecisionCenter() {
   }
 
   if (notFound) return <SimulatorShell><NoPortfolio /></SimulatorShell>
+  if (error) return <SimulatorShell><SimulatorErrorState error={error} /></SimulatorShell>
 
   return (
     <SimulatorShell>
@@ -62,7 +67,7 @@ export default function DecisionCenter() {
         <p className="text-stone-500 text-sm mt-1 max-w-2xl">{t.sim_decisionCenterSubtitle}</p>
       </div>
 
-      {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+      {actionError != null && <div className="mb-4"><SimulatorErrorState error={actionError} /></div>}
 
       <button onClick={handleGenerate} disabled={generating}
         className="mb-6 rounded-full border border-stone-700 px-5 py-2 text-sm text-stone-300

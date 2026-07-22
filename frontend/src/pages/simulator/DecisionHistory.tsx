@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLanguage } from '../../i18n/index'
 import SimulatorShell, { SimPanel, SERIF } from '../../simulator/SimulatorShell'
 import NoPortfolio from './NoPortfolio'
+import SimulatorErrorState from '../../simulator/ErrorState'
 import { recLabel, statusLabel, REC_STATUS_KEY } from '../../simulator/labels'
 import { getDecisionHistory, SimulatorApiError } from '../../api/simulatorClient'
 import type { Recommendation, RecommendationStatus } from '../../types/simulator'
@@ -12,20 +13,23 @@ export default function DecisionHistoryPage() {
   const { t, isHe } = useLanguage()
   const [recs, setRecs] = useState<Recommendation[] | null>(null)
   const [notFound, setNotFound] = useState(false)
+  const [error, setError] = useState<unknown>(null)
   const [statusFilter, setStatusFilter] = useState('')
   const [tickerFilter, setTickerFilter] = useState('')
 
   function load() {
     getDecisionHistory({ status: statusFilter || undefined, ticker: tickerFilter || undefined })
-      .then(setRecs)
+      .then(recs => { setRecs(recs); setError(null) })
       .catch(e => {
         if (e instanceof SimulatorApiError && e.status === 404) setNotFound(true)
+        else setError(e)
       })
   }
 
   useEffect(() => { load() }, [statusFilter, tickerFilter])
 
   if (notFound) return <SimulatorShell><NoPortfolio /></SimulatorShell>
+  if (error) return <SimulatorShell><SimulatorErrorState error={error} /></SimulatorShell>
 
   return (
     <SimulatorShell>

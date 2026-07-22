@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLanguage } from '../../i18n/index'
 import SimulatorShell, { SimPanel, SERIF } from '../../simulator/SimulatorShell'
 import NoPortfolio from './NoPortfolio'
+import SimulatorErrorState from '../../simulator/ErrorState'
 import { getDashboard, SimulatorApiError } from '../../api/simulatorClient'
 import type { DashboardData, Holding } from '../../types/simulator'
 
@@ -15,14 +16,17 @@ export default function HoldingsPage() {
   const { t, isHe } = useLanguage()
   const [dash, setDash] = useState<DashboardData | null>(null)
   const [notFound, setNotFound] = useState(false)
+  const [error, setError] = useState<unknown>(null)
 
   useEffect(() => {
     getDashboard().then(setDash).catch(e => {
       if (e instanceof SimulatorApiError && e.status === 404) setNotFound(true)
+      else setError(e)
     })
   }, [])
 
   if (notFound) return <SimulatorShell><NoPortfolio /></SimulatorShell>
+  if (error) return <SimulatorShell><SimulatorErrorState error={error} /></SimulatorShell>
   if (!dash) return <SimulatorShell><p className="text-stone-600 text-sm">{t.sim_loading}</p></SimulatorShell>
 
   if (dash.holdings.length === 0) {

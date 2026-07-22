@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../../i18n/index'
 import { GOLD, SERIF } from '../../estate/EstateShell'
 import { createPortfolio, generateRecommendations } from '../../api/simulatorClient'
+import { resolveErrorMessage } from '../../simulator/ErrorState'
 import type { Currency, RiskProfile } from '../../types/simulator'
 
 const RISK_PROFILES: RiskProfile[] = ['conservative', 'balanced', 'growth', 'aggressive']
@@ -40,8 +41,8 @@ export default function SimulatorOnboarding({ onCreated }: { onCreated: () => vo
       try { await generateRecommendations() } catch { /* non-fatal — dashboard can trigger later */ }
       onCreated()
       navigate('/simulator')
-    } catch (e: any) {
-      setError(e.message || t.sim_errorGeneric)
+    } catch (e) {
+      setError(resolveErrorMessage(e, t))
     } finally {
       setBusy(false)
     }

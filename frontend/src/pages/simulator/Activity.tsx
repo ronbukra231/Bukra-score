@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLanguage } from '../../i18n/index'
 import SimulatorShell, { SimPanel, SERIF } from '../../simulator/SimulatorShell'
 import NoPortfolio from './NoPortfolio'
+import SimulatorErrorState from '../../simulator/ErrorState'
 import { getActivity, SimulatorApiError } from '../../api/simulatorClient'
 import type { AuditEvent } from '../../types/simulator'
 
@@ -9,14 +10,17 @@ export default function ActivityPage() {
   const { t, isHe } = useLanguage()
   const [events, setEvents] = useState<AuditEvent[] | null>(null)
   const [notFound, setNotFound] = useState(false)
+  const [error, setError] = useState<unknown>(null)
 
   useEffect(() => {
-    getActivity(150).then(setEvents).catch(e => {
+    getActivity(150).then(e => { setEvents(e); setError(null) }).catch(e => {
       if (e instanceof SimulatorApiError && e.status === 404) setNotFound(true)
+      else setError(e)
     })
   }, [])
 
   if (notFound) return <SimulatorShell><NoPortfolio /></SimulatorShell>
+  if (error) return <SimulatorShell><SimulatorErrorState error={error} /></SimulatorShell>
 
   return (
     <SimulatorShell>

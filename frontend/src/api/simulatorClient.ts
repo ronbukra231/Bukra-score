@@ -1,5 +1,5 @@
 // Bukra Portfolio Simulator API client — virtual money only.
-import { getAuthHeaders } from './client'
+import { getAuthHeaders, forceRefreshAuthHeaders } from './client'
 import type {
   Portfolio, DashboardData, PerformanceData, PortfolioHealth, Recommendation,
   AuditEvent, Transaction, SimulatorConfig, RiskProfile, Currency,
@@ -11,22 +11,75 @@ function getLang(): 'he' | 'en' {
   return localStorage.getItem('bukra_lang') === 'en' ? 'en' : 'he'
 }
 
+/**
+ * What kind of failure this was, so the UI can show a message that matches
+ * reality instead of one generic "something went wrong":
+ *   - 'expired'      the session is gone even after one refresh attempt —
+ *                     the user needs to sign in again
+ *   - 'unauthorized' the user is authenticated but doesn't own this resource
+ *   - 'config'       the BACKEND's own auth setup is broken (503) — signing
+ *                     in again will not help; this is never shown as an
+ *                     authentication failure
+ *   - 'network'      the request never reached the server
+ *   - 'unknown'      any other error status
+ */
+export type SimulatorErrorKind = 'expired' | 'unauthorized' | 'config' | 'network' | 'unknown'
+
 class SimulatorApiError extends Error {
   status: number
-  constructor(status: number, message: string) {
+  kind: SimulatorErrorKind
+  constructor(status: number, message: string, kind: SimulatorErrorKind) {
     super(message)
     this.status = status
+    this.kind = kind
   }
 }
 
+function kindForStatus(status: number): SimulatorErrorKind {
+  if (status === 401) return 'expired'
+  if (status === 403) return 'unauthorized'
+  if (status === 503) return 'config'
+  return 'unknown'
+}
+
+async function parseDetail(res: Response): Promise<string> {
+  try { return (await res.json()).detail ?? 'שגיאה בשירות הסימולציה' }
+  catch { return 'שגיאה בשירות הסימולציה' }
+}
+
 async function call<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const headers = { ...(await getAuthHeaders()), 'Content-Type': 'application/json', ...(options.headers || {}) }
   const sep = path.includes('?') ? '&' : '?'
-  const res = await fetch(`${BASE}${path}${sep}lang=${getLang()}`, { ...options, headers })
+  const url = `${BASE}${path}${sep}lang=${getLang()}`
+  const baseHeaders: Record<string, string> = {
+    'Content-Type': 'application/json', ...(options.headers as Record<string, string> | undefined || {}),
+  }
+
+  let res: Response
+  try {
+    const headers = { ...(await getAuthHeaders()), ...baseHeaders }
+    res = await fetch(url, { ...options, headers })
+  } catch {
+    // The request never reached the server — distinct from the server
+    // actively rejecting it.
+    throw new SimulatorApiError(0, 'בעיית חיבור. בדוק את החיבור לאינטרנט ונסה שוב.', 'network')
+  }
+
+  // A 401 can mean the token was merely stale (clock drift, a token that
+  // expired between getAuthHeaders() and the server receiving it). Try
+  // exactly once with a forced refresh before treating the session as
+  // truly gone — never more than one retry.
+  if (res.status === 401) {
+    try {
+      const refreshedHeaders = { ...(await forceRefreshAuthHeaders()), ...baseHeaders }
+      if (refreshedHeaders.Authorization) {
+        res = await fetch(url, { ...options, headers: refreshedHeaders })
+      }
+    } catch { /* fall through to the original 401 */ }
+  }
+
   if (!res.ok) {
-    let detail = 'שגיאה בשירות הסימולציה'
-    try { detail = (await res.json()).detail ?? detail } catch { /* ignore */ }
-    throw new SimulatorApiError(res.status, detail)
+    const detail = await parseDetail(res)
+    throw new SimulatorApiError(res.status, detail, kindForStatus(res.status))
   }
   return res.json()
 }

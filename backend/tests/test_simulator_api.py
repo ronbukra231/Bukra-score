@@ -5,11 +5,13 @@ cross-user isolation. Data providers are patched; no live network calls.
 
 import os
 import sys
+import time
 import uuid
 from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("SUPABASE_JWT_SECRET", "test-secret-for-pytest")
+os.environ.pop("SUPABASE_URL", None)   # this suite exercises the HS256 legacy path only
 
 import jwt
 import pytest
@@ -22,7 +24,13 @@ client = TestClient(main.app)
 
 
 def make_token(user_id: str) -> str:
-    return jwt.encode({"sub": user_id}, os.environ["SUPABASE_JWT_SECRET"], algorithm="HS256")
+    # Shaped like a real Supabase access token (aud/exp/iat present) so it
+    # passes the same claim checks a production token would.
+    now = int(time.time())
+    return jwt.encode(
+        {"sub": user_id, "aud": "authenticated", "exp": now + 3600, "iat": now},
+        os.environ["SUPABASE_JWT_SECRET"], algorithm="HS256",
+    )
 
 
 def auth(user_id: str) -> dict:

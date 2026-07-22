@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { useLanguage } from '../../i18n/index'
 import SimulatorShell, { SimPanel, GOLD, SERIF } from '../../simulator/SimulatorShell'
 import NoPortfolio from './NoPortfolio'
+import SimulatorErrorState from '../../simulator/ErrorState'
 import { getPerformance, SimulatorApiError } from '../../api/simulatorClient'
 import type { PerformanceData } from '../../types/simulator'
 
@@ -13,14 +14,17 @@ export default function PerformancePage() {
   const [period, setPeriod] = useState<typeof PERIODS[number]>('1Y')
   const [data, setData] = useState<PerformanceData | null>(null)
   const [notFound, setNotFound] = useState(false)
+  const [error, setError] = useState<unknown>(null)
 
   useEffect(() => {
-    getPerformance(period).then(setData).catch(e => {
+    getPerformance(period).then(d => { setData(d); setError(null) }).catch(e => {
       if (e instanceof SimulatorApiError && e.status === 404) setNotFound(true)
+      else setError(e)
     })
   }, [period])
 
   if (notFound) return <SimulatorShell><NoPortfolio /></SimulatorShell>
+  if (error) return <SimulatorShell><SimulatorErrorState error={error} /></SimulatorShell>
 
   // Merge portfolio + benchmark series by date for a single normalized chart
   const merged: Record<string, { date: string; portfolio?: number; benchmark?: number }> = {}

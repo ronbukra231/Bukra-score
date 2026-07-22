@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { useLanguage } from '../../i18n/index'
 import SimulatorShell, { SimPanel, SimFigure, GOLD, SERIF } from '../../simulator/SimulatorShell'
 import NoPortfolio from './NoPortfolio'
+import SimulatorErrorState from '../../simulator/ErrorState'
 import { getDashboard, addVirtualFunds, SimulatorApiError } from '../../api/simulatorClient'
 import type { DashboardData } from '../../types/simulator'
 
@@ -23,17 +24,17 @@ export default function Overview() {
   const { t, isHe } = useLanguage()
   const [dash, setDash] = useState<DashboardData | null>(null)
   const [notFound, setNotFound] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<unknown>(null)
   const [showDeposit, setShowDeposit] = useState(false)
   const [depositAmount, setDepositAmount] = useState(1000)
   const [busy, setBusy] = useState(false)
 
   function load() {
     getDashboard()
-      .then(d => { setDash(d); setNotFound(false) })
+      .then(d => { setDash(d); setNotFound(false); setError(null) })
       .catch(e => {
         if (e instanceof SimulatorApiError && e.status === 404) setNotFound(true)
-        else setError(e.message || t.sim_errorGeneric)
+        else setError(e)
       })
   }
 
@@ -45,15 +46,15 @@ export default function Overview() {
       await addVirtualFunds(depositAmount)
       setShowDeposit(false)
       load()
-    } catch (e: any) {
-      setError(e.message || t.sim_errorGeneric)
+    } catch (e) {
+      setError(e)
     } finally {
       setBusy(false)
     }
   }
 
   if (notFound) return <SimulatorShell><NoPortfolio /></SimulatorShell>
-  if (error) return <SimulatorShell><p className="text-red-400 text-sm">{error}</p></SimulatorShell>
+  if (error) return <SimulatorShell><SimulatorErrorState error={error} /></SimulatorShell>
   if (!dash) return <SimulatorShell><p className="text-stone-600 text-sm">{t.sim_loading}</p></SimulatorShell>
 
   const p = dash.portfolio

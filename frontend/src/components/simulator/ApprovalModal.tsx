@@ -8,8 +8,9 @@ import { useState } from 'react'
 import { useLanguage } from '../../i18n/index'
 import { GOLD, SERIF } from '../../estate/EstateShell'
 import { SimBanner } from '../../simulator/SimulatorShell'
-import { approveRecommendation, rejectRecommendation, SimulatorApiError } from '../../api/simulatorClient'
+import { approveRecommendation, rejectRecommendation } from '../../api/simulatorClient'
 import { recLabel } from '../../simulator/labels'
+import { resolveErrorMessage } from '../../simulator/ErrorState'
 import type { Recommendation } from '../../types/simulator'
 
 function fmtPct(v: number) { return `${(v * 100).toFixed(1)}%` }
@@ -32,8 +33,8 @@ export default function ApprovalModal({ rec, onClose, onDone }: {
       await approveRecommendation(rec.id, confirmed)
       setResult('approved')
       setTimeout(() => { onDone(); onClose() }, 1600)
-    } catch (e: any) {
-      setError(e instanceof SimulatorApiError ? e.message : t.sim_approvalFailed)
+    } catch (e) {
+      setError(resolveErrorMessage(e, t))
     } finally {
       setBusy(false)
     }
@@ -45,8 +46,8 @@ export default function ApprovalModal({ rec, onClose, onDone }: {
       await rejectRecommendation(rec.id, note || undefined)
       setResult('rejected')
       setTimeout(() => { onDone(); onClose() }, 1000)
-    } catch (e: any) {
-      setError(e.message || t.sim_errorGeneric)
+    } catch (e) {
+      setError(resolveErrorMessage(e, t))
     } finally {
       setBusy(false)
     }
