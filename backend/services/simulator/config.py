@@ -83,6 +83,11 @@ RECOMMENDATION_RULES = {
     "min_cash_for_add_position":       500.0,  # minimum virtual cash to consider adding a new position
     "add_candidate_pool_size":         40,     # top-N by cached Bukra Score considered per generation run
     "max_new_recommendations_per_run": 6,
+    "guided_min_valid_candidates":     8,      # guided builder: stop live analysis early once this many
+                                                # candidates have cleared every quality gate (bounds latency);
+                                                # scans the full add_candidate_pool_size if fewer are found
+    "guided_wall_time_budget_s":       20,     # guided builder: hard wall-clock ceiling for one builder call,
+                                                # in case many candidates in a row hit provider timeouts/retries
 }
 
 # ── Benchmark defaults ──────────────────────────────────────────────────────────

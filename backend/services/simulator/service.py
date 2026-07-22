@@ -329,20 +329,34 @@ def generate_recommendations(user_id: str, lang: str = "he") -> list[dict]:
 
 
 def generate_guided_recommendation(user_id: str, exclude_tickers: Optional[list[str]] = None,
-                                   lang: str = "he") -> Optional[dict]:
-    """One-at-a-time recommendation for the Guided Portfolio Builder. None means
-    no candidate currently clears the quality bar — cash stays intentionally idle."""
+                                   lang: str = "he") -> tuple[Optional[dict], Optional[str]]:
+    """
+    One-at-a-time recommendation for the Guided Portfolio Builder.
+
+    Returns (recommendation, done_reason). done_reason is None when a
+    recommendation was found; otherwise a short internal code (e.g.
+    "provider_degraded", "no_opportunities", "all_candidates_too_small_to_size")
+    that the router maps to a user-facing message — this code, and the full
+    diagnostics behind it, are logged here but never returned to the client.
+    """
     with UserPortfolioLock(user_id) as state:
         _require_portfolio(state, lang)
         _refresh_prices_and_value(state)
         _expire_stale_recommendations(state)
-        rec = reco_engine.generate_guided_candidate(state, lang=lang, exclude_tickers=exclude_tickers)
+        rec, diag = reco_engine.generate_guided_candidate(state, lang=lang, exclude_tickers=exclude_tickers)
+        logger.info(
+            "[guided-builder] user=%s universe=%d prefilter=%d attempted=%d rejected=%s "
+            "providerFailures=%d ranked=%d doneReason=%s",
+            user_id, diag["universeSize"], diag["prefilterPassCount"], diag["liveAttempted"],
+            diag["rejectedByGate"], len(diag["providerFailures"]), len(diag["rankedCandidates"]), diag["doneReason"],
+        )
+        logger.debug("[guided-builder] full diagnostics user=%s: %s", user_id, diag)
         if rec is not None:
             audit.log(state, AuditEventType.RECOMMENDATION_CREATED.value,
                       _txt(lang, f"המדד זיהה הזדמנות מובילה לבניית התיק: {rec['ticker']}.",
                            f"The Index identified the top portfolio-building opportunity: {rec['ticker']}."),
                       recommendation_id=rec["id"], source_data_timestamp=accounting.now_iso())
-        return rec
+        return rec, diag.get("doneReason")
 
 
 def get_recommendations(user_id: str, status: Optional[str] = None, lang: str = "he") -> list[dict]:

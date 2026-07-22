@@ -13,6 +13,7 @@ import { GOLD, SERIF } from '../estate/EstateShell'
 import { SimBanner } from './SimulatorShell'
 import {
   getNextBuilderRecommendation, approveRecommendation, rejectRecommendation, getDashboard,
+  type BuilderDoneReason,
 } from '../api/simulatorClient'
 import { resolveErrorMessage } from './ErrorState'
 import type { Recommendation } from '../types/simulator'
@@ -38,6 +39,7 @@ export default function GuidedBuilder() {
   const [error, setError] = useState<unknown>(null)
   const [invested, setInvested] = useState(0)
   const [currency, setCurrency] = useState('USD')
+  const [doneReason, setDoneReason] = useState<BuilderDoneReason>('no_opportunities')
 
   async function fetchNext(excludeList: string[], previous: Recommendation | null) {
     setPhase('loading')
@@ -47,6 +49,7 @@ export default function GuidedBuilder() {
       if ('done' in next) {
         setRec(null)
         setPrevRec(null)
+        setDoneReason(next.reason ?? 'no_opportunities')
         setPhase('done')
       } else {
         setRec(next)
@@ -118,10 +121,12 @@ export default function GuidedBuilder() {
       {phase === 'done' && (
         <div className="w-full max-w-2xl text-center py-16">
           <h1 className="text-3xl text-stone-100 font-light mb-4" style={{ fontFamily: SERIF }}>
-            {invested > 0 ? t.sim_builderDoneTitle : t.sim_builderNoMoreOpportunities}
+            {doneReason === 'temporary_data_unavailable' ? t.sim_builderTemporaryDataIssue
+              : invested > 0 ? t.sim_builderDoneTitle : t.sim_builderNoMoreOpportunities}
           </h1>
           <p className="text-stone-500 text-sm leading-relaxed mb-10 max-w-md mx-auto">
-            {invested > 0 ? t.sim_builderDoneSub : t.sim_builderNoMoreOpportunitiesSub}
+            {doneReason === 'temporary_data_unavailable' ? t.sim_builderTemporaryDataIssueSub
+              : invested > 0 ? t.sim_builderDoneSub : t.sim_builderNoMoreOpportunitiesSub}
           </p>
           <button onClick={handleSkip}
             className="rounded-full px-8 py-3 text-sm font-medium"

@@ -148,9 +148,17 @@ def generate_recommendations_endpoint(request: Request, user_id: str = Depends(g
 def guided_builder_next_endpoint(request: Request, body: GuidedNextBody,
                                  user_id: str = Depends(get_current_user_id)):
     lang = _lang(request)
-    rec = _handle(generate_guided_recommendation, lang, user_id,
-                  exclude_tickers=body.excludeTickers, lang=lang)
-    return rec if rec is not None else {"done": True}
+    rec, done_reason = _handle(generate_guided_recommendation, lang, user_id,
+                               exclude_tickers=body.excludeTickers, lang=lang)
+    if rec is not None:
+        return rec
+    # Internal done_reason codes are never sent to the client verbatim —
+    # only this coarse, user-safe distinction: a temporary data problem
+    # (never worded as "no good investments exist") vs. a genuine, fully
+    # exhausted scan.
+    if done_reason == "provider_degraded":
+        return {"done": True, "reason": "temporary_data_unavailable"}
+    return {"done": True, "reason": "no_opportunities"}
 
 
 @router.get("/recommendations")

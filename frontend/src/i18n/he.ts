@@ -761,6 +761,8 @@ const he: Translations = {
   sim_builderSkipForNow: 'דלג לעת עתה',
   sim_builderNoMoreOpportunities: 'בוקרה כרגע לא מזהה השקעות נוספות שעומדות בדרישות איכות התיק.',
   sim_builderNoMoreOpportunitiesSub: 'יתרת המזומן תישאר זמינה עד שיופיעו הזדמנויות טובות יותר.',
+  sim_builderTemporaryDataIssue: 'נתוני השוק אינם זמינים כרגע.',
+  sim_builderTemporaryDataIssueSub: 'זה לא קשור לאיכות הזדמנויות ההשקעה — לבוקרה יש כרגע קושי להתחבר לספקי נתוני השוק. נסה שוב בעוד מספר דקות.',
   sim_builderDifferenceIntro: 'בהשוואה להצעה הקודמת:',
   sim_builderDoneTitle: 'התיק שלך יוצא לדרך טובה.',
   sim_builderDoneSub: 'בוקרה תמשיך לנתח את השוק ותציג המלצות חדשות במרכז ההחלטות ככל שהתיק יתפתח.',

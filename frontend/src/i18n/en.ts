@@ -762,6 +762,8 @@ const en: Translations = {
   sim_builderSkipForNow: 'Skip for now',
   sim_builderNoMoreOpportunities: 'Bukra currently sees no additional investments that satisfy the portfolio quality requirements.',
   sim_builderNoMoreOpportunitiesSub: 'Remaining cash will stay available until better opportunities appear.',
+  sim_builderTemporaryDataIssue: 'Market data is temporarily unavailable.',
+  sim_builderTemporaryDataIssueSub: "This isn't about the quality of investment opportunities — Bukra is having trouble reaching market data providers right now. Please try again shortly.",
   sim_builderDifferenceIntro: 'Compared with the previous suggestion:',
   sim_builderDoneTitle: 'Your portfolio is off to a strong start.',
   sim_builderDoneSub: 'Bukra will keep analyzing the market and surface new recommendations in the Decision Center as your portfolio evolves.',

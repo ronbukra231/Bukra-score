@@ -819,6 +819,8 @@ export interface Translations {
   sim_builderSkipForNow: string
   sim_builderNoMoreOpportunities: string
   sim_builderNoMoreOpportunitiesSub: string
+  sim_builderTemporaryDataIssue: string
+  sim_builderTemporaryDataIssueSub: string
   sim_builderDifferenceIntro: string
   sim_builderDoneTitle: string
   sim_builderDoneSub: string

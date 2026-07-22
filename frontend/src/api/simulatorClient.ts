@@ -108,8 +108,10 @@ export const getHealth = () => call<PortfolioHealth>('/health')
 export const generateRecommendations = () =>
   call<Recommendation[]>('/recommendations/generate', { method: 'POST', body: '{}' })
 
+export type BuilderDoneReason = 'temporary_data_unavailable' | 'no_opportunities'
+
 export const getNextBuilderRecommendation = (excludeTickers: string[]) =>
-  call<Recommendation | { done: true }>('/builder/next', {
+  call<Recommendation | { done: true; reason?: BuilderDoneReason }>('/builder/next', {
     method: 'POST', body: JSON.stringify({ excludeTickers }),
   })
 
