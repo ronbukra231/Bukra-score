@@ -108,6 +108,11 @@ export const getHealth = () => call<PortfolioHealth>('/health')
 export const generateRecommendations = () =>
   call<Recommendation[]>('/recommendations/generate', { method: 'POST', body: '{}' })
 
+export const getNextBuilderRecommendation = (excludeTickers: string[]) =>
+  call<Recommendation | { done: true }>('/builder/next', {
+    method: 'POST', body: JSON.stringify({ excludeTickers }),
+  })
+
 export const getRecommendations = (status?: string) =>
   call<Recommendation[]>(`/recommendations${status ? `?status=${status}` : ''}`)
 

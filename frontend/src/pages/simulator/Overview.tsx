@@ -93,7 +93,14 @@ export default function Overview() {
             <span className="text-stone-600 text-xs">{t.sim_allocationCash}: {(dash.allocation.cashWeight * 100).toFixed(0)}%</span>
           </div>
           {dash.allocation.bySector.length === 0 ? (
-            <p className="text-stone-600 text-sm">{t.sim_noHoldings}</p>
+            <div className="py-6 text-center">
+              <p className="text-stone-500 text-sm mb-4">{t.sim_noHoldings}</p>
+              <Link to="/simulator/build"
+                className="inline-block rounded-full px-5 py-2 text-sm font-medium"
+                style={{ background: GOLD, color: '#1c1410' }}>
+                {t.sim_builderTitle}
+              </Link>
+            </div>
           ) : (
             <div className="space-y-3">
               {dash.allocation.bySector.map(s => (

@@ -154,6 +154,136 @@ def _new_recommendation(state: dict, ticker: str, rtype: str, current_weight: fl
     }
 
 
+def _opportunity_score(analysis: dict, sector: str, state: dict) -> float:
+    """
+    Portfolio Opportunity Score — 0-100, separate from the Bukra Score.
+    The Bukra Score measures standalone business quality; this measures how
+    good an addition the stock is FOR THIS PORTFOLIO right now: quality,
+    valuation, margin of safety, confidence, and how much it improves
+    diversification, penalized for bubble risk.
+    """
+    score = analysis["score"]["score"] or 0
+    val = analysis["valuation"]
+    valuation_score = val.get("valuationScore") or 0
+    bubble = val.get("bubbleRisk") or 0
+    confidence = val.get("valuationConfidence", {}).get("score") or 0
+
+    fv = val.get("fairValueRange") or {}
+    base, price = fv.get("basePerShare"), val.get("currentPrice")
+    margin_of_safety = max(0.0, min(100.0, (base - price) / base * 100)) if (base and price and base > 0) else 50.0
+
+    current_sector_w = _sector_weight(state, sector)
+    diversification_bonus = max(0.0, min(100.0, 100.0 - current_sector_w * 200.0))
+
+    opp = (score * 0.30 + valuation_score * 0.20 + margin_of_safety * 0.15 +
+          confidence * 0.10 + diversification_bonus * 0.15 - bubble * 0.15)
+    return max(0.0, min(100.0, opp))
+
+
+def _guided_position_pct(opportunity_score: float) -> float:
+    """Typical 3-6%, exceptional up to 8%, very high conviction up to 10%. Never more."""
+    if opportunity_score >= 92:
+        return 0.10
+    if opportunity_score >= 85:
+        return 0.08
+    return round(0.03 + (min(opportunity_score, 85) / 85) * 0.03, 4)
+
+
+def generate_guided_candidate(state: dict, lang: str = "he",
+                              exclude_tickers: Optional[list[str]] = None) -> Optional[dict]:
+    """
+    One recommendation at a time for the Guided Portfolio Builder. Ranks
+    every eligible candidate (not held, not pending, not already shown this
+    session) by the Portfolio Opportunity Score and returns the single best
+    pick as a new PENDING recommendation — or None if nothing clears the
+    quality bar, meaning cash is intentionally left uninvested rather than
+    forced into a mediocre position.
+    """
+    p = state["portfolio"]
+    rules = RISK_PROFILES.get(p["riskProfile"], RISK_PROFILES["balanced"])
+    rr = RECOMMENDATION_RULES
+    exclude = {t.upper() for t in (exclude_tickers or [])}
+
+    if p["currentCash"] < rr["min_cash_for_add_position"]:
+        return None
+
+    pending_tickers = {
+        r["ticker"] for r in state["recommendations"].values()
+        if r["recommendationStatus"] == RecommendationStatus.PENDING.value
+    }
+    held_tickers = {h["ticker"] for h in state["holdings"].values() if h["status"] == "open"}
+
+    universe = [r for r in _scanner_universe()
+               if r["ticker"] not in held_tickers and r["ticker"] not in pending_tickers
+               and r["ticker"] not in exclude and (r.get("bukra_score") or 0) >= rules["min_bukra_score"]]
+    universe.sort(key=lambda r: -(r.get("bukra_score") or 0))
+    candidates = universe[:min(15, rr["add_candidate_pool_size"])]
+
+    best: Optional[tuple[float, dict, dict, str]] = None
+    for cand in candidates:
+        ticker, sector = cand["ticker"], cand.get("sector", "")
+        if _sector_weight(state, sector) >= rules["max_sector_pct"]:
+            continue
+        analysis = _analyze_ticker(ticker, lang)
+        if analysis is None:
+            continue
+        val = analysis["valuation"]
+        if not val.get("available"):
+            continue
+        if (val.get("valuationScore") or 0) < rules["min_valuation_score"]:
+            continue
+        if (val.get("bubbleRisk") or 100) > rules["max_bubble_risk"]:
+            continue
+        if val["valuationConfidence"]["score"] < rules["min_valuation_conf"]:
+            continue
+        if val["dataQuality"]["level"] == "insufficient":
+            continue
+        opp = _opportunity_score(analysis, sector, state)
+        if best is None or opp > best[0]:
+            best = (opp, analysis, cand, sector)
+
+    if best is None:
+        return None
+    opp_score, analysis, cand, sector = best
+    ticker = cand["ticker"]
+
+    pct = _guided_position_pct(opp_score)
+    target_position_value = min(
+        p["currentValue"] * pct,
+        p["currentCash"] * 0.5,
+        max(0.0, rules["max_sector_pct"] - _sector_weight(state, sector)) * p["currentValue"],
+    )
+    if target_position_value < rr["min_cash_for_add_position"]:
+        return None
+    price = analysis["valuation"].get("currentPrice")
+    qty = round(target_position_value / price, 4) if price else None
+
+    positive, risk = _reason_factors(lang, analysis, rules)
+    positive.append(_txt(lang, "הפוזיציה המוצעת אינה מוחזקת כיום בתיק — עשויה לשפר פיזור.",
+                         "The proposed position is not currently held — may improve diversification."))
+    if opp_score >= 92:
+        conviction = _txt(lang, "רמת ביטחון גבוהה במיוחד", "very high conviction")
+    elif opp_score >= 85:
+        conviction = _txt(lang, "הזדמנות יוצאת דופן", "an exceptional opportunity")
+    else:
+        conviction = _txt(lang, "התאמה טובה לאסטרטגיה שנבחרה", "a solid fit for the selected strategy")
+    reason = _txt(lang,
+        f"המדד דירג את {ticker} כהזדמנות המובילה כעת עבור בניית התיק — {conviction}.",
+        f"The Index ranked {ticker} as the top opportunity for building the portfolio right now — {conviction}.")
+
+    rec = _new_recommendation(
+        state, ticker, RecommendationType.ADD_POSITION.value, 0.0,
+        round(target_position_value / max(p["currentValue"], 1e-9), 4),
+        round(target_position_value, 2), qty, reason, positive, risk,
+        _impact(state, ticker, sector, target_position_value, 0.0),
+        analysis, lang,
+    )
+    rec["metadata"]["opportunityScore"] = round(opp_score, 1)
+    rec["metadata"]["guided"] = True
+    state["recommendations"][rec["id"]] = rec
+    return rec
+
+
 def generate_recommendations(state: dict, lang: str = "he", max_new: Optional[int] = None) -> list[dict]:
     """
     Deterministic pass over held positions (REDUCE/EXIT/REVIEW candidates)

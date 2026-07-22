@@ -19,7 +19,7 @@ from services.auth import get_current_user_id
 from services.simulator import (
     SimulatorError, create_portfolio, add_virtual_funds, set_risk_profile,
     get_dashboard, get_performance, get_health, get_activity, get_audit_trail,
-    get_decision_history, get_transactions, generate_recommendations,
+    get_decision_history, get_transactions, generate_recommendations, generate_guided_recommendation,
     get_recommendations, view_recommendation, reject_recommendation, approve_recommendation,
 )
 from services.simulator.config import RISK_PROFILES, SUPPORTED_CURRENCIES, EXECUTION, DEFAULT_BENCHMARK
@@ -64,6 +64,10 @@ class ApproveBody(BaseModel):
 
 class RejectBody(BaseModel):
     note: Optional[str] = Field(default=None, max_length=500)
+
+
+class GuidedNextBody(BaseModel):
+    excludeTickers: list[str] = Field(default_factory=list, max_length=200)
 
 
 # ── Config (public, read-only) ────────────────────────────────────────────────
@@ -137,6 +141,16 @@ def health_endpoint(request: Request, user_id: str = Depends(get_current_user_id
 def generate_recommendations_endpoint(request: Request, user_id: str = Depends(get_current_user_id)):
     lang = _lang(request)
     return _handle(generate_recommendations, lang, user_id, lang=lang)
+
+
+@router.post("/builder/next")
+@limiter.limit("30/minute")
+def guided_builder_next_endpoint(request: Request, body: GuidedNextBody,
+                                 user_id: str = Depends(get_current_user_id)):
+    lang = _lang(request)
+    rec = _handle(generate_guided_recommendation, lang, user_id,
+                  exclude_tickers=body.excludeTickers, lang=lang)
+    return rec if rec is not None else {"done": True}
 
 
 @router.get("/recommendations")

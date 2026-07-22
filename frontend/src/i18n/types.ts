@@ -803,6 +803,31 @@ export interface Translations {
   sim_reviewLater: string
   sim_learnMore: string
   sim_expiresOn: string
+  // Guided Portfolio Builder
+  sim_builderTitle: string
+  sim_builderSubtitle: string
+  sim_builderRecommendedAllocation: string
+  sim_builderVirtualInvestment: string
+  sim_builderRemainingCash: string
+  sim_builderWhyRecommend: string
+  sim_builderRisks: string
+  sim_builderInvest: string
+  sim_builderInvesting: string
+  sim_builderSuggestAnother: string
+  sim_builderShowAnalysis: string
+  sim_builderHideAnalysis: string
+  sim_builderSkipForNow: string
+  sim_builderNoMoreOpportunities: string
+  sim_builderNoMoreOpportunitiesSub: string
+  sim_builderDifferenceIntro: string
+  sim_builderDoneTitle: string
+  sim_builderDoneSub: string
+  sim_builderGoToPortfolio: string
+  sim_builderInvestedToast: string
+  sim_builderConvictionVeryHigh: string
+  sim_builderConvictionExceptional: string
+  sim_builderConvictionStandard: string
+  sim_builderOpportunityScore: string
   // Approval flow
   sim_approvalTitle: string
   sim_proposedAmount: string

@@ -30,7 +30,7 @@ Modules:
 from services.simulator.service import (
     SimulatorError, create_portfolio, add_virtual_funds, set_risk_profile,
     get_dashboard, get_performance, get_health, get_activity, get_audit_trail,
-    get_decision_history, get_transactions, generate_recommendations,
+    get_decision_history, get_transactions, generate_recommendations, generate_guided_recommendation,
     get_recommendations, view_recommendation, reject_recommendation, approve_recommendation,
 )
 from services.simulator.config import METHODOLOGY_VERSION
@@ -38,7 +38,7 @@ from services.simulator.config import METHODOLOGY_VERSION
 __all__ = [
     "SimulatorError", "create_portfolio", "add_virtual_funds", "set_risk_profile",
     "get_dashboard", "get_performance", "get_health", "get_activity", "get_audit_trail",
-    "get_decision_history", "get_transactions", "generate_recommendations",
+    "get_decision_history", "get_transactions", "generate_recommendations", "generate_guided_recommendation",
     "get_recommendations", "view_recommendation", "reject_recommendation", "approve_recommendation",
     "METHODOLOGY_VERSION",
 ]

@@ -27,6 +27,7 @@ import WorldIntelligenceCenter from './pages/WorldIntelligenceCenter'
 import EstateLibrary from './pages/EstateLibrary'
 import StrategyRoom from './pages/StrategyRoom'
 import SimulatorOnboarding from './pages/simulator/SimulatorOnboarding'
+import GuidedBuilder from './simulator/GuidedBuilder'
 import SimulatorOverview from './pages/simulator/Overview'
 import DecisionCenter from './pages/simulator/DecisionCenter'
 import SimulatorHoldings from './pages/simulator/Holdings'
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="/estate/strategy" element={<RequireAuth><StrategyRoom /></RequireAuth>} />
           {/* Bukra Portfolio Simulator — Phase 1, virtual money only */}
           <Route path="/simulator/start" element={<RequireAuth><SimulatorOnboarding onCreated={() => {}} /></RequireAuth>} />
+          <Route path="/simulator/build" element={<RequireAuth><GuidedBuilder /></RequireAuth>} />
           <Route path="/simulator" element={<RequireAuth><SimulatorOverview /></RequireAuth>} />
           <Route path="/simulator/decisions" element={<RequireAuth><DecisionCenter /></RequireAuth>} />
           <Route path="/simulator/holdings" element={<RequireAuth><SimulatorHoldings /></RequireAuth>} />

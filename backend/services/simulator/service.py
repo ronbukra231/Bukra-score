@@ -328,6 +328,23 @@ def generate_recommendations(user_id: str, lang: str = "he") -> list[dict]:
         return created
 
 
+def generate_guided_recommendation(user_id: str, exclude_tickers: Optional[list[str]] = None,
+                                   lang: str = "he") -> Optional[dict]:
+    """One-at-a-time recommendation for the Guided Portfolio Builder. None means
+    no candidate currently clears the quality bar — cash stays intentionally idle."""
+    with UserPortfolioLock(user_id) as state:
+        _require_portfolio(state, lang)
+        _refresh_prices_and_value(state)
+        _expire_stale_recommendations(state)
+        rec = reco_engine.generate_guided_candidate(state, lang=lang, exclude_tickers=exclude_tickers)
+        if rec is not None:
+            audit.log(state, AuditEventType.RECOMMENDATION_CREATED.value,
+                      _txt(lang, f"המדד זיהה הזדמנות מובילה לבניית התיק: {rec['ticker']}.",
+                           f"The Index identified the top portfolio-building opportunity: {rec['ticker']}."),
+                      recommendation_id=rec["id"], source_data_timestamp=accounting.now_iso())
+        return rec
+
+
 def get_recommendations(user_id: str, status: Optional[str] = None, lang: str = "he") -> list[dict]:
     with UserPortfolioLock(user_id) as state:
         _require_portfolio(state, lang)

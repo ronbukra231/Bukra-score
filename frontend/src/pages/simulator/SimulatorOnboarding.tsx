@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../../i18n/index'
 import { GOLD, SERIF } from '../../estate/EstateShell'
-import { createPortfolio, generateRecommendations } from '../../api/simulatorClient'
+import { createPortfolio } from '../../api/simulatorClient'
 import { resolveErrorMessage } from '../../simulator/ErrorState'
 import type { Currency, RiskProfile } from '../../types/simulator'
 
@@ -38,9 +38,8 @@ export default function SimulatorOnboarding({ onCreated }: { onCreated: () => vo
         name: t.sim_dashboardTitle, baseCurrency: currency, initialCapital: capital,
         riskProfile: risk, benchmarkSymbol: benchmark || null,
       })
-      try { await generateRecommendations() } catch { /* non-fatal — dashboard can trigger later */ }
       onCreated()
-      navigate('/simulator')
+      navigate('/simulator/build')
     } catch (e) {
       setError(resolveErrorMessage(e, t))
     } finally {
