@@ -356,6 +356,48 @@ def test_full_provider_outage_returns_temporary_reason(user_id):
     assert res.json() == {"done": True, "reason": "temporary_data_unavailable"}
 
 
+# ── PRODUCTION REGRESSION: get_company_info's total-failure fallback sets
+#    name = the ticker symbol itself (never empty), so a plain "not name"
+#    check can never detect it — this silently misclassified a genuine
+#    provider outage as "the market has nothing good today" in production.
+def test_degraded_company_info_fallback_is_detected_as_provider_failure(user_id):
+    make_portfolio(user_id, capital=100000)
+    universe = scanner([("NVDA", "Technology", 96), ("PLTR", "Technology", 94), ("ASML", "Technology", 94)])
+
+    def _degraded_info(ticker, lang):
+        # Exactly what services/yahoo_finance.py's get_company_info returns
+        # when yahooquery, yfinance, and the mock table have all failed:
+        # symbol echoed back as "name", every other field null.
+        return {"name": ticker, "price": None, "market_cap": None, "sector": "",
+                "pe_ratio": None, "dividend_yield": None}
+
+    with patch("services.simulator.recommendations._scanner_universe", return_value=universe), \
+         patch("services.simulator.recommendations.get_company_info", side_effect=_degraded_info), \
+         patch("services.simulator.recommendations.get_five_year_financials",
+              return_value={"years": [2020, 2021, 2022, 2023, 2024], "history": [{"year": 2024}], "raw": {}}):
+        rec, reason = service.generate_guided_recommendation(user_id, lang="en")
+    assert rec is None
+    assert reason == "provider_degraded"   # not "no_opportunities" — this is a fetch failure, not a market judgment
+
+
+# ── PRODUCTION REGRESSION: a live Bukra Score recomputation coming back None
+#    for a ticker that already has a valid CACHED score is a fetch hiccup,
+#    not proof the company genuinely lacks financial history.
+def test_score_recomputation_failure_on_cached_ticker_is_provider_failure(user_id):
+    make_portfolio(user_id, capital=100000)
+    universe = scanner([("NVDA", "Technology", 96)])
+
+    with patch("services.simulator.recommendations._scanner_universe", return_value=universe), \
+         patch("services.simulator.recommendations.get_company_info",
+              return_value={"name": "NVIDIA", "price": 900.0, "market_cap": 2e12, "sector": "Technology"}), \
+         patch("services.simulator.recommendations.get_five_year_financials",
+              return_value={"years": [2024], "history": [{"year": 2024}], "raw": {}}), \
+         patch("services.simulator.recommendations.compute_bukra_score", return_value={"score": None}):
+        rec, reason = service.generate_guided_recommendation(user_id, lang="en")
+    assert rec is None
+    assert reason == "provider_degraded"
+
+
 # ── FIX 4: Future Relevance present is used as a real weighted component ────
 def test_opportunity_score_uses_future_relevance_when_available():
     state = {"portfolio": {"currentValue": 100000.0}, "holdings": {}}

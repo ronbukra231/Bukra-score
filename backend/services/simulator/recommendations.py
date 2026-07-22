@@ -66,6 +66,18 @@ def _scanner_universe() -> list[dict]:
         return []
 
 
+def _info_fetch_failed(info: dict) -> bool:
+    """
+    get_company_info's total-failure fallback (every provider unreachable)
+    still sets info["name"] to the ticker symbol itself — so a plain
+    `not info.get("name")` check never catches it. Every other meaningful
+    field being null is what a genuine fetch failure actually looks like;
+    this is distinct from a real, thinly-covered company (which the scanner
+    cache already filtered to include a sector).
+    """
+    return info.get("price") is None and info.get("market_cap") is None and not info.get("sector")
+
+
 def _fetch_analysis(ticker: str, lang: str) -> Optional[dict]:
     """The actual network-bound work for one ticker. Runs inside the bounded
     executor so a slow/hanging provider call can't stall the whole pipeline."""
@@ -73,11 +85,18 @@ def _fetch_analysis(ticker: str, lang: str) -> Optional[dict]:
     fin = get_five_year_financials(ticker)
     if fin.get("source") == "unavailable":
         raise _ProviderUnavailable(f"financials unavailable for {ticker}")
+    if _info_fetch_failed(info):
+        raise _ProviderUnavailable(f"company info unavailable for {ticker}")
     if not info.get("name") or not fin.get("history"):
         return None   # a real, permanent data gap — not a provider hiccup
     score_data = compute_bukra_score(fin, info)
     if score_data.get("score") is None:
-        return None
+        # Every candidate reaching this function already carries a valid
+        # CACHED Bukra Score (that's how it entered the pool) — a fresh
+        # computation coming back empty on the same history almost always
+        # means this fetch attempt was degraded, not that the company
+        # suddenly has no financial history. Treat it as retryable.
+        raise _ProviderUnavailable(f"bukra score recomputation empty for {ticker}")
     valuation = compute_valuation(ticker, info, fin, lang=lang,
                                   bukra_score=score_data.get("score"), persist=False)
     future_relevance = None
