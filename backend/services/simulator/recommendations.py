@@ -70,12 +70,14 @@ def _info_fetch_failed(info: dict) -> bool:
     """
     get_company_info's total-failure fallback (every provider unreachable)
     still sets info["name"] to the ticker symbol itself — so a plain
-    `not info.get("name")` check never catches it. Every other meaningful
-    field being null is what a genuine fetch failure actually looks like;
-    this is distinct from a real, thinly-covered company (which the scanner
-    cache already filtered to include a sector).
+    `not info.get("name")` check never catches it, and a partial failure
+    (e.g. yahooquery returns a stale sector from a prior lookup but no live
+    quote) wouldn't null out every field either. Every candidate reaching
+    this function came from the scanner cache, i.e. is a real, actively
+    covered company — for one of those, a live fetch with no current price
+    at all is reliably a fetch problem, not a legitimate data gap.
     """
-    return info.get("price") is None and info.get("market_cap") is None and not info.get("sector")
+    return info.get("price") is None
 
 
 def _fetch_analysis(ticker: str, lang: str) -> Optional[dict]:
